@@ -3,7 +3,8 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import { 
   Download, Calendar, HardDrive, ExternalLink, Package, ChevronLeft, 
   ChevronRight, X, Shield, History, ArrowLeft, Home, Search, Sparkles,
-  Box, Gamepad2, Puzzle, LayoutGrid, ChevronDown, ShoppingCart, Lock
+  Box, Gamepad2, Puzzle, LayoutGrid, ChevronDown, ShoppingCart, Lock,
+  ShoppingBag
 } from "lucide-react";
 import { useLanguage, useTranslations } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -305,9 +306,11 @@ const AppDetail = () => {
   const navigate = useNavigate();
   const { t } = useLanguage();
   const translations = useTranslations();
+  const { user } = useAuth();
   const [selectedScreenshot, setSelectedScreenshot] = useState(0);
   const [showVersions, setShowVersions] = useState(false);
   const [showLangMenu, setShowLangMenu] = useState(false);
+  const [showPaymentDialog, setShowPaymentDialog] = useState(false);
   const { language, setLanguage } = useLanguage();
   
   
@@ -320,7 +323,10 @@ const AppDetail = () => {
   
   // Extract app ID from URL (format: "123-app-name")
   const appId = id ? parseInt(id.split('-')[0]) : null;
-
+  
+  // Check if user has purchased this app
+  const { data: hasPurchased, isLoading: purchaseLoading } = useHasPurchased(appId || 0);
+  
   // Fetch app details
   const { data: appData, isLoading: appLoading, error: appError } = useQuery({
     queryKey: ["app", appId],
@@ -462,10 +468,23 @@ const AppDetail = () => {
               )}
             </div>
 
-            {/* Login button */}
-            <Link to="/admin" className="btn-primary text-xs sm:text-sm px-3 sm:px-6 py-2 sm:py-2.5">
-              {translations.login}
-            </Link>
+            {/* User actions */}
+            {user ? (
+              <div className="flex items-center gap-2">
+                <Link to="/my-purchases">
+                  <Button variant="ghost" size="sm" className="gap-2">
+                    <ShoppingBag className="w-4 h-4" />
+                    <span className="hidden sm:inline">
+                      {language === 'km' ? 'កម្មវិធីដែលបានទិញ' : 'My Purchases'}
+                    </span>
+                  </Button>
+                </Link>
+              </div>
+            ) : (
+              <Link to="/auth" className="btn-primary text-xs sm:text-sm px-3 sm:px-6 py-2 sm:py-2.5">
+                {translations.login}
+              </Link>
+            )}
           </div>
         </header>
 
@@ -607,31 +626,65 @@ const AppDetail = () => {
                       )}
                     </div>
 
-                    {/* Download/Purchase Button - will be updated with payment logic */}
-                    {latestVersion?.download_url ? (
-                      <a href={latestVersion.download_url} target="_blank" rel="noopener noreferrer">
-                        <Button 
-                          className="w-full h-14 text-base font-semibold gap-2 bg-green-600 hover:bg-green-700 text-white shadow-lg"
-                        >
-                          <Download className="w-5 h-5" />
-                          {appData.price && appData.price > 0 
-                            ? `${language === 'km' ? 'ទិញ' : 'Buy'} - $${appData.price.toFixed(2)}`
-                            : translations.downloadForFree
-                          }
-                          {latestVersion.file_size && (
-                            <span className="text-white/80">({latestVersion.file_size})</span>
-                          )}
-                        </Button>
-                      </a>
-                    ) : (
-                      <Button 
-                        className="w-full h-14 text-base font-semibold gap-2"
-                        disabled
-                      >
-                        <Download className="w-5 h-5" />
-                        {translations.noVersions}
-                      </Button>
-                    )}
+                    {/* Download/Purchase Button */}
+                    {(() => {
+                      const isPaidApp = appData.price && appData.price > 0;
+                      const canDownload = !isPaidApp || hasPurchased;
+                      
+                      if (!latestVersion?.download_url) {
+                        return (
+                          <Button 
+                            className="w-full h-14 text-base font-semibold gap-2"
+                            disabled
+                          >
+                            <Download className="w-5 h-5" />
+                            {translations.noVersions}
+                          </Button>
+                        );
+                      }
+                      
+                      if (isPaidApp && !user) {
+                        // Not logged in - show login prompt
+                        return (
+                          <Link to="/auth">
+                            <Button 
+                              className="w-full h-14 text-base font-semibold gap-2 bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg"
+                            >
+                              <Lock className="w-5 h-5" />
+                              {language === 'km' ? 'ចូលគណនីដើម្បីទិញ' : 'Sign In to Buy'} - ${appData.price?.toFixed(2)}
+                            </Button>
+                          </Link>
+                        );
+                      }
+                      
+                      if (isPaidApp && !hasPurchased) {
+                        // Logged in but not purchased - show buy button
+                        return (
+                          <Button 
+                            className="w-full h-14 text-base font-semibold gap-2 bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg"
+                            onClick={() => setShowPaymentDialog(true)}
+                          >
+                            <ShoppingCart className="w-5 h-5" />
+                            {language === 'km' ? 'ទិញ' : 'Buy Now'} - ${appData.price?.toFixed(2)}
+                          </Button>
+                        );
+                      }
+                      
+                      // Free app or purchased - show download
+                      return (
+                        <a href={latestVersion.download_url} target="_blank" rel="noopener noreferrer">
+                          <Button 
+                            className="w-full h-14 text-base font-semibold gap-2 bg-green-600 hover:bg-green-700 text-white shadow-lg"
+                          >
+                            <Download className="w-5 h-5" />
+                            {translations.downloadForFree}
+                            {latestVersion.file_size && (
+                              <span className="text-white/80">({latestVersion.file_size})</span>
+                            )}
+                          </Button>
+                        </a>
+                      );
+                    })()}
 
                     {/* Previous Versions Button */}
                     {versions && versions.length > 1 && (
@@ -679,6 +732,20 @@ const AppDetail = () => {
         onOpenChange={setShowVersions}
         appName={displayName}
       />
+      
+      {/* Payment Dialog */}
+      {appData && appData.price && appData.price > 0 && (
+        <PaymentDialog
+          open={showPaymentDialog}
+          onOpenChange={setShowPaymentDialog}
+          appId={appData.id}
+          appName={displayName}
+          price={appData.price}
+          onPaymentSuccess={() => {
+            setShowPaymentDialog(false);
+          }}
+        />
+      )}
     </div>
   );
 };
