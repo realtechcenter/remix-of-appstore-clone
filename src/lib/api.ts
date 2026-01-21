@@ -119,8 +119,10 @@ export const appsApi = {
     };
   },
   
-  getById: (id: number) => 
-    apiRequest<App>(`apps/${id}`, { requiresAuth: false }),
+  getById: async (id: number): Promise<App> => {
+    const response = await apiRequest<{ app: App }>(`apps/${id}`, { requiresAuth: false });
+    return response.app;
+  },
   
   create: (data: Omit<Partial<App>, 'screenshots'> & { screenshots?: string[] }) => 
     apiRequest<{ success: boolean; id: number; message: string }>('apps', { method: 'POST', body: data }),
