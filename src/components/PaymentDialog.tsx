@@ -34,7 +34,7 @@ export const PaymentDialog = ({
   // Convert price to number (API may return string)
   const priceNum = typeof price === 'string' ? parseFloat(price) : (price || 0);
   
-  const [status, setStatus] = useState<'loading' | 'ready' | 'verifying' | 'success' | 'error'>('loading');
+  const [status, setStatus] = useState<'loading' | 'ready' | 'scanned' | 'verifying' | 'success' | 'error'>('loading');
   const [qrDataUrl, setQrDataUrl] = useState<string>('');
   const [orderId, setOrderId] = useState<string>('');
   const [md5, setMd5] = useState<string>('');
@@ -71,7 +71,7 @@ export const PaymentDialog = ({
 
   // Poll for payment verification
   useEffect(() => {
-    if (status === 'ready' && orderId && md5) {
+    if ((status === 'ready' || status === 'scanned') && orderId && md5) {
       const interval = setInterval(async () => {
         try {
           const result = await verifyPayment(orderId, md5);
@@ -84,6 +84,8 @@ export const PaymentDialog = ({
               onPaymentSuccess();
               onOpenChange(false);
             }, 2000);
+          } else if (result.status === 'scanned' && status !== 'scanned') {
+            setStatus('scanned');
           }
         } catch (err) {
           console.error('Verification error:', err);
@@ -231,11 +233,28 @@ export const PaymentDialog = ({
             </>
           )}
 
+          {status === 'scanned' && (
+            <div className="flex flex-col items-center gap-4 py-8">
+              <div className="w-16 h-16 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
+                <Loader2 className="w-10 h-10 animate-spin text-blue-500" />
+              </div>
+              <p className="text-lg font-semibold text-blue-500">
+                {language === 'km' ? 'QR ត្រូវបានស្កេន!' : 'QR Scanned!'}
+              </p>
+              <p className="text-sm text-muted-foreground text-center">
+                {language === 'km' 
+                  ? 'សូមបញ្ជាក់ការទូទាត់នៅក្នុងកម្មវិធីធនាគាររបស់អ្នក'
+                  : 'Please confirm the payment in your banking app'
+                }
+              </p>
+            </div>
+          )}
+
           {status === 'verifying' && (
             <div className="flex flex-col items-center gap-4 py-8">
               <Loader2 className="w-12 h-12 animate-spin text-primary" />
               <p className="text-muted-foreground">
-                {language === 'km' ? 'កំពុងផ្ទៀងផ្ទាត់ការទូទាត់...' : 'Verifying payment...'}
+                {language === 'km' ? 'កំពុងផ្ទៀងផ្ទorg់ការទូទorg់...' : 'Verifying payment...'}
               </p>
             </div>
           )}
