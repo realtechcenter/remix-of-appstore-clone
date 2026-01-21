@@ -1,4 +1,4 @@
-// API Configuration
+// API Configuration - Laravel API
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://api.realtechcomputer.com';
 
 // Get API key from localStorage (set after login)
@@ -15,13 +15,14 @@ async function apiRequest<T>(endpoint: string, options: ApiOptions = {}): Promis
   
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
+    'Accept': 'application/json',
   };
   
   if (requiresAuth) {
     headers['Authorization'] = `Bearer ${getApiKey()}`;
   }
   
-  const response = await fetch(`${API_BASE_URL}/${endpoint}`, {
+  const response = await fetch(`${API_BASE_URL}/api/${endpoint}`, {
     method,
     headers,
     body: body ? JSON.stringify(body) : undefined,
@@ -30,7 +31,7 @@ async function apiRequest<T>(endpoint: string, options: ApiOptions = {}): Promis
   const data = await response.json();
   
   if (!response.ok) {
-    throw new Error(data.error || 'API request failed');
+    throw new Error(data.error || data.message || 'API request failed');
   }
   
   return data;
@@ -52,7 +53,7 @@ export interface App {
   latest_version?: string;
   versions?: AppVersion[];
   screenshots?: AppScreenshot[];
-  price?: number; // Price in USD, null/0 means free
+  price?: number;
   created_at: string;
   updated_at: string;
 }
@@ -79,7 +80,7 @@ export interface AppScreenshot {
 }
 
 export interface PaginatedResponse<T> {
-  data: T[];
+  apps: T[];
   pagination: {
     page: number;
     limit: number;
@@ -96,9 +97,9 @@ export interface AppsQueryParams {
   limit?: number;
 }
 
-// Apps API
+// Apps API - Laravel endpoints
 export const appsApi = {
-  getAll: async (params?: AppsQueryParams): Promise<PaginatedResponse<App>> => {
+  getAll: async (params?: AppsQueryParams): Promise<{ data: App[]; pagination: { page: number; limit: number; total: number; total_pages: number } }> => {
     const query = new URLSearchParams();
     if (params?.category) query.set('category', params.category);
     if (params?.search) query.set('search', params.search);
@@ -107,61 +108,53 @@ export const appsApi = {
     if (params?.limit) query.set('limit', params.limit.toString());
     
     const queryString = query.toString();
-    const response = await apiRequest<PaginatedResponse<App> | App[]>(
-      `apps.php${queryString ? `?${queryString}` : ''}`, 
+    const response = await apiRequest<PaginatedResponse<App>>(
+      `apps${queryString ? `?${queryString}` : ''}`, 
       { requiresAuth: false }
     );
     
-    // Handle both old format (array) and new format (paginated)
-    if (Array.isArray(response)) {
-      return {
-        data: response,
-        pagination: {
-          page: params?.page || 1,
-          limit: params?.limit || response.length,
-          total: response.length,
-          total_pages: 1,
-        },
-      };
-    }
-    
-    return response;
+    return {
+      data: response.apps,
+      pagination: response.pagination,
+    };
   },
   
   getById: (id: number) => 
-    apiRequest<App>(`apps.php?id=${id}`, { requiresAuth: false }),
+    apiRequest<App>(`apps/${id}`, { requiresAuth: false }),
   
   create: (data: Omit<Partial<App>, 'screenshots'> & { screenshots?: string[] }) => 
-    apiRequest<{ id: number; message: string }>('apps.php', { method: 'POST', body: data }),
+    apiRequest<{ success: boolean; id: number; message: string }>('apps', { method: 'POST', body: data }),
   
   update: (id: number, data: Omit<Partial<App>, 'screenshots'> & { screenshots?: string[] }) => 
-    apiRequest<{ message: string }>(`apps.php?id=${id}`, { method: 'PUT', body: data }),
+    apiRequest<{ success: boolean; message: string }>(`apps/${id}`, { method: 'PUT', body: data }),
   
   delete: (id: number) => 
-    apiRequest<{ message: string }>(`apps.php?id=${id}`, { method: 'DELETE' }),
+    apiRequest<{ success: boolean; message: string }>(`apps/${id}`, { method: 'DELETE' }),
 };
 
-// Versions API
+// Versions API - Laravel endpoints
 export const versionsApi = {
-  getByAppId: (appId: number) => 
-    apiRequest<AppVersion[]>(`versions.php?app_id=${appId}`, { requiresAuth: false }),
+  getByAppId: async (appId: number) => {
+    const response = await apiRequest<{ versions: AppVersion[] }>(`versions?app_id=${appId}`, { requiresAuth: false });
+    return response.versions;
+  },
   
   create: (data: Partial<AppVersion>) => 
-    apiRequest<{ id: number; message: string }>('versions.php', { method: 'POST', body: data }),
+    apiRequest<{ success: boolean; id: number; message: string }>('versions', { method: 'POST', body: data }),
   
   update: (id: number, data: Partial<AppVersion>) => 
-    apiRequest<{ message: string }>(`versions.php?id=${id}`, { method: 'PUT', body: data }),
+    apiRequest<{ success: boolean; message: string }>(`versions/${id}`, { method: 'PUT', body: data }),
   
   delete: (id: number) => 
-    apiRequest<{ message: string }>(`versions.php?id=${id}`, { method: 'DELETE' }),
+    apiRequest<{ success: boolean; message: string }>(`versions/${id}`, { method: 'DELETE' }),
 };
 
-// Auth API
+// Auth API - Laravel endpoints (admin)
 export const authApi = {
   login: async (username: string, password: string) => {
     const response = await apiRequest<{ success: boolean; token: string; user: { id: number; username: string } }>(
-      'auth.php',
-      { method: 'POST', body: { action: 'login', username, password }, requiresAuth: false }
+      'auth/login',
+      { method: 'POST', body: { username, password }, requiresAuth: false }
     );
     
     if (response.success) {
@@ -170,6 +163,13 @@ export const authApi = {
     }
     
     return response;
+  },
+  
+  changePassword: async (username: string, currentPassword: string, newPassword: string) => {
+    return apiRequest<{ success: boolean; message: string }>(
+      'auth/change-password',
+      { method: 'POST', body: { username, current_password: currentPassword, new_password: newPassword } }
+    );
   },
   
   logout: () => {
@@ -182,5 +182,30 @@ export const authApi = {
   getUser: () => {
     const user = localStorage.getItem('admin_user');
     return user ? JSON.parse(user) : null;
+  },
+};
+
+// Upload API - Laravel endpoint
+export const uploadApi = {
+  upload: async (file: File, type: 'icons' | 'screenshots' | 'versions' | 'general') => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('type', type);
+    
+    const response = await fetch(`${API_BASE_URL}/api/upload`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${getApiKey()}`,
+      },
+      body: formData,
+    });
+    
+    const data = await response.json();
+    
+    if (!response.ok) {
+      throw new Error(data.error || data.message || 'Upload failed');
+    }
+    
+    return data as { success: boolean; url: string; filename: string; size: number; mime_type: string };
   },
 };

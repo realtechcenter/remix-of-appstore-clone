@@ -24,13 +24,16 @@ export const useOrders = () => {
   return useQuery({
     queryKey: ['orders', user?.id],
     queryFn: async () => {
-      const response = await fetch(`${API_BASE_URL}/orders.php`, {
-        headers: getAuthHeader(),
+      const response = await fetch(`${API_BASE_URL}/api/orders`, {
+        headers: {
+          'Accept': 'application/json',
+          ...getAuthHeader(),
+        },
       });
       
       const data = await response.json();
       if (!response.ok || data.error) {
-        throw new Error(data.error || 'Failed to fetch orders');
+        throw new Error(data.error || data.message || 'Failed to fetch orders');
       }
       
       return data.orders as Order[];
@@ -45,8 +48,11 @@ export const useHasPurchased = (appId: number) => {
   return useQuery({
     queryKey: ['purchased', appId, user?.id],
     queryFn: async () => {
-      const response = await fetch(`${API_BASE_URL}/orders.php?app_id=${appId}`, {
-        headers: getAuthHeader(),
+      const response = await fetch(`${API_BASE_URL}/api/orders/purchased?app_id=${appId}`, {
+        headers: {
+          'Accept': 'application/json',
+          ...getAuthHeader(),
+        },
       });
       
       const data = await response.json();
@@ -68,14 +74,14 @@ export const useCreateOrder = () => {
     mutationFn: async ({ appId, appName, amount }: { appId: number; appName: string; amount: number }) => {
       if (!user) throw new Error('User not authenticated');
 
-      const response = await fetch(`${API_BASE_URL}/orders.php`, {
+      const response = await fetch(`${API_BASE_URL}/api/orders`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
           ...getAuthHeader(),
         },
         body: JSON.stringify({
-          action: 'create',
           app_id: appId,
           app_name: appName,
           amount,
@@ -84,7 +90,7 @@ export const useCreateOrder = () => {
 
       const data = await response.json();
       if (!response.ok || data.error) {
-        throw new Error(data.error || 'Failed to create order');
+        throw new Error(data.error || data.message || 'Failed to create order');
       }
 
       return data.order as Order;
@@ -95,16 +101,16 @@ export const useCreateOrder = () => {
   });
 };
 
-// Generate KHQR code
+// Generate KHQR code - Laravel endpoint
 export const generateKHQR = async (orderId: string, amount: number) => {
-  const response = await fetch(`${API_BASE_URL}/payment.php`, {
+  const response = await fetch(`${API_BASE_URL}/api/payment/generate-qr`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
+      'Accept': 'application/json',
       ...getAuthHeader(),
     },
     body: JSON.stringify({
-      action: 'generate-qr',
       order_id: orderId,
       amount,
     }),
@@ -112,22 +118,22 @@ export const generateKHQR = async (orderId: string, amount: number) => {
 
   const data = await response.json();
   if (!response.ok || data.error) {
-    throw new Error(data.error || 'Failed to generate QR code');
+    throw new Error(data.error || data.message || 'Failed to generate QR code');
   }
 
   return data;
 };
 
-// Verify payment
+// Verify payment - Laravel endpoint
 export const verifyPayment = async (orderId: string, md5: string) => {
-  const response = await fetch(`${API_BASE_URL}/payment.php`, {
+  const response = await fetch(`${API_BASE_URL}/api/payment/verify`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
+      'Accept': 'application/json',
       ...getAuthHeader(),
     },
     body: JSON.stringify({
-      action: 'verify',
       order_id: orderId,
       md5,
     }),
@@ -137,23 +143,23 @@ export const verifyPayment = async (orderId: string, md5: string) => {
   return data;
 };
 
-// Manual confirm for testing
+// Manual confirm for testing - Laravel endpoint
 export const confirmPaymentManual = async (orderId: string) => {
-  const response = await fetch(`${API_BASE_URL}/payment.php`, {
+  const response = await fetch(`${API_BASE_URL}/api/payment/confirm-manual`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
+      'Accept': 'application/json',
       ...getAuthHeader(),
     },
     body: JSON.stringify({
-      action: 'confirm-manual',
       order_id: orderId,
     }),
   });
 
   const data = await response.json();
   if (!response.ok || data.error) {
-    throw new Error(data.error || 'Failed to confirm payment');
+    throw new Error(data.error || data.message || 'Failed to confirm payment');
   }
 
   return data;
