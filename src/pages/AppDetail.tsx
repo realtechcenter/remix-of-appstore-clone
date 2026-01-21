@@ -3,9 +3,10 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import { 
   Download, Calendar, HardDrive, ExternalLink, Package, ChevronLeft, 
   ChevronRight, X, Shield, History, ArrowLeft, Home, Search, Sparkles,
-  Box, Gamepad2, Puzzle, LayoutGrid, ChevronDown
+  Box, Gamepad2, Puzzle, LayoutGrid, ChevronDown, ShoppingCart, Lock
 } from "lucide-react";
 import { useLanguage, useTranslations } from "@/contexts/LanguageContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -15,6 +16,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { appsApi, versionsApi, type AppVersion } from "@/lib/api";
 import { useQuery } from "@tanstack/react-query";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { PaymentDialog } from "@/components/PaymentDialog";
+import { useHasPurchased } from "@/hooks/useOrders";
 
 const getGradientFromName = (name: string): string => {
   const gradients = [
@@ -604,14 +607,17 @@ const AppDetail = () => {
                       )}
                     </div>
 
-                    {/* Download Button */}
+                    {/* Download/Purchase Button - will be updated with payment logic */}
                     {latestVersion?.download_url ? (
                       <a href={latestVersion.download_url} target="_blank" rel="noopener noreferrer">
                         <Button 
                           className="w-full h-14 text-base font-semibold gap-2 bg-green-600 hover:bg-green-700 text-white shadow-lg"
                         >
                           <Download className="w-5 h-5" />
-                          {translations.downloadForFree}
+                          {appData.price && appData.price > 0 
+                            ? `${language === 'km' ? 'ទិញ' : 'Buy'} - $${appData.price.toFixed(2)}`
+                            : translations.downloadForFree
+                          }
                           {latestVersion.file_size && (
                             <span className="text-white/80">({latestVersion.file_size})</span>
                           )}
