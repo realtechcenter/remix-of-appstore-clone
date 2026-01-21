@@ -5,6 +5,13 @@ define('DB_NAME', 'your_database_name');
 define('DB_USER', 'your_username');
 define('DB_PASS', 'your_password');
 
+// JWT Secret for user authentication - CHANGE THIS TO A RANDOM STRING!
+define('JWT_SECRET', 'your-super-secret-jwt-key-change-this');
+
+// Bakong API configuration
+define('BAKONG_API_TOKEN', 'your-bakong-api-token');
+define('BAKONG_ACCOUNT_ID', 'your-bakong-account-id');
+
 // CORS settings - Update with your Lovable app URL
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
@@ -18,26 +25,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 // Database connection
-function getDB() {
-    try {
-        $pdo = new PDO(
-            "mysql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";charset=utf8mb4",
-            DB_USER,
-            DB_PASS,
-            [
-                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
-            ]
-        );
-        return $pdo;
-    } catch (PDOException $e) {
-        http_response_code(500);
-        echo json_encode(['error' => 'Database connection failed']);
-        exit();
-    }
+try {
+    $pdo = new PDO(
+        "mysql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";charset=utf8mb4",
+        DB_USER,
+        DB_PASS,
+        [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
+        ]
+    );
+} catch (PDOException $e) {
+    http_response_code(500);
+    echo json_encode(['error' => 'Database connection failed']);
+    exit();
 }
 
-// Simple API key authentication
+function getDB() {
+    global $pdo;
+    return $pdo;
+}
+
+// Simple API key authentication for admin
 define('API_KEY', 'your-secure-api-key-here'); // Change this!
 
 function authenticate() {

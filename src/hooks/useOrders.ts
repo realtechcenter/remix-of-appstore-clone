@@ -1,10 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth, getAuthHeader } from '@/contexts/AuthContext';
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://api.realtechcomputer.com';
 
 export interface Order {
   id: string;
-  user_id: string;
+  user_id: number;
   app_id: number;
   app_name: string;
   amount: number;
@@ -18,40 +19,44 @@ export interface Order {
 }
 
 export const useOrders = () => {
-  const { user } = useAuth();
+  const { user, token } = useAuth();
 
   return useQuery({
     queryKey: ['orders', user?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('orders')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      return data as Order[];
+      const response = await fetch(`${API_BASE_URL}/orders.php`, {
+        headers: getAuthHeader(),
+      });
+      
+      const data = await response.json();
+      if (!response.ok || data.error) {
+        throw new Error(data.error || 'Failed to fetch orders');
+      }
+      
+      return data.orders as Order[];
     },
-    enabled: !!user,
+    enabled: !!user && !!token,
   });
 };
 
 export const useHasPurchased = (appId: number) => {
-  const { user } = useAuth();
+  const { user, token } = useAuth();
 
   return useQuery({
     queryKey: ['purchased', appId, user?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('orders')
-        .select('id')
-        .eq('app_id', appId)
-        .eq('status', 'paid')
-        .maybeSingle();
-
-      if (error) throw error;
-      return !!data;
+      const response = await fetch(`${API_BASE_URL}/orders.php?app_id=${appId}`, {
+        headers: getAuthHeader(),
+      });
+      
+      const data = await response.json();
+      if (!response.ok) {
+        return false;
+      }
+      
+      return data.purchased === true;
     },
-    enabled: !!user && !!appId,
+    enabled: !!user && !!token && !!appId,
   });
 };
 
@@ -63,25 +68,93 @@ export const useCreateOrder = () => {
     mutationFn: async ({ appId, appName, amount }: { appId: number; appName: string; amount: number }) => {
       if (!user) throw new Error('User not authenticated');
 
-      const { data, error } = await supabase
-        .from('orders')
-        .insert({
-          user_id: user.id,
+      const response = await fetch(`${API_BASE_URL}/orders.php`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeader(),
+        },
+        body: JSON.stringify({
+          action: 'create',
           app_id: appId,
           app_name: appName,
           amount,
-          currency: 'USD',
-          status: 'pending',
-          expires_at: new Date(Date.now() + 15 * 60 * 1000).toISOString(), // 15 min expiry
-        })
-        .select()
-        .single();
+        }),
+      });
 
-      if (error) throw error;
-      return data as Order;
+      const data = await response.json();
+      if (!response.ok || data.error) {
+        throw new Error(data.error || 'Failed to create order');
+      }
+
+      return data.order as Order;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['orders'] });
     },
   });
+};
+
+// Generate KHQR code
+export const generateKHQR = async (orderId: string, amount: number) => {
+  const response = await fetch(`${API_BASE_URL}/payment.php`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeader(),
+    },
+    body: JSON.stringify({
+      action: 'generate-qr',
+      order_id: orderId,
+      amount,
+    }),
+  });
+
+  const data = await response.json();
+  if (!response.ok || data.error) {
+    throw new Error(data.error || 'Failed to generate QR code');
+  }
+
+  return data;
+};
+
+// Verify payment
+export const verifyPayment = async (orderId: string, md5: string) => {
+  const response = await fetch(`${API_BASE_URL}/payment.php`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeader(),
+    },
+    body: JSON.stringify({
+      action: 'verify',
+      order_id: orderId,
+      md5,
+    }),
+  });
+
+  const data = await response.json();
+  return data;
+};
+
+// Manual confirm for testing
+export const confirmPaymentManual = async (orderId: string) => {
+  const response = await fetch(`${API_BASE_URL}/payment.php`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeader(),
+    },
+    body: JSON.stringify({
+      action: 'confirm-manual',
+      order_id: orderId,
+    }),
+  });
+
+  const data = await response.json();
+  if (!response.ok || data.error) {
+    throw new Error(data.error || 'Failed to confirm payment');
+  }
+
+  return data;
 };
