@@ -44,13 +44,14 @@ const PreviousVersionsDialog = ({
   appName: string;
 }) => {
   const { t } = useLanguage();
+  const translations = useTranslations();
   
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg">
         <div className="flex items-center gap-3 mb-4">
           <History className="w-5 h-5 text-muted-foreground" />
-          <h2 className="text-lg font-semibold">{appName} - Previous Versions</h2>
+          <h2 className="text-lg font-semibold">{appName} - {translations.previousVersions}</h2>
         </div>
         
         <ScrollArea className="max-h-[60vh]">
@@ -64,7 +65,7 @@ const PreviousVersionsDialog = ({
                   <div className="flex items-center gap-2">
                     <span className="font-medium">v{version.version}</span>
                     {version.is_latest && (
-                      <Badge variant="default" className="text-xs">Latest</Badge>
+                      <Badge variant="default" className="text-xs">{translations.latest}</Badge>
                     )}
                   </div>
                   <div className="flex items-center gap-3 text-xs text-muted-foreground">
@@ -336,8 +337,8 @@ const AppDetail = () => {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold mb-2">Invalid App</h1>
-          <Link to="/" className="text-primary hover:underline">Go back home</Link>
+          <h1 className="text-2xl font-bold mb-2">{translations.invalidApp}</h1>
+          <Link to="/" className="text-primary hover:underline">{translations.goBackHome}</Link>
         </div>
       </div>
     );
@@ -350,8 +351,8 @@ const AppDetail = () => {
   const categoryLabels: Record<string, string> = {
     programs: translations.programs,
     games: translations.games,
-    extensions: 'Extensions',
-    os: 'OS Versions'
+    extensions: translations.extensions,
+    os: translations.os
   };
 
   return (
@@ -371,13 +372,12 @@ const AppDetail = () => {
           </div>
         </Link>
 
-        {/* Navigation */}
         <nav className="flex-1 space-y-1">
           {[
-            { id: "all", label: "All", icon: LayoutGrid },
+            { id: "all", label: translations.all, icon: LayoutGrid },
             { id: "programs", label: translations.programs, icon: Box },
             { id: "games", label: translations.games, icon: Gamepad2 },
-            { id: "extensions", label: "Extensions", icon: Puzzle },
+            { id: "extensions", label: translations.extensions, icon: Puzzle },
           ].map((item) => (
             <Link
               key={item.id}
@@ -469,11 +469,10 @@ const AppDetail = () => {
         </header>
 
         <div className="px-4 sm:px-6 lg:px-8 py-6">
-          {/* Breadcrumb */}
           <div className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
             <Link to="/" className="flex items-center gap-1 hover:text-foreground transition-colors">
               <Home className="w-4 h-4" />
-              <span>Home</span>
+              <span>{translations.home}</span>
             </Link>
             <span>/</span>
             {appData && (
@@ -494,11 +493,11 @@ const AppDetail = () => {
             <AppDetailSkeleton />
           ) : appError ? (
             <div className="text-center py-12">
-              <h1 className="text-2xl font-bold mb-2">App Not Found</h1>
-              <p className="text-muted-foreground mb-4">The app you're looking for doesn't exist.</p>
+              <h1 className="text-2xl font-bold mb-2">{translations.appNotFound}</h1>
+              <p className="text-muted-foreground mb-4">{translations.appNotFound}</p>
               <Button onClick={() => navigate('/')} variant="outline" className="gap-2">
                 <ArrowLeft className="w-4 h-4" />
-                Back to Home
+                {translations.backToHome}
               </Button>
             </div>
           ) : appData && (
@@ -561,39 +560,39 @@ const AppDetail = () => {
                     {/* Metadata Grid */}
                     <div className="space-y-4 p-5 bg-muted/30 rounded-xl border border-border/50">
                       <MetadataItem 
-                        label="Version" 
+                        label={translations.version} 
                         value={appData.latest_version || latestVersion?.version}
                       />
                       
                       <MetadataItem 
-                        label="Developer" 
+                        label={translations.developer} 
                         value={appData.developer}
                       />
                       
                       {latestVersion?.min_os_version && (
                         <MetadataItem 
-                          label="Compatibility" 
+                          label={translations.compatibility} 
                           value={latestVersion.min_os_version}
                         />
                       )}
                       
                       {latestVersion?.file_size && (
                         <MetadataItem 
-                          label="Size" 
+                          label={translations.size} 
                           value={latestVersion.file_size}
                         />
                       )}
                       
                       {latestVersion?.release_date && (
                         <MetadataItem 
-                          label="Release Date" 
+                          label={translations.releaseDate} 
                           value={new Date(latestVersion.release_date).toLocaleDateString()}
                         />
                       )}
                       
                       {appData.website && (
                         <div className="space-y-1">
-                          <div className="text-xs text-muted-foreground uppercase tracking-wide">Website</div>
+                          <div className="text-xs text-muted-foreground uppercase tracking-wide">{translations.website}</div>
                           <a
                             href={appData.website}
                             target="_blank"
@@ -601,7 +600,7 @@ const AppDetail = () => {
                             className="text-sm text-primary hover:underline flex items-center gap-1"
                           >
                             <ExternalLink className="w-3 h-3" />
-                            Visit
+                            {translations.visit}
                           </a>
                         </div>
                       )}
@@ -618,7 +617,7 @@ const AppDetail = () => {
                         )}
                       >
                         <Download className="w-5 h-5" />
-                        Download for free
+                        {translations.downloadForFree}
                         {latestVersion.file_size && (
                           <span className="text-white/80">({latestVersion.file_size})</span>
                         )}
@@ -641,14 +640,14 @@ const AppDetail = () => {
                         onClick={() => setShowVersions(true)}
                       >
                         <History className="w-4 h-4" />
-                        Previous versions
+                        {translations.previousVersions}
                       </Button>
                     )}
 
                     {/* Security Badge */}
                     <div className="flex items-center gap-2 text-sm text-muted-foreground p-3 bg-green-500/10 rounded-lg border border-green-500/20">
                       <Shield className="w-4 h-4 text-green-500" />
-                      <span>No threats found. <span className="text-primary hover:underline cursor-pointer">Read more...</span></span>
+                      <span>{translations.noThreatsFound} <span className="text-primary hover:underline cursor-pointer">{translations.readMore}</span></span>
                     </div>
                   </div>
                 </div>
@@ -658,7 +657,7 @@ const AppDetail = () => {
                   <div className="mt-10">
                     <Separator className="mb-8" />
                     <div>
-                      <h2 className="text-xl font-semibold mb-3">Description</h2>
+                      <h2 className="text-xl font-semibold mb-3">{translations.description}</h2>
                       <div className="w-16 h-1 bg-primary rounded-full mb-6" />
                       <p className="text-muted-foreground leading-relaxed whitespace-pre-wrap text-base">
                         {displayDescription}
