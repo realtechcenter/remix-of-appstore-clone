@@ -2,6 +2,7 @@ import { Download, CheckCircle2, XCircle, Loader2 } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
+import { useTranslations } from "@/contexts/LanguageContext";
 import type { DownloadState } from "@/hooks/useDownload";
 
 interface DownloadProgressProps {
@@ -11,6 +12,7 @@ interface DownloadProgressProps {
 
 export const DownloadProgress = ({ state, onClose }: DownloadProgressProps) => {
   const { isDownloading, progress, fileName, fileSize, status } = state;
+  const translations = useTranslations();
 
   return (
     <Dialog open={isDownloading} onOpenChange={(open) => !open && onClose()}>
@@ -53,9 +55,9 @@ export const DownloadProgress = ({ state, onClose }: DownloadProgressProps) => {
             <Progress value={progress} className="h-3" />
             <div className="flex justify-between text-sm text-muted-foreground">
               <span>
-                {status === "downloading" && "Downloading..."}
-                {status === "complete" && "Download complete!"}
-                {status === "error" && "Download failed"}
+                {status === "downloading" && translations.downloading}
+                {status === "complete" && translations.downloadComplete}
+                {status === "error" && translations.downloadFailed}
               </span>
               <span>{Math.round(progress)}%</span>
             </div>
@@ -67,7 +69,7 @@ export const DownloadProgress = ({ state, onClose }: DownloadProgressProps) => {
               onClick={onClose} 
               className="mt-6 bg-green-600 hover:bg-green-700 text-white"
             >
-              Done
+              {translations.done}
             </Button>
           )}
           {status === "error" && (
@@ -76,7 +78,7 @@ export const DownloadProgress = ({ state, onClose }: DownloadProgressProps) => {
               variant="outline"
               className="mt-6"
             >
-              Close
+              {translations.close}
             </Button>
           )}
         </div>
