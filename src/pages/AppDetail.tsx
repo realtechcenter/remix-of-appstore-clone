@@ -20,7 +20,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { PaymentDialog } from "@/components/PaymentDialog";
 import { useHasPurchased } from "@/hooks/useOrders";
 
-const getGradientFromName = (name: string): string => {
+const getGradientFromName = (name: string | undefined): string => {
   const gradients = [
     "bg-gradient-to-br from-blue-500 to-cyan-500",
     "bg-gradient-to-br from-purple-500 to-pink-500",
@@ -29,6 +29,7 @@ const getGradientFromName = (name: string): string => {
     "bg-gradient-to-br from-indigo-500 to-purple-600",
     "bg-gradient-to-br from-amber-500 to-yellow-600",
   ];
+  if (!name) return gradients[0];
   const hash = name.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0);
   return gradients[hash % gradients.length];
 };
