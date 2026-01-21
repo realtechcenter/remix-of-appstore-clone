@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Edit, Trash2, LogOut, Package, Layers, Search, X, Save, ArrowLeft } from "lucide-react";
+import { Plus, Edit, Trash2, LogOut, Package, Layers, Search, X, Save, ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -404,15 +404,28 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
   const [showVersionForm, setShowVersionForm] = useState(false);
   const [editingVersion, setEditingVersion] = useState<AppVersion | undefined>();
   const [appVersions, setAppVersions] = useState<AppVersion[]>([]);
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalApps, setTotalApps] = useState(0);
+  const itemsPerPage = 10;
 
   useEffect(() => {
     loadApps();
-  }, []);
+  }, [currentPage, searchQuery]);
 
   const loadApps = async () => {
+    setLoading(true);
     try {
-      const response = await appsApi.getAll({ limit: 100 });
+      const response = await appsApi.getAll({ 
+        page: currentPage, 
+        limit: itemsPerPage,
+        search: searchQuery || undefined
+      });
       setApps(response.data || []);
+      setTotalPages(response.pagination?.total_pages || 1);
+      setTotalApps(response.pagination?.total || 0);
     } catch (error) {
       toast.error("Failed to load apps");
       setApps([]);
@@ -514,11 +527,10 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
     }
   };
 
-  const filteredApps = apps.filter(
-    (app) =>
-      app.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      app.name_km?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Reset to page 1 when search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
 
   const handleLogout = () => {
     authApi.logout();
@@ -556,7 +568,7 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
           {/* Apps List */}
           <div className="lg:col-span-1 space-y-3 sm:space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-base sm:text-lg font-semibold">Apps ({apps.length})</h2>
+              <h2 className="text-base sm:text-lg font-semibold">Apps ({totalApps})</h2>
               <Button size="sm" onClick={() => { setEditingApp(undefined); setShowAppForm(true); }} className="gap-1">
                 <Plus className="w-4 h-4" />
                 <span className="hidden sm:inline">Add App</span>
@@ -577,10 +589,10 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
             <div className="space-y-2 max-h-[40vh] lg:max-h-[calc(100vh-280px)] overflow-y-auto">
               {loading ? (
                 <div className="text-center py-8 text-muted-foreground">Loading...</div>
-              ) : filteredApps.length === 0 ? (
+              ) : apps.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">No apps found</div>
               ) : (
-                filteredApps.map((app) => (
+                apps.map((app) => (
                   <div
                     key={app.id}
                     onClick={() => handleSelectApp(app)}
@@ -613,6 +625,58 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
                 ))
               )}
             </div>
+            
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-center gap-2 mt-4">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1 || loading}
+                  className="h-8 w-8 p-0"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </Button>
+                
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => {
+                    const showPage = page === 1 || page === totalPages || 
+                      (page >= currentPage - 1 && page <= currentPage + 1);
+                    const showEllipsis = page === currentPage - 2 || page === currentPage + 2;
+                    
+                    if (showEllipsis && totalPages > 5) {
+                      return <span key={page} className="px-1 text-muted-foreground text-sm">...</span>;
+                    }
+                    
+                    if (!showPage && totalPages > 5) return null;
+                    
+                    return (
+                      <Button
+                        key={page}
+                        variant={currentPage === page ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setCurrentPage(page)}
+                        disabled={loading}
+                        className="h-8 w-8 p-0 text-xs"
+                      >
+                        {page}
+                      </Button>
+                    );
+                  })}
+                </div>
+                
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages || loading}
+                  className="h-8 w-8 p-0"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </Button>
+              </div>
+            )}
           </div>
 
           {/* App Details & Versions */}
