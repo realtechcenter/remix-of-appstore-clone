@@ -132,6 +132,19 @@ try {
                 exit;
             }
             
+            if ($result['status'] === 'scanned') {
+                // Update payment log with scanned status
+                $stmt = $pdo->prepare("UPDATE payment_logs SET status_text = 'scanned' WHERE id = ?");
+                $stmt->execute([$paymentLog['id']]);
+                
+                echo json_encode([
+                    'success' => true,
+                    'status' => 'scanned',
+                    'message' => 'QR code scanned, waiting for payment confirmation'
+                ]);
+                exit;
+            }
+            
             // Update payment log with status text
             if (isset($result['status_text'])) {
                 $stmt = $pdo->prepare("UPDATE payment_logs SET status_text = ? WHERE id = ?");
@@ -313,7 +326,8 @@ function checkPaymentStatus($paymentLog) {
         return ['status' => 'pending', 'status_text' => 'invalid_json'];
     }
     
-    $status = $jsonResponse['data']['action'] ?? 'pending';
+    // ABA returns status in data.status field: 'approved', 'scanned', 'pending', etc.
+    $status = $jsonResponse['data']['status'] ?? ($jsonResponse['status'] ?? 'pending');
     
     return [
         'status' => $status,
