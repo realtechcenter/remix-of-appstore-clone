@@ -38,15 +38,18 @@ const PreviousVersionsDialog = ({
   versions, 
   open, 
   onOpenChange,
-  appName 
+  appName,
+  canDownload 
 }: { 
   versions: AppVersion[]; 
   open: boolean; 
   onOpenChange: (open: boolean) => void;
   appName: string;
+  canDownload: boolean;
 }) => {
   const { t } = useLanguage();
   const translations = useTranslations();
+  const { language } = useLanguage();
   
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -91,13 +94,18 @@ const PreviousVersionsDialog = ({
                   )}
                 </div>
                 
-                {version.download_url && (
+                {version.download_url && canDownload ? (
                   <a href={version.download_url} target="_blank" rel="noopener noreferrer">
                     <Button size="sm" variant="outline" className="gap-1.5">
                       <Download className="w-3.5 h-3.5" />
                     </Button>
                   </a>
-                )}
+                ) : version.download_url ? (
+                  <Button size="sm" variant="outline" className="gap-1.5" disabled>
+                    <Lock className="w-3.5 h-3.5" />
+                    <span className="text-xs">{language === 'km' ? 'ទិញ' : 'Buy'}</span>
+                  </Button>
+                ) : null}
               </div>
             ))}
           </div>
@@ -731,6 +739,7 @@ const AppDetail = () => {
         open={showVersions}
         onOpenChange={setShowVersions}
         appName={displayName}
+        canDownload={!appData?.price || appData.price === 0 || !!hasPurchased}
       />
       
       {/* Payment Dialog */}
