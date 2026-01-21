@@ -298,7 +298,8 @@ function checkPaymentStatus($paymentLog) {
     
     $ch = curl_init();
     curl_setopt_array($ch, [
-        CURLOPT_URL => 'https://pwapp.ababank.com/api/core/v1/check-payment-status',
+        // Correct ABA PayWay endpoint for status check
+        CURLOPT_URL => 'https://pwapp.ababank.com/api/pw-app/v1/payment-link/check-payment-status',
         CURLOPT_POST => true,
         CURLOPT_POSTFIELDS => $postData,
         CURLOPT_RETURNTRANSFER => true,
@@ -326,12 +327,22 @@ function checkPaymentStatus($paymentLog) {
         return ['status' => 'pending', 'status_text' => 'invalid_json'];
     }
     
-    // ABA returns status in data.status field: 'approved', 'scanned', 'pending', etc.
-    $status = $jsonResponse['data']['status'] ?? ($jsonResponse['status'] ?? 'pending');
+    // ABA returns action in data.action field: 'approved', 'scanned', 'request_qr', etc.
+    $action = $jsonResponse['data']['action'] ?? 'pending';
+    
+    // Map ABA actions to our status
+    $status = 'pending';
+    if ($action === 'approved') {
+        $status = 'approved';
+    } elseif ($action === 'scanned') {
+        $status = 'scanned';
+    } elseif ($action === 'request_qr') {
+        $status = 'pending'; // QR requested but not scanned yet
+    }
     
     return [
         'status' => $status,
-        'status_text' => $status,
+        'status_text' => $action,
         'raw_response' => $jsonResponse
     ];
 }
