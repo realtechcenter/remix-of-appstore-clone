@@ -1,5 +1,5 @@
 <?php
-// KHQR Payment API - Bakong Integration
+// KHQR Payment API - ABA PayWay Integration
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
@@ -11,6 +11,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 require_once 'config.php';
+
+// ABA PayWay Gateway - Replace with your actual PayWay link
+define('PAYWAY_URL', 'https://link.payway.com.kh/ABAPAYGJ288488t');
+define('PAYWAY_SECRET', '123456789');
 
 $method = $_SERVER['REQUEST_METHOD'];
 $input = json_decode(file_get_contents('php://input'), true);
@@ -35,20 +39,30 @@ try {
                 throw new Exception('Order not found');
             }
             
-            // Convert USD to KHR (1 USD ≈ 4100 KHR)
+            // Generate QR using ABA PayWay
+            $qrResult = getQRString($amount, $orderId);
+            
+            // Update order with payment session data
+            $stmt = $pdo->prepare("UPDATE orders SET payment_md5 = ?, bakong_transaction_id = ? WHERE id = ?");
+            $stmt->execute([
+                json_encode([
+                    'hash' => $qrResult['hash'],
+                    'client_id' => $qrResult['client_id'],
+                    'device_id' => $qrResult['device_id'],
+                    'request_time' => $qrResult['request_time']
+                ]),
+                $qrResult['tran_id'],
+                $orderId
+            ]);
+            
+            // Convert to KHR for display (1 USD ≈ 4100 KHR)
             $amountKHR = round($amount * 4100);
-            
-            // Generate KHQR with proper format
-            $qrResult = generateKHQR($amountKHR, $orderId, $order['app_name']);
-            
-            // Update order with MD5 for verification
-            $stmt = $pdo->prepare("UPDATE orders SET payment_md5 = ? WHERE id = ?");
-            $stmt->execute([$qrResult['md5'], $orderId]);
             
             echo json_encode([
                 'success' => true,
-                'qr_string' => $qrResult['qr'],
-                'md5' => $qrResult['md5'],
+                'qr_string' => $qrResult['qr_string'],
+                'md5' => $qrResult['hash'],
+                'tran_id' => $qrResult['tran_id'],
                 'amount' => $amountKHR,
                 'currency' => 'KHR'
             ]);
@@ -62,39 +76,48 @@ try {
                 throw new Exception('Order ID required');
             }
             
-            // Check with Bakong API
-            $bakongResponse = checkBakongPayment($md5);
+            // Get order details
+            $stmt = $pdo->prepare("SELECT * FROM orders WHERE id = ?");
+            $stmt->execute([$orderId]);
+            $order = $stmt->fetch(PDO::FETCH_ASSOC);
             
-            if ($bakongResponse && $bakongResponse['status'] === 'paid') {
-                // Payment confirmed by Bakong
-                $stmt = $pdo->prepare("UPDATE orders SET status = 'paid', paid_at = NOW(), bakong_transaction_id = ? WHERE id = ?");
-                $stmt->execute([$bakongResponse['hash'] ?? '', $orderId]);
-                
-                echo json_encode([
-                    'success' => true,
-                    'status' => 'paid',
-                    'transaction_id' => $bakongResponse['hash'] ?? null
-                ]);
+            if (!$order) {
+                throw new Exception('Order not found');
+            }
+            
+            // Already paid
+            if ($order['status'] === 'paid') {
+                echo json_encode(['success' => true, 'status' => 'paid']);
                 exit;
             }
             
-            // Check local order status
-            $stmt = $pdo->prepare("SELECT status FROM orders WHERE id = ?");
-            $stmt->execute([$orderId]);
-            $orderStatus = $stmt->fetch(PDO::FETCH_ASSOC);
-            
-            if ($orderStatus && $orderStatus['status'] === 'paid') {
-                echo json_encode([
-                    'success' => true,
-                    'status' => 'paid'
-                ]);
-            } else {
-                echo json_encode([
-                    'success' => true,
-                    'status' => 'pending',
-                    'message' => 'Payment not yet received'
-                ]);
+            // Check if expired
+            if ($order['expires_at'] && strtotime($order['expires_at']) < time()) {
+                $stmt = $pdo->prepare("UPDATE orders SET status = 'expired' WHERE id = ?");
+                $stmt->execute([$orderId]);
+                echo json_encode(['success' => true, 'status' => 'expired']);
+                exit;
             }
+            
+            // Check payment status with ABA API
+            $paymentData = json_decode($order['payment_md5'], true);
+            
+            if ($paymentData && isset($paymentData['client_id'])) {
+                $result = checkPaymentStatus($paymentData);
+                
+                if ($result['status'] === 'approved') {
+                    $stmt = $pdo->prepare("UPDATE orders SET status = 'paid', paid_at = NOW() WHERE id = ?");
+                    $stmt->execute([$orderId]);
+                    echo json_encode(['success' => true, 'status' => 'paid']);
+                    exit;
+                }
+            }
+            
+            echo json_encode([
+                'success' => true,
+                'status' => 'pending',
+                'message' => 'Payment not yet received'
+            ]);
             break;
             
         case 'confirm-manual':
@@ -121,133 +144,149 @@ try {
 }
 
 /**
- * Generate KHQR with proper EMVCo format
+ * Get QR String from ABA PayWay
  */
-function generateKHQR($amountKHR, $orderId, $appName) {
-    $accountId = BAKONG_ACCOUNT_ID;
-    $merchantName = 'AppsTorrent';
-    $merchantCity = 'Phnom Penh';
-    $billNumber = substr($orderId, 0, 8);
+function getQRString($amount, $orderId) {
+    // Step 1: Fetch aba_data from PayWay URL
+    $ch = curl_init();
+    curl_setopt_array($ch, [
+        CURLOPT_URL => PAYWAY_URL,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_FOLLOWLOCATION => true,
+        CURLOPT_SSL_VERIFYPEER => false,
+        CURLOPT_TIMEOUT => 30
+    ]);
+    $response = curl_exec($ch);
     
-    // Build EMVCo QR Code data
-    $qr = '';
+    if (curl_errno($ch)) {
+        throw new Exception('Curl error: ' . curl_error($ch));
+    }
+    curl_close($ch);
     
-    // ID 00 - Payload Format Indicator
-    $qr .= '000201';
+    $response = str_replace("\\u002F", "/", $response);
     
-    // ID 01 - Point of Initiation Method (12 = Dynamic)
-    $qr .= '010212';
+    // Extract aba_data and request_time
+    preg_match('/aba_data="([^"]+)"/', $response, $abaMatches);
+    preg_match('/request_time:"([^"]+)"/', $response, $timeMatches);
     
-    // ID 29 - Merchant Account Information (Bakong)
-    $accountInfo = '0004KHQR0118' . sprintf('%02d', strlen($accountId)) . $accountId;
-    $qr .= '29' . sprintf('%02d', strlen($accountInfo)) . $accountInfo;
+    if (empty($abaMatches[1]) || empty($timeMatches[1])) {
+        throw new Exception('aba_data or request_time not found');
+    }
     
-    // ID 52 - Merchant Category Code
-    $qr .= '52045999';
+    $abaData = $abaMatches[1];
+    $requestTime = $timeMatches[1];
     
-    // ID 53 - Transaction Currency (116 = KHR)
-    $qr .= '5303116';
+    // Step 2: Prepare additional fields
+    $additionalFields = json_encode([
+        "amount" => $amount,
+        "remark" => "Order: " . substr($orderId, 0, 8),
+        "full_name" => "",
+        "email" => "",
+        "phone" => ""
+    ]);
     
-    // ID 54 - Transaction Amount
-    $amountStr = strval($amountKHR);
-    $qr .= '54' . sprintf('%02d', strlen($amountStr)) . $amountStr;
+    // Step 3: Generate hash
+    $hashString = $requestTime . $abaData . $additionalFields;
+    $hash = hash('sha512', $hashString);
     
-    // ID 58 - Country Code
-    $qr .= '5802KH';
+    // Step 4: Call ABA API to get QR string
+    $postData = json_encode([
+        "additional_fields" => $additionalFields,
+        "request_time" => $requestTime,
+        "aba_data" => $abaData,
+        "hash" => $hash
+    ]);
     
-    // ID 59 - Merchant Name
-    $qr .= '59' . sprintf('%02d', strlen($merchantName)) . $merchantName;
+    $ch2 = curl_init();
+    curl_setopt_array($ch2, [
+        CURLOPT_URL => 'https://pwapp.ababank.com/api/pw-app/v1/payment/gateway/list-payment-options',
+        CURLOPT_POST => true,
+        CURLOPT_POSTFIELDS => $postData,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_SSL_VERIFYPEER => false,
+        CURLOPT_TIMEOUT => 30,
+        CURLOPT_HTTPHEADER => ['Content-Type: application/json']
+    ]);
     
-    // ID 60 - Merchant City
-    $qr .= '60' . sprintf('%02d', strlen($merchantCity)) . $merchantCity;
+    $response2 = curl_exec($ch2);
+    $httpCode = curl_getinfo($ch2, CURLINFO_HTTP_CODE);
     
-    // ID 62 - Additional Data Field
-    $billNumberField = '01' . sprintf('%02d', strlen($billNumber)) . $billNumber;
-    $qr .= '62' . sprintf('%02d', strlen($billNumberField)) . $billNumberField;
+    if (curl_errno($ch2)) {
+        throw new Exception('API error: ' . curl_error($ch2));
+    }
+    curl_close($ch2);
     
-    // ID 99 - Timestamp for uniqueness
-    $timestamp = strval(time());
-    $timestampField = '00' . sprintf('%02d', strlen($timestamp)) . $timestamp;
-    $qr .= '99' . sprintf('%02d', strlen($timestampField)) . $timestampField;
+    if ($httpCode !== 200) {
+        throw new Exception('API returned status: ' . $httpCode);
+    }
     
-    // Add CRC placeholder
-    $qr .= '6304';
+    $jsonResponse = json_decode($response2, true);
     
-    // Calculate and append CRC16
-    $crc = crc16($qr);
-    $qr .= strtoupper(sprintf('%04X', $crc));
+    if (empty($jsonResponse['qr_string'])) {
+        throw new Exception('No QR string in response: ' . $response2);
+    }
     
-    // Generate MD5
-    $md5 = md5($qr);
+    // Generate device_id and client hash for status checking
+    $deviceId = generateDeviceId(10);
+    $clientId = $jsonResponse['client_id'];
+    $hashData = $clientId . $deviceId . $requestTime;
+    $statusHash = hash_hmac('sha512', $hashData, PAYWAY_SECRET);
     
     return [
-        'qr' => $qr,
-        'md5' => $md5
+        'tran_id' => $jsonResponse['status']['tran_id'] ?? '',
+        'qr_string' => $jsonResponse['qr_string'],
+        'client_id' => $clientId,
+        'device_id' => $deviceId,
+        'request_time' => $requestTime,
+        'hash' => $statusHash
     ];
 }
 
 /**
- * CRC16-CCITT calculation
+ * Check payment status with ABA API
  */
-function crc16($data) {
-    $crc = 0xFFFF;
-    $polynomial = 0x1021;
+function checkPaymentStatus($paymentData) {
+    $postData = json_encode([
+        "device_id" => $paymentData['device_id'],
+        "client_id" => $paymentData['client_id'],
+        "hash" => $paymentData['hash'],
+        "request_time" => $paymentData['request_time']
+    ]);
     
-    for ($i = 0; $i < strlen($data); $i++) {
-        $crc ^= (ord($data[$i]) << 8);
-        for ($j = 0; $j < 8; $j++) {
-            if (($crc & 0x8000) != 0) {
-                $crc = (($crc << 1) ^ $polynomial) & 0xFFFF;
-            } else {
-                $crc = ($crc << 1) & 0xFFFF;
-            }
-        }
-    }
-    
-    return $crc;
-}
-
-/**
- * Check payment status with Bakong API
- */
-function checkBakongPayment($md5) {
-    if (empty($md5)) {
-        return null;
-    }
-    
-    $url = 'https://api-bakong.nbc.gov.kh/v1/check_transaction_by_md5';
-    
-    $ch = curl_init($url);
+    $ch = curl_init();
     curl_setopt_array($ch, [
-        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_URL => 'https://pwapp.ababank.com/api/core/v1/check-payment-status',
         CURLOPT_POST => true,
-        CURLOPT_POSTFIELDS => json_encode(['md5' => $md5]),
-        CURLOPT_HTTPHEADER => [
-            'Content-Type: application/json',
-            'Authorization: Bearer ' . BAKONG_API_TOKEN
-        ],
-        CURLOPT_TIMEOUT => 30
+        CURLOPT_POSTFIELDS => $postData,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_SSL_VERIFYPEER => false,
+        CURLOPT_TIMEOUT => 30,
+        CURLOPT_HTTPHEADER => ['Content-Type: application/json']
     ]);
     
     $response = curl_exec($ch);
-    $error = curl_error($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     curl_close($ch);
     
-    if ($error) {
-        error_log("Bakong API error: $error");
-        return null;
+    if ($httpCode !== 200) {
+        return ['status' => 'pending'];
     }
     
-    $data = json_decode($response, true);
+    $jsonResponse = json_decode($response, true);
+    $status = $jsonResponse['data']['action'] ?? 'pending';
     
-    // Check if payment is confirmed
-    if ($data && isset($data['responseCode']) && $data['responseCode'] === 0) {
-        return [
-            'status' => 'paid',
-            'hash' => $data['data']['hash'] ?? null
-        ];
+    return ['status' => $status];
+}
+
+/**
+ * Generate random device ID
+ */
+function generateDeviceId($length = 10) {
+    $characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    $randomString = '';
+    for ($i = 0; $i < $length; $i++) {
+        $randomString .= $characters[random_int(0, strlen($characters) - 1)];
     }
-    
-    return null;
+    return $randomString;
 }
 ?>
