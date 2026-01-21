@@ -181,7 +181,7 @@ const MyPurchases = () => {
                           <div className="flex flex-wrap items-center gap-3 mt-2 text-sm text-muted-foreground">
                             <span className="flex items-center gap-1">
                               <DollarSign className="w-4 h-4" />
-                              ${order.amount.toFixed(2)}
+                              ${(typeof order.amount === 'string' ? parseFloat(order.amount) : order.amount).toFixed(2)}
                             </span>
                             <span className="flex items-center gap-1">
                               <Calendar className="w-4 h-4" />
