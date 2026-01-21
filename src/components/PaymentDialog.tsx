@@ -31,6 +31,9 @@ export const PaymentDialog = ({
   const createOrder = useCreateOrder();
   const queryClient = useQueryClient();
   
+  // Convert price to number (API may return string)
+  const priceNum = typeof price === 'string' ? parseFloat(price) : (price || 0);
+  
   const [status, setStatus] = useState<'loading' | 'ready' | 'verifying' | 'success' | 'error'>('loading');
   const [qrDataUrl, setQrDataUrl] = useState<string>('');
   const [orderId, setOrderId] = useState<string>('');
@@ -187,7 +190,7 @@ export const PaymentDialog = ({
               {/* Amount */}
               <div className="text-center mb-4">
                 <p className="text-2xl font-bold text-primary">
-                  ${price.toFixed(2)} USD
+                  ${priceNum.toFixed(2)} USD
                 </p>
                 <p className="text-muted-foreground">
                   ≈ {amountKHR.toLocaleString()} KHR
