@@ -4,10 +4,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { useCreateOrder } from '@/hooks/useOrders';
-import { supabase } from '@/integrations/supabase/client';
+import { useCreateOrder, generateKHQR, verifyPayment, confirmPaymentManual } from '@/hooks/useOrders';
 import { toast } from 'sonner';
 import QRCode from 'qrcode';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface PaymentDialogProps {
   open: boolean;
@@ -29,6 +29,7 @@ export const PaymentDialog = ({
   const { language } = useLanguage();
   const { user } = useAuth();
   const createOrder = useCreateOrder();
+  const queryClient = useQueryClient();
   
   const [status, setStatus] = useState<'loading' | 'ready' | 'verifying' | 'success' | 'error'>('loading');
   const [qrDataUrl, setQrDataUrl] = useState<string>('');
@@ -70,14 +71,12 @@ export const PaymentDialog = ({
     if (status === 'ready' && orderId && md5) {
       const interval = setInterval(async () => {
         try {
-          const { data, error } = await supabase.functions.invoke('bakong-payment', {
-            body: { orderId, md5 },
-            method: 'POST',
-          });
+          const result = await verifyPayment(orderId, md5);
 
-          if (data?.status === 'paid') {
+          if (result.status === 'paid') {
             setStatus('success');
             clearInterval(interval);
+            queryClient.invalidateQueries({ queryKey: ['purchased', appId] });
             setTimeout(() => {
               onPaymentSuccess();
               onOpenChange(false);
@@ -90,7 +89,7 @@ export const PaymentDialog = ({
 
       return () => clearInterval(interval);
     }
-  }, [status, orderId, md5]);
+  }, [status, orderId, md5, appId]);
 
   const initializePayment = async () => {
     try {
@@ -106,18 +105,13 @@ export const PaymentDialog = ({
       setOrderId(order.id);
 
       // Generate QR code
-      const { data, error } = await supabase.functions.invoke('bakong-payment', {
-        body: { orderId: order.id, amount: price, currency: 'USD' },
-        method: 'POST',
-      });
+      const qrData = await generateKHQR(order.id, price);
 
-      if (error) throw error;
-
-      setMd5(data.md5);
-      setAmountKHR(data.amount);
+      setMd5(qrData.md5);
+      setAmountKHR(qrData.amount);
 
       // Generate QR code image
-      const qrUrl = await QRCode.toDataURL(data.qr_string, {
+      const qrUrl = await QRCode.toDataURL(qrData.qr_string, {
         width: 280,
         margin: 2,
         color: {
@@ -146,14 +140,10 @@ export const PaymentDialog = ({
   const handleManualConfirm = async () => {
     try {
       setStatus('verifying');
-      const { data, error } = await supabase.functions.invoke('bakong-payment', {
-        body: { orderId },
-        method: 'POST',
-      });
-
-      if (error) throw error;
+      await confirmPaymentManual(orderId);
 
       setStatus('success');
+      queryClient.invalidateQueries({ queryKey: ['purchased', appId] });
       toast.success(language === 'km' ? 'ការទូទាត់បានជោគជ័យ!' : 'Payment successful!');
       setTimeout(() => {
         onPaymentSuccess();

@@ -60,11 +60,7 @@ const Auth = () => {
 
         const { error } = await signIn(email, password);
         if (error) {
-          if (error.message.includes('Invalid login credentials')) {
-            toast.error(language === 'km' ? 'អ៊ីមែល ឬពាក្យសម្ងាត់មិនត្រឹមត្រូវ' : 'Invalid email or password');
-          } else {
-            toast.error(error.message);
-          }
+          toast.error(language === 'km' ? 'អ៊ីមែល ឬពាក្យសម្ងាត់មិនត្រឹមត្រូវ' : error.message);
         } else {
           toast.success(language === 'km' ? 'ចូលបានជោគជ័យ!' : 'Logged in successfully!');
         }
@@ -82,11 +78,7 @@ const Auth = () => {
 
         const { error } = await signUp(email, password, fullName);
         if (error) {
-          if (error.message.includes('already registered')) {
-            toast.error(language === 'km' ? 'អ៊ីមែលនេះបានចុះឈ្មោះរួចហើយ' : 'This email is already registered');
-          } else {
-            toast.error(error.message);
-          }
+          toast.error(language === 'km' ? 'មានបញ្ហាក្នុងការចុះឈ្មោះ' : error.message);
         } else {
           toast.success(language === 'km' ? 'គណនីបានបង្កើតជោគជ័យ!' : 'Account created successfully!');
         }
