@@ -637,7 +637,21 @@ const AppDetail = () => {
                     {/* Download/Purchase Button */}
                     {(() => {
                       const isPaidApp = appData.price && appData.price > 0;
-                      const canDownload = !isPaidApp || hasPurchased;
+                      
+                      // Wait for purchase check to complete for paid apps
+                      if (isPaidApp && user && purchaseLoading) {
+                        return (
+                          <Button 
+                            className="w-full h-14 text-base font-semibold gap-2"
+                            disabled
+                          >
+                            <Download className="w-5 h-5 animate-pulse" />
+                            {language === 'km' ? 'កំពុងពិនិត្យ...' : 'Checking...'}
+                          </Button>
+                        );
+                      }
+                      
+                      const canDownload = !isPaidApp || hasPurchased === true;
                       
                       if (!latestVersion?.download_url) {
                         return (
