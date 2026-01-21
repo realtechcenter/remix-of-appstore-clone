@@ -639,6 +639,10 @@ const AppDetail = () => {
                       const isPaidApp = appData.price && appData.price > 0;
                       
                       // Wait for purchase check to complete for paid apps
+                      // Convert price to number (API may return string)
+                      const priceNum = typeof appData.price === 'string' ? parseFloat(appData.price) : appData.price;
+                      const priceDisplay = priceNum ? `$${priceNum.toFixed(2)}` : '';
+                      
                       if (isPaidApp && user && purchaseLoading) {
                         return (
                           <Button 
@@ -673,7 +677,7 @@ const AppDetail = () => {
                               className="w-full h-14 text-base font-semibold gap-2 bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg"
                             >
                               <Lock className="w-5 h-5" />
-                              {language === 'km' ? 'ចូលគណនីដើម្បីទិញ' : 'Sign In to Buy'} - ${appData.price?.toFixed(2)}
+                              {language === 'km' ? 'ចូលគណនីដើម្បីទិញ' : 'Sign In to Buy'} - {priceDisplay}
                             </Button>
                           </Link>
                         );
@@ -687,7 +691,7 @@ const AppDetail = () => {
                             onClick={() => setShowPaymentDialog(true)}
                           >
                             <ShoppingCart className="w-5 h-5" />
-                            {language === 'km' ? 'ទិញ' : 'Buy Now'} - ${appData.price?.toFixed(2)}
+                            {language === 'km' ? 'ទិញ' : 'Buy Now'} - {priceDisplay}
                           </Button>
                         );
                       }
