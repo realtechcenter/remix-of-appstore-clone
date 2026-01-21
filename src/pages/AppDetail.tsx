@@ -637,12 +637,10 @@ const AppDetail = () => {
 
                     {/* Download/Purchase Button */}
                     {(() => {
-                      const isPaidApp = appData.price && appData.price > 0;
-                      
-                      // Wait for purchase check to complete for paid apps
                       // Convert price to number (API may return string)
-                      const priceNum = typeof appData.price === 'string' ? parseFloat(appData.price) : appData.price;
-                      const priceDisplay = priceNum ? `$${priceNum.toFixed(2)}` : '';
+                      const priceNum = typeof appData.price === 'string' ? parseFloat(appData.price) : (appData.price || 0);
+                      const isPaidApp = priceNum > 0;
+                      const priceDisplay = isPaidApp ? `$${priceNum.toFixed(2)}` : '';
                       
                       if (isPaidApp && user && purchaseLoading) {
                         return (
