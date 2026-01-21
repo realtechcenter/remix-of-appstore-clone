@@ -59,20 +59,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         },
       });
       
-      const data = await response.json();
-      
-      if (data.success && data.user) {
-        setUser(data.user);
-        localStorage.setItem('auth_user', JSON.stringify(data.user));
-      } else {
+      if (!response.ok) {
         // Token invalid, clear storage
         localStorage.removeItem('auth_token');
         localStorage.removeItem('auth_user');
         setToken(null);
         setUser(null);
+        return;
+      }
+      
+      const data = await response.json();
+      
+      if (data.user) {
+        setUser(data.user);
+        localStorage.setItem('auth_user', JSON.stringify(data.user));
       }
     } catch (error) {
       console.error('Token verification failed:', error);
+      // Keep existing user data on network error
     } finally {
       setLoading(false);
     }
