@@ -1,4 +1,4 @@
-import { ArrowUp, Package } from "lucide-react";
+import { ArrowUp, Package, HardDrive } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
 import type { App } from "@/lib/api";
@@ -14,6 +14,7 @@ interface AppCardProps {
   icon_url?: string;
   iconBg?: string;
   hasUpdate?: boolean;
+  size?: string;
 }
 
 const getGradientFromName = (name: string): string => {
@@ -54,6 +55,9 @@ export const AppCard = (props: AppCardProps) => {
   const icon = props.icon || "📦";
   const iconBg = props.iconBg || getGradientFromName(name);
   const hasUpdate = props.hasUpdate ?? false;
+  
+  // Get file size from latest version or props
+  const fileSize = props.size || props.app?.versions?.[0]?.file_size;
 
   const displayName = t(nameKm, name);
   const displayDescription = t(descriptionKm, description);
@@ -113,6 +117,14 @@ export const AppCard = (props: AppCardProps) => {
         )}
 
         <p className="text-[10px] sm:text-xs text-muted-foreground line-clamp-2 leading-relaxed">{displayDescription}</p>
+        
+        {/* Size badge on hover */}
+        {fileSize && (
+          <div className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-primary/90 text-primary-foreground text-[10px] sm:text-xs px-2 py-1 rounded-md flex items-center gap-1 shadow-lg">
+            <HardDrive className="w-3 h-3" />
+            <span>{fileSize}</span>
+          </div>
+        )}
       </div>
       
       {/* Hover shine effect */}
