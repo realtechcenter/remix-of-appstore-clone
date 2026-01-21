@@ -59,6 +59,62 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_logs: {
+        Row: {
+          amount: number
+          client_id: string
+          created_at: string
+          device_id: string
+          hash: string
+          id: string
+          order_id: string
+          qr_string: string | null
+          request_time: string
+          status: string
+          status_text: string | null
+          tran_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          client_id: string
+          created_at?: string
+          device_id: string
+          hash: string
+          id?: string
+          order_id: string
+          qr_string?: string | null
+          request_time: string
+          status?: string
+          status_text?: string | null
+          tran_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          client_id?: string
+          created_at?: string
+          device_id?: string
+          hash?: string
+          id?: string
+          order_id?: string
+          qr_string?: string | null
+          request_time?: string
+          status?: string
+          status_text?: string | null
+          tran_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_logs_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
