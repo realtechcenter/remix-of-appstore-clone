@@ -1,4 +1,4 @@
-import { ArrowUp, Package, HardDrive } from "lucide-react";
+import { ArrowUp, Package, HardDrive, DollarSign } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
 import type { App } from "@/lib/api";
@@ -43,7 +43,7 @@ const createSlug = (name: string): string => {
 };
 
 export const AppCard = (props: AppCardProps) => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const navigate = useNavigate();
   
   const name = props.app?.name || props.name || "";
@@ -58,6 +58,11 @@ export const AppCard = (props: AppCardProps) => {
   
   // Get file size from latest version or props
   const fileSize = props.size || props.app?.versions?.[0]?.file_size;
+  
+  // Get price and determine if it's a paid app
+  const priceValue = props.app?.price;
+  const priceNum = typeof priceValue === 'string' ? parseFloat(priceValue) : (priceValue || 0);
+  const isPaidApp = priceNum > 0;
 
   const displayName = t(nameKm, name);
   const displayDescription = t(descriptionKm, description);
@@ -117,6 +122,18 @@ export const AppCard = (props: AppCardProps) => {
         )}
 
         <p className="text-[10px] sm:text-xs text-muted-foreground line-clamp-2 leading-relaxed">{displayDescription}</p>
+        
+        {/* Price badge */}
+        {isPaidApp ? (
+          <div className="absolute top-2 right-2 bg-primary text-primary-foreground text-[10px] sm:text-xs font-semibold px-2 py-0.5 rounded-full shadow-md flex items-center gap-0.5">
+            <DollarSign className="w-3 h-3" />
+            <span>{priceNum.toFixed(2)}</span>
+          </div>
+        ) : (
+          <div className="absolute top-2 right-2 bg-green-600 text-white text-[10px] sm:text-xs font-semibold px-2 py-0.5 rounded-full shadow-md">
+            {language === 'km' ? 'ឥតគិតថ្លៃ' : 'Free'}
+          </div>
+        )}
         
         {/* Size badge on hover */}
         {fileSize && (
