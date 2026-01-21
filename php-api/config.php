@@ -9,8 +9,8 @@ define('DB_PASS', 'your_password');
 define('JWT_SECRET', 'your-super-secret-jwt-key-change-this');
 
 // Bakong API configuration
-define('BAKONG_API_TOKEN', 'your-bakong-api-token');
-define('BAKONG_ACCOUNT_ID', 'your-bakong-account-id');
+define('BAKONG_API_TOKEN', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjp7ImlkIjoiYmMxYmJhYzUzMmZiNDlkOCJ9LCJpYXQiOjE3NjkwMDgxODAsImV4cCI6MTc3Njc4NDE4MH0.3Jdd8dQQGId7skxZOpV3r1zOf3L9vyF-RRaXECUSOXg');
+define('BAKONG_ACCOUNT_ID', 'mengleang_san@aclb');
 
 // CORS settings - Update with your Lovable app URL
 header('Access-Control-Allow-Origin: *');
