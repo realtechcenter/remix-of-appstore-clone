@@ -1,5 +1,5 @@
 <?php
-// KHQR Payment API - ABA PayWay Integration
+// ABA PayWay Payment API
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
@@ -12,7 +12,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 
 require_once 'config.php';
 
-// ABA PayWay Gateway - Replace with your actual PayWay link
+// ABA PayWay Gateway
 define('PAYWAY_URL', 'https://link.payway.com.kh/ABAPAYGJ288488t');
 define('PAYWAY_SECRET', '123456789');
 
@@ -42,18 +42,22 @@ try {
             // Generate QR using ABA PayWay
             $qrResult = getQRString($amount, $orderId);
             
-            // Update order with payment session data
-            $stmt = $pdo->prepare("UPDATE orders SET payment_md5 = ?, bakong_transaction_id = ? WHERE id = ?");
+            // Save to payment_logs table
+            $stmt = $pdo->prepare("INSERT INTO payment_logs (order_id, tran_id, device_id, client_id, hash, request_time, qr_string, amount, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending')");
             $stmt->execute([
-                json_encode([
-                    'hash' => $qrResult['hash'],
-                    'client_id' => $qrResult['client_id'],
-                    'device_id' => $qrResult['device_id'],
-                    'request_time' => $qrResult['request_time']
-                ]),
+                $orderId,
                 $qrResult['tran_id'],
-                $orderId
+                $qrResult['device_id'],
+                $qrResult['client_id'],
+                $qrResult['hash'],
+                $qrResult['request_time'],
+                $qrResult['qr_string'],
+                $amount
             ]);
+            
+            // Also update orders table for backward compatibility
+            $stmt = $pdo->prepare("UPDATE orders SET bakong_transaction_id = ? WHERE id = ?");
+            $stmt->execute([$qrResult['tran_id'], $orderId]);
             
             // Convert to KHR for display (1 USD ≈ 4100 KHR)
             $amountKHR = round($amount * 4100);
@@ -70,7 +74,6 @@ try {
             
         case 'verify':
             $orderId = $input['order_id'] ?? null;
-            $md5 = $input['md5'] ?? null;
             
             if (!$orderId) {
                 throw new Exception('Order ID required');
@@ -99,24 +102,47 @@ try {
                 exit;
             }
             
-            // Check payment status with ABA API
-            $paymentData = json_decode($order['payment_md5'], true);
+            // Get payment log from payment_logs table
+            $stmt = $pdo->prepare("SELECT * FROM payment_logs WHERE order_id = ? ORDER BY created_at DESC LIMIT 1");
+            $stmt->execute([$orderId]);
+            $paymentLog = $stmt->fetch(PDO::FETCH_ASSOC);
             
-            if ($paymentData && isset($paymentData['client_id'])) {
-                $result = checkPaymentStatus($paymentData);
+            if (!$paymentLog) {
+                echo json_encode([
+                    'success' => true,
+                    'status' => 'pending',
+                    'message' => 'No payment log found'
+                ]);
+                exit;
+            }
+            
+            // Check payment status with ABA API
+            $result = checkPaymentStatus($paymentLog);
+            
+            if ($result['status'] === 'approved') {
+                // Update order status
+                $stmt = $pdo->prepare("UPDATE orders SET status = 'paid', paid_at = NOW() WHERE id = ?");
+                $stmt->execute([$orderId]);
                 
-                if ($result['status'] === 'approved') {
-                    $stmt = $pdo->prepare("UPDATE orders SET status = 'paid', paid_at = NOW() WHERE id = ?");
-                    $stmt->execute([$orderId]);
-                    echo json_encode(['success' => true, 'status' => 'paid']);
-                    exit;
-                }
+                // Update payment log
+                $stmt = $pdo->prepare("UPDATE payment_logs SET status = 'paid', status_text = 'approved' WHERE id = ?");
+                $stmt->execute([$paymentLog['id']]);
+                
+                echo json_encode(['success' => true, 'status' => 'paid']);
+                exit;
+            }
+            
+            // Update payment log with status text
+            if (isset($result['status_text'])) {
+                $stmt = $pdo->prepare("UPDATE payment_logs SET status_text = ? WHERE id = ?");
+                $stmt->execute([$result['status_text'], $paymentLog['id']]);
             }
             
             echo json_encode([
                 'success' => true,
                 'status' => 'pending',
-                'message' => 'Payment not yet received'
+                'message' => 'Payment not yet received',
+                'debug' => $result // Remove this in production
             ]);
             break;
             
@@ -129,6 +155,10 @@ try {
             }
             
             $stmt = $pdo->prepare("UPDATE orders SET status = 'paid', paid_at = NOW() WHERE id = ?");
+            $stmt->execute([$orderId]);
+            
+            // Update payment log
+            $stmt = $pdo->prepare("UPDATE payment_logs SET status = 'paid', status_text = 'manual' WHERE order_id = ?");
             $stmt->execute([$orderId]);
             
             echo json_encode(['success' => true, 'message' => 'Payment confirmed']);
@@ -185,7 +215,7 @@ function getQRString($amount, $orderId) {
         "phone" => ""
     ]);
     
-    // Step 3: Generate hash
+    // Step 3: Generate hash (SHA512 of concatenated string)
     $hashString = $requestTime . $abaData . $additionalFields;
     $hash = hash('sha512', $hashString);
     
@@ -226,7 +256,7 @@ function getQRString($amount, $orderId) {
         throw new Exception('No QR string in response: ' . $response2);
     }
     
-    // Generate device_id and client hash for status checking
+    // Generate device_id and hash for status checking
     $deviceId = generateDeviceId(10);
     $clientId = $jsonResponse['client_id'];
     $hashData = $clientId . $deviceId . $requestTime;
@@ -245,12 +275,12 @@ function getQRString($amount, $orderId) {
 /**
  * Check payment status with ABA API
  */
-function checkPaymentStatus($paymentData) {
+function checkPaymentStatus($paymentLog) {
     $postData = json_encode([
-        "device_id" => $paymentData['device_id'],
-        "client_id" => $paymentData['client_id'],
-        "hash" => $paymentData['hash'],
-        "request_time" => $paymentData['request_time']
+        "device_id" => $paymentLog['device_id'],
+        "client_id" => $paymentLog['client_id'],
+        "hash" => $paymentLog['hash'],
+        "request_time" => $paymentLog['request_time']
     ]);
     
     $ch = curl_init();
@@ -266,16 +296,30 @@ function checkPaymentStatus($paymentData) {
     
     $response = curl_exec($ch);
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $curlError = curl_error($ch);
     curl_close($ch);
     
+    if ($curlError) {
+        return ['status' => 'pending', 'status_text' => 'curl_error: ' . $curlError];
+    }
+    
     if ($httpCode !== 200) {
-        return ['status' => 'pending'];
+        return ['status' => 'pending', 'status_text' => 'http_error: ' . $httpCode];
     }
     
     $jsonResponse = json_decode($response, true);
+    
+    if (!$jsonResponse) {
+        return ['status' => 'pending', 'status_text' => 'invalid_json'];
+    }
+    
     $status = $jsonResponse['data']['action'] ?? 'pending';
     
-    return ['status' => $status];
+    return [
+        'status' => $status,
+        'status_text' => $status,
+        'raw_response' => $jsonResponse
+    ];
 }
 
 /**
