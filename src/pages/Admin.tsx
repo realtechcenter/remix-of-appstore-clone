@@ -97,6 +97,7 @@ const AppForm = ({ app, onSave, onCancel }: AppFormProps) => {
     developer: app?.developer || "",
     website: app?.website || "",
     is_featured: app?.is_featured || false,
+    price: app?.price || 0,
   });
   // Initialize screenshots from existing app data
   const [screenshots, setScreenshots] = useState<string[]>(
@@ -162,7 +163,7 @@ const AppForm = ({ app, onSave, onCancel }: AppFormProps) => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div>
           <Label htmlFor="category">Category</Label>
           <Select
@@ -198,6 +199,23 @@ const AppForm = ({ app, onSave, onCancel }: AppFormProps) => {
             onChange={(e) => setFormData({ ...formData, website: e.target.value })}
             className="mt-1.5"
           />
+        </div>
+        <div>
+          <Label htmlFor="price">Price (USD)</Label>
+          <div className="relative mt-1.5">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+            <Input
+              id="price"
+              type="number"
+              min="0"
+              step="0.01"
+              value={formData.price || ""}
+              onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })}
+              placeholder="0.00 (Free)"
+              className="pl-7"
+            />
+          </div>
+          <p className="text-xs text-muted-foreground mt-1">Leave 0 or empty for free apps</p>
         </div>
       </div>
 
@@ -617,6 +635,13 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
                           <span className="text-[10px] sm:text-xs bg-accent px-2 py-0.5 rounded">{app.category}</span>
                           {app.is_featured && (
                             <span className="text-[10px] sm:text-xs bg-primary/20 text-primary px-2 py-0.5 rounded">Featured</span>
+                          )}
+                          {app.price && app.price > 0 ? (
+                            <span className="text-[10px] sm:text-xs bg-green-500/20 text-green-600 dark:text-green-400 px-2 py-0.5 rounded font-medium">
+                              ${app.price.toFixed(2)}
+                            </span>
+                          ) : (
+                            <span className="text-[10px] sm:text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded">Free</span>
                           )}
                         </div>
                       </div>
