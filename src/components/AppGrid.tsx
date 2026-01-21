@@ -39,7 +39,6 @@ export const AppGrid = ({ title, showViewAll = true, searchQuery = "", itemsPerP
   const [currentPage, setCurrentPage] = useState(1);
   
   const { data, isLoading, error, isFetching } = usePaginatedApps({
-    category: "programs",
     search: searchQuery || undefined,
     page: currentPage,
     limit: itemsPerPage,
