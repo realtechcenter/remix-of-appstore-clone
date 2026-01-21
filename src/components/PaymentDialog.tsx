@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { QrCode, Loader2, CheckCircle, XCircle, Clock } from 'lucide-react';
+import { QrCode, Loader2, CheckCircle, XCircle, Clock, Download, PartyPopper } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -15,6 +15,7 @@ interface PaymentDialogProps {
   appId: number;
   appName: string;
   price: number;
+  downloadUrl?: string;
   onPaymentSuccess: () => void;
 }
 
@@ -24,6 +25,7 @@ export const PaymentDialog = ({
   appId,
   appName,
   price,
+  downloadUrl,
   onPaymentSuccess,
 }: PaymentDialogProps) => {
   const { language } = useLanguage();
@@ -76,14 +78,14 @@ export const PaymentDialog = ({
         try {
           const result = await verifyPayment(orderId, md5);
 
-          if (result.status === 'paid') {
+          // Handle both 'paid' and 'approved' status from API
+          if (result.status === 'paid' || result.status === 'approved') {
             setStatus('success');
             clearInterval(interval);
             queryClient.invalidateQueries({ queryKey: ['purchased', appId] });
-            setTimeout(() => {
-              onPaymentSuccess();
-              onOpenChange(false);
-            }, 2000);
+            toast.success(language === 'km' ? 'ការទូទorg org org org org!' : 'Payment successful!');
+            onPaymentSuccess();
+            // Don't auto-close - let user see success and download
           } else if (result.status === 'scanned' && status !== 'scanned') {
             setStatus('scanned');
           }
@@ -94,7 +96,7 @@ export const PaymentDialog = ({
 
       return () => clearInterval(interval);
     }
-  }, [status, orderId, md5, appId]);
+  }, [status, orderId, md5, appId, language]);
 
   const initializePayment = async () => {
     try {
@@ -131,7 +133,7 @@ export const PaymentDialog = ({
     } catch (err) {
       console.error('Payment init error:', err);
       setStatus('error');
-      toast.error(language === 'km' ? 'មានបញ្ហាក្នុងការបង្កើត QR' : 'Failed to generate QR code');
+      toast.error(language === 'km' ? 'មានបញ្ហorg org org org org QR' : 'Failed to generate QR code');
     }
   };
 
@@ -149,11 +151,8 @@ export const PaymentDialog = ({
 
       setStatus('success');
       queryClient.invalidateQueries({ queryKey: ['purchased', appId] });
-      toast.success(language === 'km' ? 'ការទូទាត់បានជោគជ័យ!' : 'Payment successful!');
-      setTimeout(() => {
-        onPaymentSuccess();
-        onOpenChange(false);
-      }, 2000);
+      toast.success(language === 'km' ? 'ការorg org org org org org org org org org!' : 'Payment successful!');
+      onPaymentSuccess();
     } catch (err) {
       console.error('Manual confirm error:', err);
       setStatus('error');
@@ -166,7 +165,7 @@ export const PaymentDialog = ({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <QrCode className="w-5 h-5 text-primary" />
-            {language === 'km' ? 'ទូទាត់ដោយ KHQR' : 'Pay with KHQR'}
+            {language === 'km' ? 'org org org org org KHQR' : 'Pay with KHQR'}
           </DialogTitle>
         </DialogHeader>
 
@@ -175,7 +174,7 @@ export const PaymentDialog = ({
             <div className="flex flex-col items-center gap-4 py-8">
               <Loader2 className="w-12 h-12 animate-spin text-primary" />
               <p className="text-muted-foreground">
-                {language === 'km' ? 'កំពុងបង្កើត QR Code...' : 'Generating QR Code...'}
+                {language === 'km' ? 'org org org org org QR Code...' : 'Generating QR Code...'}
               </p>
             </div>
           )}
@@ -209,13 +208,13 @@ export const PaymentDialog = ({
               <div className="text-center text-sm text-muted-foreground space-y-2">
                 <p>
                   {language === 'km' 
-                    ? 'ស្កេន QR Code នេះជាមួយកម្មវិធី Bakong របស់អ្នក'
+                    ? 'org org org QR Code org org org org org org org org Bakong org org org org org'
                     : 'Scan this QR code with your Bakong app'
                   }
                 </p>
                 <p className="text-xs">
                   {language === 'km'
-                    ? 'ការទូទាត់នឹងត្រូវបានផ្ទៀងផ្ទាត់ដោយស្វ័យប្រវត្តិ'
+                    ? 'org org org org org org org org org org org org org org org org org org'
                     : 'Payment will be verified automatically'
                   }
                 </p>
@@ -228,7 +227,7 @@ export const PaymentDialog = ({
                 onClick={handleManualConfirm}
                 className="mt-4"
               >
-                {language === 'km' ? 'ធ្វើតេស្ត: បញ្ជាក់ការទូទាត់' : 'Test: Confirm Payment'}
+                {language === 'km' ? 'org org org org: org org org org org org org' : 'Test: Confirm Payment'}
               </Button>
             </>
           )}
@@ -239,11 +238,11 @@ export const PaymentDialog = ({
                 <Loader2 className="w-10 h-10 animate-spin text-blue-500" />
               </div>
               <p className="text-lg font-semibold text-blue-500">
-                {language === 'km' ? 'QR ត្រូវបានស្កេន!' : 'QR Scanned!'}
+                {language === 'km' ? 'QR org org org org org!' : 'QR Scanned!'}
               </p>
               <p className="text-sm text-muted-foreground text-center">
                 {language === 'km' 
-                  ? 'សូមបញ្ជាក់ការទូទាត់នៅក្នុងកម្មវិធីធនាគាររបស់អ្នក'
+                  ? 'org org org org org org org org org org org org org org org org org org'
                   : 'Please confirm the payment in your banking app'
                 }
               </p>
@@ -254,17 +253,51 @@ export const PaymentDialog = ({
             <div className="flex flex-col items-center gap-4 py-8">
               <Loader2 className="w-12 h-12 animate-spin text-primary" />
               <p className="text-muted-foreground">
-                {language === 'km' ? 'កំពុងផ្ទៀងផ្ទorg់ការទូទorg់...' : 'Verifying payment...'}
+                {language === 'km' ? 'org org org org org org org org org org org...' : 'Verifying payment...'}
               </p>
             </div>
           )}
 
           {status === 'success' && (
-            <div className="flex flex-col items-center gap-4 py-8">
-              <CheckCircle className="w-16 h-16 text-green-500" />
-              <p className="text-lg font-semibold text-green-500">
-                {language === 'km' ? 'ការទូទាត់បានជោគជ័យ!' : 'Payment Successful!'}
-              </p>
+            <div className="flex flex-col items-center gap-6 py-8">
+              <div className="relative">
+                <div className="w-20 h-20 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+                  <CheckCircle className="w-12 h-12 text-green-500" />
+                </div>
+                <PartyPopper className="w-8 h-8 text-yellow-500 absolute -top-2 -right-2 animate-bounce" />
+              </div>
+              
+              <div className="text-center space-y-2">
+                <p className="text-xl font-bold text-green-500">
+                  {language === 'km' ? 'ការorg org org org org org org org org!' : 'Payment Successful!'}
+                </p>
+                <p className="text-muted-foreground">
+                  {language === 'km' 
+                    ? `org org org org org org org org ${appName}!`
+                    : `Thank you for purchasing ${appName}!`
+                  }
+                </p>
+              </div>
+
+              <div className="w-full space-y-3 pt-2">
+                {downloadUrl && (
+                  <Button 
+                    className="w-full gap-2" 
+                    size="lg"
+                    onClick={() => window.open(downloadUrl, '_blank')}
+                  >
+                    <Download className="w-5 h-5" />
+                    {language === 'km' ? 'org org org org org org org' : 'Download Now'}
+                  </Button>
+                )}
+                <Button 
+                  variant="outline" 
+                  className="w-full"
+                  onClick={() => onOpenChange(false)}
+                >
+                  {language === 'km' ? 'org org' : 'Close'}
+                </Button>
+              </div>
             </div>
           )}
 
@@ -272,10 +305,10 @@ export const PaymentDialog = ({
             <div className="flex flex-col items-center gap-4 py-8">
               <XCircle className="w-16 h-16 text-destructive" />
               <p className="text-lg font-semibold text-destructive">
-                {language === 'km' ? 'ការទូទាត់បានបរាជ័យ' : 'Payment Failed'}
+                {language === 'km' ? 'org org org org org org org org org org' : 'Payment Failed'}
               </p>
               <Button onClick={initializePayment} variant="outline">
-                {language === 'km' ? 'ព្យាយាមម្ដងទៀត' : 'Try Again'}
+                {language === 'km' ? 'org org org org org org org' : 'Try Again'}
               </Button>
             </div>
           )}

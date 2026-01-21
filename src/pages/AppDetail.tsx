@@ -767,8 +767,9 @@ const AppDetail = () => {
           appId={appData.id}
           appName={displayName}
           price={appData.price}
+          downloadUrl={latestVersion?.download_url}
           onPaymentSuccess={() => {
-            setShowPaymentDialog(false);
+            // Refresh purchase status - dialog stays open to show success
           }}
         />
       )}
