@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Edit, Trash2, LogOut, Package, Layers, Search, X, Save, ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react";
+import { Plus, Edit, Trash2, LogOut, Package, Layers, Search, X, Save, ArrowLeft, ChevronLeft, ChevronRight, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { appsApi, versionsApi, authApi, type App, type AppVersion } from "@/lib/api";
 import { FileUpload, ScreenshotUpload } from "@/components/FileUpload";
+import { UserManagement } from "@/components/admin/UserManagement";
 
 const AdminLogin = ({ onLogin }: { onLogin: () => void }) => {
   const [username, setUsername] = useState("");
@@ -582,7 +583,20 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
       </header>
 
       <div className="max-w-7xl mx-auto p-3 sm:p-4">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+        <Tabs defaultValue="apps" className="w-full">
+          <TabsList className="mb-4">
+            <TabsTrigger value="apps" className="gap-2">
+              <Package className="w-4 h-4" />
+              Apps
+            </TabsTrigger>
+            <TabsTrigger value="users" className="gap-2">
+              <Users className="w-4 h-4" />
+              Users
+            </TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="apps">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
           {/* Apps List */}
           <div className="lg:col-span-1 space-y-3 sm:space-y-4">
             <div className="flex items-center justify-between">
@@ -824,7 +838,13 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
               </div>
             )}
           </div>
-        </div>
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="users">
+            <UserManagement />
+          </TabsContent>
+        </Tabs>
       </div>
 
       {/* App Form Dialog */}

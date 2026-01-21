@@ -8,6 +8,7 @@ use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\UploadController;
 use App\Http\Controllers\VersionController;
+use App\Http\Controllers\AdminUserController;
 
 /*
 |--------------------------------------------------------------------------
@@ -37,6 +38,14 @@ Route::middleware('auth.admin')->group(function () {
     
     Route::post('/upload', [UploadController::class, 'store']);
     Route::post('/auth/change-password', [AuthController::class, 'changePassword']);
+    
+    // Admin user management
+    Route::get('/admin/users', [AdminUserController::class, 'index']);
+    Route::get('/admin/users/{id}', [AdminUserController::class, 'show']);
+    Route::get('/admin/users/{id}/orders', [AdminUserController::class, 'orders']);
+    Route::post('/admin/users/{id}/grant-app', [AdminUserController::class, 'grantApp']);
+    Route::delete('/admin/users/{userId}/revoke-app/{appId}', [AdminUserController::class, 'revokeApp']);
+    Route::get('/admin/orders', [AdminUserController::class, 'allOrders']);
 });
 
 // Protected user routes
