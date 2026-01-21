@@ -26,7 +26,7 @@ Route::get('/apps/{id}', [AppController::class, 'show']);
 Route::get('/versions', [VersionController::class, 'index']);
 
 // Protected admin routes
-Route::middleware('auth:admin')->group(function () {
+Route::middleware('auth.admin')->group(function () {
     Route::post('/apps', [AppController::class, 'store']);
     Route::put('/apps/{id}', [AppController::class, 'update']);
     Route::delete('/apps/{id}', [AppController::class, 'destroy']);
@@ -40,7 +40,7 @@ Route::middleware('auth:admin')->group(function () {
 });
 
 // Protected user routes
-Route::middleware('auth:user')->group(function () {
+Route::middleware('auth.user')->group(function () {
     Route::get('/users/me', [UserController::class, 'me']);
     Route::put('/users/profile', [UserController::class, 'updateProfile']);
     
@@ -51,7 +51,7 @@ Route::middleware('auth:user')->group(function () {
 });
 
 // Payment routes (need user auth for some, public for webhooks)
-Route::post('/payment/generate-qr', [PaymentController::class, 'generateQr'])->middleware('auth:user');
-Route::post('/payment/verify', [PaymentController::class, 'verify'])->middleware('auth:user');
-Route::post('/payment/confirm-manual', [PaymentController::class, 'confirmManual'])->middleware('auth:user');
+Route::post('/payment/generate-qr', [PaymentController::class, 'generateQr'])->middleware('auth.user');
+Route::post('/payment/verify', [PaymentController::class, 'verify'])->middleware('auth.user');
+Route::post('/payment/confirm-manual', [PaymentController::class, 'confirmManual'])->middleware('auth.user');
 Route::post('/payment/webhook', [PaymentController::class, 'webhook']); // Public webhook
