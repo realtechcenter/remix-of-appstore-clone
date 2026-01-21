@@ -435,6 +435,20 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
     await loadAppVersions(app.id);
   };
 
+  const handleEditApp = async (app: App) => {
+    try {
+      // Fetch full app details including screenshots
+      const fullAppData = await appsApi.getById(app.id);
+      setEditingApp(fullAppData);
+      setShowAppForm(true);
+    } catch (error) {
+      console.error('Failed to load app details:', error);
+      // Fallback to using existing data
+      setEditingApp(app);
+      setShowAppForm(true);
+    }
+  };
+
   const handleSaveApp = async (data: AppFormData) => {
     try {
       if (editingApp) {
@@ -621,7 +635,7 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
                     </div>
                   </div>
                   <div className="flex gap-2">
-                    <Button variant="outline" size="sm" onClick={() => { setEditingApp(selectedApp); setShowAppForm(true); }}>
+                    <Button variant="outline" size="sm" onClick={() => handleEditApp(selectedApp)}>
                       <Edit className="w-4 h-4 mr-1" />
                       Edit
                     </Button>
