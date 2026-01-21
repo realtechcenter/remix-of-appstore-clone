@@ -636,9 +636,9 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
                           {app.is_featured && (
                             <span className="text-[10px] sm:text-xs bg-primary/20 text-primary px-2 py-0.5 rounded">Featured</span>
                           )}
-                          {app.price && app.price > 0 ? (
+                          {app.price && (typeof app.price === 'string' ? parseFloat(app.price) : app.price) > 0 ? (
                             <span className="text-[10px] sm:text-xs bg-green-500/20 text-green-600 dark:text-green-400 px-2 py-0.5 rounded font-medium">
-                              ${app.price.toFixed(2)}
+                              ${(typeof app.price === 'string' ? parseFloat(app.price) : app.price).toFixed(2)}
                             </span>
                           ) : (
                             <span className="text-[10px] sm:text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded">Free</span>
