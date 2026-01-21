@@ -15,8 +15,6 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { appsApi, versionsApi, type AppVersion } from "@/lib/api";
 import { useQuery } from "@tanstack/react-query";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { useDownload } from "@/hooks/useDownload";
-import { DownloadProgress } from "@/components/DownloadProgress";
 
 const getGradientFromName = (name: string): string => {
   const gradients = [
@@ -308,7 +306,7 @@ const AppDetail = () => {
   const [showVersions, setShowVersions] = useState(false);
   const [showLangMenu, setShowLangMenu] = useState(false);
   const { language, setLanguage } = useLanguage();
-  const download = useDownload();
+  
   
   const languages = [
     { code: "km" as const, name: "ខ្មែរ", flag: "🇰🇭" },
@@ -608,20 +606,17 @@ const AppDetail = () => {
 
                     {/* Download Button */}
                     {latestVersion?.download_url ? (
-                      <Button 
-                        className="w-full h-14 text-base font-semibold gap-2 bg-green-600 hover:bg-green-700 text-white shadow-lg"
-                        onClick={() => download.startDownload(
-                          latestVersion.download_url!,
-                          displayName,
-                          latestVersion.file_size || "Unknown size"
-                        )}
-                      >
-                        <Download className="w-5 h-5" />
-                        {translations.downloadForFree}
-                        {latestVersion.file_size && (
-                          <span className="text-white/80">({latestVersion.file_size})</span>
-                        )}
-                      </Button>
+                      <a href={latestVersion.download_url} target="_blank" rel="noopener noreferrer">
+                        <Button 
+                          className="w-full h-14 text-base font-semibold gap-2 bg-green-600 hover:bg-green-700 text-white shadow-lg"
+                        >
+                          <Download className="w-5 h-5" />
+                          {translations.downloadForFree}
+                          {latestVersion.file_size && (
+                            <span className="text-white/80">({latestVersion.file_size})</span>
+                          )}
+                        </Button>
+                      </a>
                     ) : (
                       <Button 
                         className="w-full h-14 text-base font-semibold gap-2"
@@ -678,9 +673,6 @@ const AppDetail = () => {
         onOpenChange={setShowVersions}
         appName={displayName}
       />
-
-      {/* Download Progress Dialog */}
-      <DownloadProgress state={download} onClose={download.reset} />
     </div>
   );
 };

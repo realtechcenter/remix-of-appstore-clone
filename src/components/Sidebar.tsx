@@ -1,4 +1,4 @@
-import { Gamepad2, Puzzle, HardDrive, FileText, ShoppingBag, LayoutGrid, Sparkles } from "lucide-react";
+import { Gamepad2, Puzzle, HardDrive, FileText, ShoppingBag, LayoutGrid, Sparkles, Box } from "lucide-react";
 import { useLanguage, useTranslations } from "@/contexts/LanguageContext";
 
 interface SidebarProps {
@@ -13,6 +13,7 @@ export const Sidebar = ({ activeCategory, onCategoryChange, isOpen = false }: Si
 
   const navItems = [
     { id: "all", label: language === "km" ? "ទាំងអស់" : "All", icon: LayoutGrid, badge: false },
+    { id: "programs", label: t.programs, icon: Box, badge: true },
     { id: "games", label: t.games, icon: Gamepad2, badge: true },
     { id: "extensions", label: t.extensions, icon: Puzzle, badge: true },
     { id: "os", label: t.os, icon: HardDrive, badge: true },
