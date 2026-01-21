@@ -43,7 +43,7 @@ export const FileUpload = ({ type, onUpload, currentUrl, accept, label }: FileUp
         throw new Error('Not authenticated. Please log in again.');
       }
 
-      const response = await fetch(`${API_BASE_URL}/upload.php`, {
+      const response = await fetch(`${API_BASE_URL}/api/upload`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${apiKey}`,
@@ -189,7 +189,7 @@ export const ScreenshotUpload = ({ screenshots, onUpdate }: ScreenshotUploadProp
         formData.append('file', file);
         formData.append('type', 'screenshots');
 
-        const response = await fetch(`${API_BASE_URL}/upload.php`, {
+        const response = await fetch(`${API_BASE_URL}/api/upload`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${apiKey}`,

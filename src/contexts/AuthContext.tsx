@@ -52,8 +52,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const verifyToken = async (authToken: string) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/users.php?action=me`, {
+      const response = await fetch(`${API_BASE_URL}/api/users/me`, {
         headers: {
+          'Accept': 'application/json',
           'Authorization': `Bearer ${authToken}`,
         },
       });
@@ -79,13 +80,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signUp = async (email: string, password: string, fullName?: string) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/users.php`, {
+      const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
         },
         body: JSON.stringify({
-          action: 'register',
           email,
           password,
           full_name: fullName,
@@ -95,7 +96,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const data = await response.json();
       
       if (!response.ok || data.error) {
-        return { error: new Error(data.error || 'Registration failed') };
+        return { error: new Error(data.error || data.message || 'Registration failed') };
       }
       
       // Save token and user
@@ -112,13 +113,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signIn = async (email: string, password: string) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/users.php`, {
+      const response = await fetch(`${API_BASE_URL}/api/users/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
         },
         body: JSON.stringify({
-          action: 'login',
           email,
           password,
         }),
@@ -127,7 +128,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const data = await response.json();
       
       if (!response.ok || data.error) {
-        return { error: new Error(data.error || 'Login failed') };
+        return { error: new Error(data.error || data.message || 'Login failed') };
       }
       
       // Save token and user
