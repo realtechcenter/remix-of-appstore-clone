@@ -211,3 +211,81 @@ export const uploadApi = {
     return data as { success: boolean; url: string; filename: string; size: number; mime_type: string };
   },
 };
+
+// Admin User Types
+export interface AdminUser {
+  id: number;
+  email: string;
+  full_name?: string;
+  phone?: string;
+  avatar_url?: string;
+  created_at: string;
+  updated_at: string;
+  paid_orders_count?: number;
+}
+
+export interface AdminOrder {
+  id: string;
+  user_id: number;
+  app_id: number;
+  app_name: string;
+  amount: number;
+  currency: string;
+  status: 'pending' | 'paid' | 'failed' | 'expired';
+  bakong_transaction_id?: string;
+  payment_md5?: string;
+  created_at: string;
+  paid_at?: string;
+  expires_at?: string;
+  user?: {
+    id: number;
+    email: string;
+    full_name?: string;
+  };
+}
+
+// Admin User Management API
+export const adminUsersApi = {
+  getAll: async (params?: { search?: string; page?: number; limit?: number }): Promise<{ 
+    users: AdminUser[]; 
+    pagination: { current_page: number; total_pages: number; total: number; per_page: number } 
+  }> => {
+    const query = new URLSearchParams();
+    if (params?.search) query.set('search', params.search);
+    if (params?.page) query.set('page', params.page.toString());
+    if (params?.limit) query.set('limit', params.limit.toString());
+    
+    const queryString = query.toString();
+    return apiRequest(`admin/users${queryString ? `?${queryString}` : ''}`);
+  },
+  
+  getById: async (id: number): Promise<{ user: AdminUser; orders: AdminOrder[] }> => {
+    return apiRequest(`admin/users/${id}`);
+  },
+  
+  getOrders: async (userId: number): Promise<{ user: { id: number; email: string; full_name?: string }; orders: AdminOrder[] }> => {
+    return apiRequest(`admin/users/${userId}/orders`);
+  },
+  
+  grantApp: async (userId: number, data: { app_id: number; app_name: string; amount?: number }): Promise<{ success: boolean; message: string; order: AdminOrder }> => {
+    return apiRequest(`admin/users/${userId}/grant-app`, { method: 'POST', body: data });
+  },
+  
+  revokeApp: async (userId: number, appId: number): Promise<{ success: boolean; message: string }> => {
+    return apiRequest(`admin/users/${userId}/revoke-app/${appId}`, { method: 'DELETE' });
+  },
+  
+  getAllOrders: async (params?: { status?: string; user_id?: number; page?: number; limit?: number }): Promise<{
+    orders: AdminOrder[];
+    pagination: { current_page: number; total_pages: number; total: number; per_page: number }
+  }> => {
+    const query = new URLSearchParams();
+    if (params?.status) query.set('status', params.status);
+    if (params?.user_id) query.set('user_id', params.user_id.toString());
+    if (params?.page) query.set('page', params.page.toString());
+    if (params?.limit) query.set('limit', params.limit.toString());
+    
+    const queryString = query.toString();
+    return apiRequest(`admin/orders${queryString ? `?${queryString}` : ''}`);
+  },
+};
