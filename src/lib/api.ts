@@ -52,6 +52,7 @@ export interface App {
   latest_version?: string;
   versions?: AppVersion[];
   screenshots?: AppScreenshot[];
+  price?: number; // Price in USD, null/0 means free
   created_at: string;
   updated_at: string;
 }

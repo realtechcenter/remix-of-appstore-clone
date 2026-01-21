@@ -1,8 +1,17 @@
-import { Search, ChevronDown, X } from "lucide-react";
+import { Search, ChevronDown, X, User, LogOut } from "lucide-react";
 import { useState } from "react";
 import { useLanguage, useTranslations } from "@/contexts/LanguageContext";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { ThemeToggle } from "./ThemeToggle";
+import { useAuth } from "@/contexts/AuthContext";
+import { Button } from "./ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const languages = [
   { code: "km" as const, name: "ខ្មែរ", flag: "🇰🇭" },
@@ -17,9 +26,16 @@ interface HeaderProps {
 export const Header = ({ searchQuery, onSearchChange }: HeaderProps) => {
   const { language, setLanguage } = useLanguage();
   const t = useTranslations();
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
   const [showLangMenu, setShowLangMenu] = useState(false);
 
   const currentLang = languages.find(l => l.code === language) || languages[0];
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/');
+  };
 
   return (
     <header className="sticky top-0 z-40 glass py-3 sm:py-4 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8">
@@ -82,10 +98,36 @@ export const Header = ({ searchQuery, onSearchChange }: HeaderProps) => {
           )}
         </div>
 
-        {/* Login button */}
-        <Link to="/admin" className="btn-primary text-xs sm:text-sm px-3 sm:px-6 py-2 sm:py-2.5">
-          {t.login}
-        </Link>
+        {/* Auth buttons */}
+        {user ? (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="gap-2">
+                <User className="w-4 h-4" />
+                <span className="hidden sm:inline max-w-[100px] truncate">
+                  {user.email?.split('@')[0]}
+                </span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuItem className="text-muted-foreground text-xs">
+                {user.email}
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleSignOut} className="text-destructive">
+                <LogOut className="w-4 h-4 mr-2" />
+                {language === 'km' ? 'ចាកចេញ' : 'Sign Out'}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ) : (
+          <Link to="/auth">
+            <Button size="sm" className="gap-2">
+              <User className="w-4 h-4" />
+              <span className="hidden sm:inline">{t.login}</span>
+            </Button>
+          </Link>
+        )}
       </div>
     </header>
   );
