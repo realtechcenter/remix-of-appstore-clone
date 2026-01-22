@@ -22,7 +22,8 @@ interface ParsedApp {
   description: string;
 }
 
-const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/app-recommend-chat`;
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://api.realtechcomputer.com';
+const CHAT_URL = `${API_BASE_URL}/api/ai-chat/stream`;
 
 // Parse [APP:id:name:icon_url:is_popular:download_count:description] tags from message content
 // icon_url can be relative (e.g., /icons/app.png) or absolute (https://...)
@@ -281,7 +282,6 @@ export const AIChatBot = () => {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
       },
       body: JSON.stringify({ messages: userMessages }),
     });
