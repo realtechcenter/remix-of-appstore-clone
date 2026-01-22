@@ -24,10 +24,10 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Get the authorization header from the incoming request
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
-      throw new Error("Missing authorization header");
+    // Get the LOVABLE_API_KEY for AI Gateway authentication
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    if (!LOVABLE_API_KEY) {
+      throw new Error("LOVABLE_API_KEY is not configured");
     }
 
     const { messages } = await req.json();
@@ -88,7 +88,7 @@ Both are excellent choices for professional photography work!"`;
       method: "POST",
       headers: { 
         "Content-Type": "application/json",
-        "Authorization": authHeader
+        "Authorization": `Bearer ${LOVABLE_API_KEY}`
       },
       body: JSON.stringify({
         model: "google/gemini-3-flash-preview",
@@ -103,6 +103,21 @@ Both are excellent choices for professional photography work!"`;
     if (!response.ok) {
       const errorText = await response.text();
       console.error("AI Gateway error:", errorText);
+      
+      // Handle rate limits and payment errors
+      if (response.status === 429) {
+        return new Response(JSON.stringify({ error: "Rate limits exceeded, please try again later." }), {
+          status: 429,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (response.status === 402) {
+        return new Response(JSON.stringify({ error: "Payment required, please add funds to your workspace." }), {
+          status: 402,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      
       throw new Error(`AI Gateway error: ${response.status}`);
     }
 
