@@ -63,14 +63,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
         
-        // Handle banned/suspended users
+        // Handle banned/suspended users - store info for Auth page to display
         if (response.status === 403 && (data.status === 'banned' || data.status === 'suspended')) {
           localStorage.removeItem('auth_token');
           localStorage.removeItem('auth_user');
           setToken(null);
           setUser(null);
-          // Store the ban/suspend message to show on login page
-          sessionStorage.setItem('auth_error', data.error || 'Your account has been restricted.');
+          
+          // Store the ban info to show dialog on login page
+          sessionStorage.setItem('ban_info', JSON.stringify({
+            status: data.status,
+            reason: data.reason,
+            suspendedUntil: data.suspended_until,
+          }));
+          
+          // Redirect to auth page to show the ban dialog
+          window.location.href = '/auth';
           return;
         }
         

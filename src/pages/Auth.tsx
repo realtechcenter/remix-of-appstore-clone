@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Mail, Lock, User, Eye, EyeOff, Sparkles, ArrowLeft, KeyRound } from 'lucide-react';
+import { Mail, Lock, User, Eye, EyeOff, Sparkles, ArrowLeft, KeyRound, ShieldX, Ban } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -9,6 +9,15 @@ import { useLanguage, useTranslations } from '@/contexts/LanguageContext';
 import { toast } from 'sonner';
 import { z } from 'zod';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://api.realtechcomputer.com';
 
@@ -54,10 +63,32 @@ const Auth = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [resendCooldown, setResendCooldown] = useState(0);
+  const [banDialogOpen, setBanDialogOpen] = useState(false);
+  const [banInfo, setBanInfo] = useState<{ status: string; reason?: string; suspendedUntil?: string } | null>(null);
 
   useEffect(() => {
     if (user) {
       navigate('/');
+    }
+    
+    // Check for stored auth error (from banned user trying to access)
+    const authError = sessionStorage.getItem('auth_error');
+    if (authError) {
+      sessionStorage.removeItem('auth_error');
+      toast.error(authError);
+    }
+    
+    // Check for stored ban info (from mid-session ban)
+    const storedBanInfo = sessionStorage.getItem('ban_info');
+    if (storedBanInfo) {
+      sessionStorage.removeItem('ban_info');
+      try {
+        const info = JSON.parse(storedBanInfo);
+        setBanInfo(info);
+        setBanDialogOpen(true);
+      } catch {
+        // Ignore parsing errors
+      }
     }
   }, [user, navigate]);
 
@@ -87,6 +118,17 @@ const Auth = () => {
       });
       
       const data = await response.json();
+      
+      // Handle banned/suspended users
+      if (response.status === 403 && (data.status === 'banned' || data.status === 'suspended')) {
+        setBanInfo({
+          status: data.status,
+          reason: data.reason,
+          suspendedUntil: data.suspended_until,
+        });
+        setBanDialogOpen(true);
+        return;
+      }
       
       if (!response.ok || data.error) {
         toast.error(language === 'km' ? 'អ៊ីមែល ឬពាក្យសម្ងាត់មិនត្រឹមត្រូវ' : data.error || 'Invalid credentials');
@@ -588,6 +630,79 @@ const Auth = () => {
           </button>
         </div>
       </div>
+
+      {/* Ban/Suspend Alert Dialog */}
+      <AlertDialog open={banDialogOpen} onOpenChange={setBanDialogOpen}>
+        <AlertDialogContent className="max-w-md">
+          <AlertDialogHeader>
+            <div className="flex flex-col items-center gap-4 mb-2">
+              <div className={`w-16 h-16 rounded-full flex items-center justify-center ${
+                banInfo?.status === 'banned' 
+                  ? 'bg-red-100 dark:bg-red-900/30' 
+                  : 'bg-orange-100 dark:bg-orange-900/30'
+              }`}>
+                {banInfo?.status === 'banned' ? (
+                  <Ban className="w-8 h-8 text-red-600 dark:text-red-400" />
+                ) : (
+                  <ShieldX className="w-8 h-8 text-orange-600 dark:text-orange-400" />
+                )}
+              </div>
+              <AlertDialogTitle className="text-center text-xl">
+                {banInfo?.status === 'banned'
+                  ? (language === 'km' ? 'គណនីត្រូវបានហាមឃាត់' : 'Account Banned')
+                  : (language === 'km' ? 'គណនីត្រូវបានផ្អាក' : 'Account Suspended')
+                }
+              </AlertDialogTitle>
+            </div>
+            <AlertDialogDescription className="text-center space-y-3">
+              <p>
+                {banInfo?.status === 'banned'
+                  ? (language === 'km' 
+                      ? 'គណនីរបស់អ្នកត្រូវបានហាមឃាត់ជាអចិន្ត្រៃយ៍។' 
+                      : 'Your account has been permanently banned.')
+                  : (language === 'km' 
+                      ? 'គណនីរបស់អ្នកត្រូវបានផ្អាកជាបណ្តោះអាសន្ន។' 
+                      : 'Your account has been temporarily suspended.')
+                }
+              </p>
+              {banInfo?.reason && (
+                <div className="bg-muted rounded-lg p-3 text-left">
+                  <p className="text-xs text-muted-foreground mb-1">
+                    {language === 'km' ? 'មូលហេតុ:' : 'Reason:'}
+                  </p>
+                  <p className="text-sm text-foreground">{banInfo.reason}</p>
+                </div>
+              )}
+              {banInfo?.status === 'suspended' && banInfo?.suspendedUntil && (
+                <div className="bg-orange-50 dark:bg-orange-900/20 rounded-lg p-3 text-left">
+                  <p className="text-xs text-muted-foreground mb-1">
+                    {language === 'km' ? 'ផ្អាករហូតដល់:' : 'Suspended until:'}
+                  </p>
+                  <p className="text-sm font-medium text-orange-700 dark:text-orange-400">
+                    {new Date(banInfo.suspendedUntil).toLocaleString()}
+                  </p>
+                </div>
+              )}
+              <p className="text-xs text-muted-foreground pt-2">
+                {language === 'km' 
+                  ? 'សូមទាក់ទងផ្នែកជំនួយប្រសិនបើអ្នកជឿថានេះជាកំហុស។' 
+                  : 'Please contact support if you believe this is a mistake.'}
+              </p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="sm:justify-center">
+            <AlertDialogAction 
+              onClick={() => {
+                setBanDialogOpen(false);
+                setBanInfo(null);
+              }}
+              className={banInfo?.status === 'banned' ? 'bg-red-600 hover:bg-red-700' : 'bg-orange-600 hover:bg-orange-700'}
+            >
+              {language === 'km' ? 'យល់ព្រម' : 'I Understand'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
