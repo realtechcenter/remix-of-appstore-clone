@@ -13,10 +13,15 @@ class User extends Authenticatable
         'full_name',
         'phone',
         'avatar_url',
+        'email_verified_at',
     ];
 
     protected $hidden = [
         'password_hash',
+    ];
+
+    protected $casts = [
+        'email_verified_at' => 'datetime',
     ];
 
     public function getAuthPassword()
