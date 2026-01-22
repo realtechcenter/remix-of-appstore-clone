@@ -1,9 +1,10 @@
 import { useState, useRef, useEffect } from "react";
-import { MessageCircle, X, Send, Bot, User, Loader2, Sparkles } from "lucide-react";
+import { MessageCircle, X, Send, Bot, User, Loader2, Sparkles, Maximize2, Minimize2, TrendingUp, Download } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Badge } from "@/components/ui/badge";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
 
@@ -16,12 +17,14 @@ interface ParsedApp {
   id: number;
   name: string;
   icon_url: string;
+  is_popular: boolean;
+  download_count: number;
   description: string;
 }
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/app-recommend-chat`;
 
-// Parse [APP:id:name:icon_url:description] tags from message content
+// Parse [APP:id:name:icon_url:is_popular:download_count:description] tags from message content
 const parseAppTags = (content: string): { text: string; apps: ParsedApp[] }[] => {
   const lines = content.split('\n');
   let result: { text: string; apps: ParsedApp[] }[] = [];
@@ -29,23 +32,38 @@ const parseAppTags = (content: string): { text: string; apps: ParsedApp[] }[] =>
   let pendingApps: ParsedApp[] = [];
   
   for (const line of lines) {
-    // Match new format: [APP:id:name:icon_url:description]
-    const appMatch = line.match(/\[APP:(\d+):([^:]+):([^:]*):([^\]]+)\]/);
-    // Fallback to old format: [APP:id:name:description]
-    const oldFormatMatch = !appMatch ? line.match(/\[APP:(\d+):([^:]+):([^\]]+)\]/) : null;
+    // Match new format: [APP:id:name:icon_url:is_popular:download_count:description]
+    const appMatch = line.match(/\[APP:(\d+):([^:]+):([^:]*):([^:]*):([^:]*):([^\]]+)\]/);
+    // Fallback to 4-part format: [APP:id:name:icon_url:description]
+    const fourPartMatch = !appMatch ? line.match(/\[APP:(\d+):([^:]+):([^:]*):([^\]]+)\]/) : null;
+    // Fallback to old 3-part format: [APP:id:name:description]
+    const oldFormatMatch = !appMatch && !fourPartMatch ? line.match(/\[APP:(\d+):([^:]+):([^\]]+)\]/) : null;
     
     if (appMatch) {
       pendingApps.push({
         id: parseInt(appMatch[1], 10),
         name: appMatch[2],
         icon_url: appMatch[3],
-        description: appMatch[4]
+        is_popular: appMatch[4] === 'true',
+        download_count: parseInt(appMatch[5], 10) || 0,
+        description: appMatch[6]
+      });
+    } else if (fourPartMatch) {
+      pendingApps.push({
+        id: parseInt(fourPartMatch[1], 10),
+        name: fourPartMatch[2],
+        icon_url: fourPartMatch[3],
+        is_popular: false,
+        download_count: 0,
+        description: fourPartMatch[4]
       });
     } else if (oldFormatMatch) {
       pendingApps.push({
         id: parseInt(oldFormatMatch[1], 10),
         name: oldFormatMatch[2],
         icon_url: "",
+        is_popular: false,
+        download_count: 0,
         description: oldFormatMatch[3]
       });
     } else {
@@ -71,8 +89,15 @@ const createSlug = (name: string): string => {
   return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 };
 
+const formatDownloads = (count: number): string => {
+  if (count >= 1000000) return `${(count / 1000000).toFixed(1)}M`;
+  if (count >= 1000) return `${(count / 1000).toFixed(1)}K`;
+  return count.toString();
+};
+
 // App Card Component for chat recommendations
-const AppRecommendCard = ({ app, onClick }: { app: ParsedApp; onClick: () => void }) => {
+const AppRecommendCard = ({ app, onClick, isFullPage }: { app: ParsedApp; onClick: () => void; isFullPage?: boolean }) => {
+  const { language } = useLanguage();
   const gradients = [
     "from-blue-500 to-purple-600",
     "from-green-500 to-teal-600", 
@@ -93,15 +118,20 @@ const AppRecommendCard = ({ app, onClick }: { app: ParsedApp; onClick: () => voi
   return (
     <button
       onClick={onClick}
-      className="flex items-start gap-3 p-3 rounded-xl bg-background border hover:bg-accent/50 hover:border-primary/50 transition-all duration-200 w-full text-left group"
+      className={cn(
+        "flex gap-3 rounded-xl bg-background border hover:bg-accent/50 hover:border-primary/50 transition-all duration-200 w-full text-left group",
+        isFullPage ? "p-4 items-start" : "p-3 items-start"
+      )}
     >
       {hasIcon ? (
         <img 
           src={iconUrl} 
           alt={app.name}
-          className="w-12 h-12 rounded-xl object-cover shrink-0 shadow-md group-hover:scale-105 transition-transform"
+          className={cn(
+            "rounded-xl object-cover shrink-0 shadow-md group-hover:scale-105 transition-transform",
+            isFullPage ? "w-16 h-16" : "w-12 h-12"
+          )}
           onError={(e) => {
-            // Hide image and show fallback on error
             const target = e.target as HTMLImageElement;
             target.style.display = 'none';
             const fallback = target.nextElementSibling as HTMLElement;
@@ -111,18 +141,39 @@ const AppRecommendCard = ({ app, onClick }: { app: ParsedApp; onClick: () => voi
       ) : null}
       <div 
         className={cn(
-          "w-12 h-12 rounded-xl bg-gradient-to-br items-center justify-center text-white font-bold text-lg shrink-0 shadow-md group-hover:scale-105 transition-transform",
-          gradients[gradientIndex]
+          "rounded-xl bg-gradient-to-br items-center justify-center text-white font-bold shrink-0 shadow-md group-hover:scale-105 transition-transform",
+          gradients[gradientIndex],
+          isFullPage ? "w-16 h-16 text-xl" : "w-12 h-12 text-lg"
         )}
         style={{ display: hasIcon ? 'none' : 'flex' }}
       >
         {app.name.charAt(0).toUpperCase()}
       </div>
       <div className="flex-1 min-w-0">
-        <h4 className="font-medium text-sm text-foreground truncate group-hover:text-primary transition-colors">
-          {app.name}
-        </h4>
-        <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">
+        <div className="flex items-center gap-2 flex-wrap">
+          <h4 className={cn(
+            "font-medium text-foreground group-hover:text-primary transition-colors",
+            isFullPage ? "text-base" : "text-sm"
+          )}>
+            {app.name}
+          </h4>
+          {app.is_popular && (
+            <Badge variant="secondary" className="gap-1 text-xs bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400">
+              <TrendingUp className="h-3 w-3" />
+              {language === 'km' ? 'ពេញនិយម' : 'Popular'}
+            </Badge>
+          )}
+        </div>
+        {app.download_count > 0 && (
+          <div className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5">
+            <Download className="h-3 w-3" />
+            <span>{formatDownloads(app.download_count)} {language === 'km' ? 'ទាញយក' : 'downloads'}</span>
+          </div>
+        )}
+        <p className={cn(
+          "text-muted-foreground mt-1",
+          isFullPage ? "text-sm" : "text-xs line-clamp-2"
+        )}>
           {app.description}
         </p>
       </div>
@@ -131,7 +182,7 @@ const AppRecommendCard = ({ app, onClick }: { app: ParsedApp; onClick: () => voi
 };
 
 // Message content renderer with app cards
-const MessageContent = ({ content, onAppClick }: { content: string; onAppClick: (id: number, name: string) => void }) => {
+const MessageContent = ({ content, onAppClick, isFullPage }: { content: string; onAppClick: (id: number, name: string) => void; isFullPage?: boolean }) => {
   const parsed = parseAppTags(content);
   
   return (
@@ -139,15 +190,16 @@ const MessageContent = ({ content, onAppClick }: { content: string; onAppClick: 
       {parsed.map((section, idx) => (
         <div key={idx}>
           {section.text && (
-            <p className="text-sm whitespace-pre-wrap">{section.text}</p>
+            <p className={cn("whitespace-pre-wrap", isFullPage ? "text-base" : "text-sm")}>{section.text}</p>
           )}
           {section.apps.length > 0 && (
-            <div className="space-y-2 mt-2">
+            <div className={cn("mt-2", isFullPage ? "space-y-3" : "space-y-2")}>
               {section.apps.map((app) => (
                 <AppRecommendCard 
                   key={app.id} 
                   app={app} 
                   onClick={() => onAppClick(app.id, app.name)}
+                  isFullPage={isFullPage}
                 />
               ))}
             </div>
@@ -160,6 +212,7 @@ const MessageContent = ({ content, onAppClick }: { content: string; onAppClick: 
 
 export const AIChatBot = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [isFullPage, setIsFullPage] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -180,9 +233,21 @@ export const AIChatBot = () => {
     }
   }, [isOpen]);
 
+  // Handle escape key to close full page mode
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isFullPage) {
+        setIsFullPage(false);
+      }
+    };
+    window.addEventListener('keydown', handleEscape);
+    return () => window.removeEventListener('keydown', handleEscape);
+  }, [isFullPage]);
+
   const handleAppClick = (id: number, name: string) => {
     const slug = createSlug(name);
     setIsOpen(false);
+    setIsFullPage(false);
     navigate(`/${id}-${slug}`);
   };
 
@@ -285,6 +350,133 @@ export const AIChatBot = () => {
     ? "សួស្តី! 👋 ខ្ញុំជាជំនួយការ AI របស់អ្នក។ សូមប្រាប់ខ្ញុំអំពីអ្វីដែលអ្នកត្រូវការ ហើយខ្ញុំនឹងណែនាំកម្មវិធីដ៏ល្អបំផុតសម្រាប់អ្នក!"
     : "Hi there! 👋 I'm your AI assistant. Tell me what you need and I'll recommend the best apps for you!";
 
+  // Full page chat view
+  if (isFullPage) {
+    return (
+      <div className="fixed inset-0 z-50 bg-background animate-in fade-in duration-200">
+        <div className="h-full flex flex-col max-w-4xl mx-auto">
+          {/* Header */}
+          <div className="bg-gradient-to-r from-primary to-primary/80 p-4 flex items-center justify-between shrink-0">
+            <div className="flex items-center gap-3">
+              <div className="h-12 w-12 rounded-full bg-white/20 flex items-center justify-center">
+                <Sparkles className="h-6 w-6 text-white" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-white text-lg">
+                  {language === 'km' ? 'ជំនួយការ AI' : 'AI Assistant'}
+                </h3>
+                <p className="text-sm text-white/80">
+                  {language === 'km' ? 'ស្វែងរកកម្មវិធីល្អបំផុត' : 'Find the perfect app'}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setIsFullPage(false)}
+                className="text-white hover:bg-white/20 h-10 w-10"
+                title={language === 'km' ? 'បង្រួម' : 'Minimize'}
+              >
+                <Minimize2 className="h-5 w-5" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => { setIsFullPage(false); setIsOpen(false); }}
+                className="text-white hover:bg-white/20 h-10 w-10"
+              >
+                <X className="h-5 w-5" />
+              </Button>
+            </div>
+          </div>
+
+          {/* Messages */}
+          <ScrollArea className="flex-1 p-6" ref={scrollRef}>
+            {messages.length === 0 && (
+              <div className="flex gap-4 mb-6">
+                <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                  <Bot className="h-5 w-5 text-primary" />
+                </div>
+                <div className="bg-muted rounded-2xl rounded-tl-sm px-5 py-4 max-w-[80%]">
+                  <p className="text-base">{welcomeMessage}</p>
+                </div>
+              </div>
+            )}
+            
+            {messages.map((message, index) => (
+              <div
+                key={index}
+                className={cn(
+                  "flex gap-4 mb-6",
+                  message.role === "user" && "flex-row-reverse"
+                )}
+              >
+                <div className={cn(
+                  "h-10 w-10 rounded-full flex items-center justify-center shrink-0",
+                  message.role === "user" 
+                    ? "bg-primary text-primary-foreground" 
+                    : "bg-primary/10"
+                )}>
+                  {message.role === "user" 
+                    ? <User className="h-5 w-5" />
+                    : <Bot className="h-5 w-5 text-primary" />
+                  }
+                </div>
+                <div className={cn(
+                  "rounded-2xl px-5 py-4 max-w-[80%]",
+                  message.role === "user"
+                    ? "bg-primary text-primary-foreground rounded-tr-sm"
+                    : "bg-muted rounded-tl-sm"
+                )}>
+                  {message.role === "assistant" ? (
+                    <MessageContent content={message.content} onAppClick={handleAppClick} isFullPage />
+                  ) : (
+                    <p className="text-base whitespace-pre-wrap">{message.content}</p>
+                  )}
+                </div>
+              </div>
+            ))}
+
+            {isLoading && messages[messages.length - 1]?.role !== "assistant" && (
+              <div className="flex gap-4 mb-6">
+                <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                  <Bot className="h-5 w-5 text-primary" />
+                </div>
+                <div className="bg-muted rounded-2xl rounded-tl-sm px-5 py-4">
+                  <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                </div>
+              </div>
+            )}
+          </ScrollArea>
+
+          {/* Input */}
+          <div className="p-6 border-t bg-background shrink-0">
+            <div className="flex gap-3">
+              <Input
+                ref={inputRef}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={handleKeyPress}
+                placeholder={language === 'km' ? 'សរសេរសារ...' : 'Type a message...'}
+                className="flex-1 rounded-full bg-muted border-0 h-12 px-5 text-base"
+                disabled={isLoading}
+              />
+              <Button
+                onClick={handleSend}
+                disabled={!input.trim() || isLoading}
+                size="icon"
+                className="rounded-full h-12 w-12 shrink-0"
+              >
+                <Send className="h-5 w-5" />
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <>
       {/* Chat Button with Pulsing Animation */}
@@ -332,14 +524,25 @@ export const AIChatBot = () => {
                   </p>
                 </div>
               </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setIsOpen(false)}
-                className="text-white hover:bg-white/20 h-8 w-8"
-              >
-                <X className="h-5 w-5" />
-              </Button>
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setIsFullPage(true)}
+                  className="text-white hover:bg-white/20 h-8 w-8"
+                  title={language === 'km' ? 'ពង្រីកទំហំពេញ' : 'Full screen'}
+                >
+                  <Maximize2 className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setIsOpen(false)}
+                  className="text-white hover:bg-white/20 h-8 w-8"
+                >
+                  <X className="h-5 w-5" />
+                </Button>
+              </div>
             </div>
 
             {/* Messages */}
