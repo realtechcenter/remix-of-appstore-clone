@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
-import { 
+import { useParams, useNavigate, Link, useLocation } from "react-router-dom";
+import {
   Download, Calendar, HardDrive, ExternalLink, Package, ChevronLeft, 
   ChevronRight, X, Shield, History, ArrowLeft, Home, Search, Sparkles,
   Box, Gamepad2, Puzzle, LayoutGrid, ChevronDown, ShoppingCart, Lock,
@@ -313,6 +313,7 @@ const AppDetailSkeleton = () => (
 const AppDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const { t } = useLanguage();
   const translations = useTranslations();
   const { user } = useAuth();
@@ -322,6 +323,17 @@ const AppDetail = () => {
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
   const { language, setLanguage } = useLanguage();
   
+  // Get the previous location from state or default to home
+  const fromPath = (location.state as { from?: string })?.from || '/';
+  
+  const handleBack = () => {
+    // Use browser back if we have history, otherwise navigate to stored path
+    if (window.history.length > 2) {
+      navigate(-1);
+    } else {
+      navigate(fromPath);
+    }
+  };
   
   const languages = [
     { code: "km" as const, name: "ខ្មែរ", flag: "🇰🇭" },
@@ -418,7 +430,7 @@ const AppDetail = () => {
             <Button 
               variant="ghost" 
               size="icon" 
-              onClick={() => navigate('/')}
+              onClick={handleBack}
               className="lg:hidden"
             >
               <ArrowLeft className="w-5 h-5" />
