@@ -197,7 +197,26 @@ const Auth = () => {
       setErrors({ otp: 'Please enter the 6-digit code' });
       return;
     }
-    setMode('reset-password');
+    
+    // Verify OTP with backend before proceeding
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/otp/verify-reset-code`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify({ email, code: otp, type: 'password_reset' }),
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok || data.error) {
+        toast.error(data.error || (language === 'km' ? 'កូដ OTP មិនត្រឹមត្រូវ' : 'Invalid or expired OTP'));
+        return;
+      }
+      
+      setMode('reset-password');
+    } catch (error) {
+      toast.error(language === 'km' ? 'មានបញ្ហាកើតឡើង' : 'Something went wrong');
+    }
   };
 
   const handleResetPassword = async () => {

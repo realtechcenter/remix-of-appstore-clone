@@ -129,6 +129,35 @@ class OtpController extends Controller
     }
 
     /**
+     * Verify OTP code only (without resetting password)
+     */
+    public function verifyResetCode(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email',
+            'code' => 'required|string|size:6',
+            'type' => 'required|in:registration,password_reset',
+        ]);
+
+        $otp = OtpCode::where('email', $request->email)
+            ->where('code', $request->code)
+            ->where('type', $request->type)
+            ->where('used', false)
+            ->where('expires_at', '>', now())
+            ->first();
+
+        if (!$otp) {
+            return response()->json(['error' => 'Invalid or expired OTP'], 400);
+        }
+
+        // Don't mark as used yet - will be marked when password is actually reset
+        return response()->json([
+            'success' => true,
+            'message' => 'OTP verified successfully',
+        ]);
+    }
+
+    /**
      * Verify OTP and reset password
      */
     public function verifyPasswordResetOtp(Request $request)
