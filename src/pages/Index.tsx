@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Menu, X } from "lucide-react";
+
 import { Sidebar } from "@/components/Sidebar";
 import { Header } from "@/components/Header";
 import { HeroSlider } from "@/components/HeroSlider";
@@ -69,14 +69,6 @@ const Index = () => {
 
   return (
     <div className={`min-h-screen bg-background ${language === 'km' ? 'font-khmer' : ''}`}>
-      {/* Mobile Menu Button */}
-      <button
-        onClick={() => setSidebarOpen(!sidebarOpen)}
-        className="lg:hidden fixed top-20 left-4 z-[60] p-2 bg-card rounded-xl border border-border shadow-lg"
-      >
-        {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-      </button>
-
       {/* Mobile Overlay */}
       {sidebarOpen && (
         <div
@@ -93,11 +85,17 @@ const Index = () => {
           setSidebarOpen(false);
         }}
         isOpen={sidebarOpen}
+        onToggle={() => setSidebarOpen(!sidebarOpen)}
       />
 
       {/* Main Content */}
-      <main className="lg:ml-64 px-4 sm:px-6 lg:px-8 pb-12 pt-16 lg:pt-0">
-        <Header searchQuery={searchQuery} onSearchChange={setSearchQuery} />
+      <main className="lg:ml-64 px-4 sm:px-6 lg:px-8 pb-12">
+        <Header 
+          searchQuery={searchQuery} 
+          onSearchChange={setSearchQuery}
+          onMenuToggle={() => setSidebarOpen(!sidebarOpen)}
+          isSidebarOpen={sidebarOpen}
+        />
         {!searchQuery && activeCategory === "all" && <HeroSlider />}
         <PageTransition transitionKey={`${activeCategory}-${searchQuery}`}>
           {renderContent()}

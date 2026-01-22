@@ -1,4 +1,4 @@
-import { Search, ChevronDown, X, User, LogOut, ShoppingBag } from "lucide-react";
+import { Search, ChevronDown, X, User, LogOut, ShoppingBag, Menu } from "lucide-react";
 import { useState } from "react";
 import { useLanguage, useTranslations } from "@/contexts/LanguageContext";
 import { Link, useNavigate } from "react-router-dom";
@@ -21,9 +21,11 @@ const languages = [
 interface HeaderProps {
   searchQuery: string;
   onSearchChange: (query: string) => void;
+  onMenuToggle?: () => void;
+  isSidebarOpen?: boolean;
 }
 
-export const Header = ({ searchQuery, onSearchChange }: HeaderProps) => {
+export const Header = ({ searchQuery, onSearchChange, onMenuToggle, isSidebarOpen }: HeaderProps) => {
   const { language, setLanguage } = useLanguage();
   const t = useTranslations();
   const { user, signOut } = useAuth();
@@ -40,6 +42,16 @@ export const Header = ({ searchQuery, onSearchChange }: HeaderProps) => {
   return (
     <header className="sticky top-0 z-40 glass py-3 sm:py-4 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8">
       <div className="flex items-center gap-2 sm:gap-4">
+        {/* Mobile Menu Button */}
+        {onMenuToggle && (
+          <button
+            onClick={onMenuToggle}
+            className="lg:hidden p-2 bg-card rounded-xl border border-border hover:bg-accent transition-colors"
+          >
+            {isSidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          </button>
+        )}
+        
         {/* Search */}
         <div className="flex-1 relative group">
           <Search className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground transition-colors group-focus-within:text-primary" />
