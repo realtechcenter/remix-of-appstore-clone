@@ -4,8 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\App;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Log;
 
 class AIChatController extends Controller
@@ -269,27 +269,44 @@ class AIChatController extends Controller
      */
     private function getAppsFromDatabase()
     {
-        // Cache apps for 10 minutes to prevent repeated database queries
-        return Cache::remember('ai_chat_apps_catalog', 600, function () {
-            return App::select(['id', 'name', 'name_km', 'description', 'description_km', 'icon_url', 'price', 'category', 'is_popular', 'download_count'])
-                ->orderBy('download_count', 'desc')
-                ->limit(2000)
-                ->get()
-                ->map(function ($app) {
-                    return [
-                        'id' => $app->id,
-                        'name' => $app->name,
-                        'name_km' => $app->name_km ?? $app->name,
-                        'description' => $app->description ?? '',
-                        'description_km' => $app->description_km ?? $app->description ?? '',
-                        'icon_url' => $app->icon_url ?? '',
-                        'price' => $app->price ?? 0,
-                        'category' => $app->category ?? 'programs',
-                        'is_popular' => $app->is_popular ?? false,
-                        'download_count' => $app->download_count ?? 0,
-                    ];
-                });
-        });
+        // Use file-based cache (10 minutes) to prevent repeated database queries
+        // File cache doesn't require database table setup
+        $cacheKey = 'ai_chat_apps_catalog';
+        $cachePath = storage_path('framework/cache/ai_apps_catalog.json');
+        $cacheTime = 600; // 10 minutes
+        
+        // Check if cache file exists and is still valid
+        if (file_exists($cachePath) && (time() - filemtime($cachePath)) < $cacheTime) {
+            $cached = json_decode(file_get_contents($cachePath), true);
+            if ($cached) {
+                return collect($cached);
+            }
+        }
+        
+        // Fetch from database and cache
+        $apps = App::select(['id', 'name', 'name_km', 'description', 'description_km', 'icon_url', 'price', 'category', 'is_popular', 'download_count'])
+            ->orderBy('download_count', 'desc')
+            ->limit(2000)
+            ->get()
+            ->map(function ($app) {
+                return [
+                    'id' => $app->id,
+                    'name' => $app->name,
+                    'name_km' => $app->name_km ?? $app->name,
+                    'description' => $app->description ?? '',
+                    'description_km' => $app->description_km ?? $app->description ?? '',
+                    'icon_url' => $app->icon_url ?? '',
+                    'price' => $app->price ?? 0,
+                    'category' => $app->category ?? 'programs',
+                    'is_popular' => $app->is_popular ?? false,
+                    'download_count' => $app->download_count ?? 0,
+                ];
+            });
+        
+        // Save to file cache
+        file_put_contents($cachePath, json_encode($apps->toArray()));
+        
+        return $apps;
     }
 
     /**
@@ -297,7 +314,10 @@ class AIChatController extends Controller
      */
     public static function clearAppsCache(): void
     {
-        Cache::forget('ai_chat_apps_catalog');
+        $cachePath = storage_path('framework/cache/ai_apps_catalog.json');
+        if (file_exists($cachePath)) {
+            unlink($cachePath);
+        }
     }
 
     /**
