@@ -34,6 +34,27 @@ class AppController extends Controller
             $query->where('is_featured', true);
         }
 
+        // Popular filter
+        if ($request->has('popular') && $request->popular === 'true') {
+            $query->where('is_popular', true);
+        }
+
+        // Price range filters
+        if ($request->has('min_price') && is_numeric($request->min_price)) {
+            $query->where('price', '>=', (float) $request->min_price);
+        }
+
+        if ($request->has('max_price') && is_numeric($request->max_price)) {
+            $query->where('price', '<=', (float) $request->max_price);
+        }
+
+        // Free only filter
+        if ($request->has('free_only') && $request->free_only === 'true') {
+            $query->where(function ($q) {
+                $q->whereNull('price')->orWhere('price', 0);
+            });
+        }
+
         // Pagination
         $page = (int) ($request->page ?? 1);
         $limit = (int) ($request->limit ?? 20);
@@ -81,6 +102,7 @@ class AppController extends Controller
             'developer' => $request->developer,
             'website' => $request->website,
             'is_featured' => $request->is_featured ?? false,
+            'is_popular' => $request->is_popular ?? false,
             'price' => $request->price,
         ]);
 
@@ -120,6 +142,7 @@ class AppController extends Controller
             'developer' => $request->developer ?? $app->developer,
             'website' => $request->website ?? $app->website,
             'is_featured' => $request->is_featured ?? $app->is_featured,
+            'is_popular' => $request->is_popular ?? $app->is_popular,
             'price' => $request->price ?? $app->price,
         ]);
 

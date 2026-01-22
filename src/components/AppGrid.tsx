@@ -5,12 +5,14 @@ import { useTranslations } from "@/contexts/LanguageContext";
 import { usePaginatedApps } from "@/hooks/useApps";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
+import { AppFilters, type FilterOptions } from "./AppFilters";
 
 interface AppGridProps {
   title?: string;
   showViewAll?: boolean;
   searchQuery?: string;
   itemsPerPage?: number;
+  showFilters?: boolean;
 }
 
 const AppGridSkeleton = () => (
@@ -34,20 +36,31 @@ const EmptyState = ({ message }: { message: string }) => (
   </div>
 );
 
-export const AppGrid = ({ title, showViewAll = true, searchQuery = "", itemsPerPage = 10 }: AppGridProps) => {
+export const AppGrid = ({ 
+  title, 
+  showViewAll = true, 
+  searchQuery = "", 
+  itemsPerPage = 10, 
+  showFilters = true 
+}: AppGridProps) => {
   const t = useTranslations();
   const [currentPage, setCurrentPage] = useState(1);
+  const [filters, setFilters] = useState<FilterOptions>({});
   
   const { data, isLoading, error, isFetching } = usePaginatedApps({
     search: searchQuery || undefined,
     page: currentPage,
     limit: itemsPerPage,
+    popular: filters.popular || undefined,
+    minPrice: filters.minPrice,
+    maxPrice: filters.maxPrice,
+    freeOnly: filters.freeOnly || undefined,
   });
 
-  // Reset to page 1 when search changes
+  // Reset to page 1 when search or filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery]);
+  }, [searchQuery, filters]);
 
   const apps = data?.data || [];
   const pagination = data?.pagination;
@@ -63,7 +76,7 @@ export const AppGrid = ({ title, showViewAll = true, searchQuery = "", itemsPerP
 
   return (
     <section className="mb-10">
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
         <h2 className="text-xl font-semibold text-foreground">
           {displayTitle}
           {total > 0 && (
@@ -72,9 +85,14 @@ export const AppGrid = ({ title, showViewAll = true, searchQuery = "", itemsPerP
             </span>
           )}
         </h2>
-        {showViewAll && !searchQuery && (
-          <a href="#" className="section-link">{t.viewAll}</a>
-        )}
+        <div className="flex items-center gap-3">
+          {showFilters && (
+            <AppFilters filters={filters} onFiltersChange={setFilters} />
+          )}
+          {showViewAll && !searchQuery && (
+            <a href="#" className="section-link">{t.viewAll}</a>
+          )}
+        </div>
       </div>
 
       {isLoading && !data ? (

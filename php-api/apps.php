@@ -52,6 +52,10 @@ switch ($method) {
             $category = $_GET['category'] ?? null;
             $search = $_GET['search'] ?? null;
             $featured = isset($_GET['featured']);
+            $popular = isset($_GET['popular']);
+            $minPrice = isset($_GET['min_price']) ? floatval($_GET['min_price']) : null;
+            $maxPrice = isset($_GET['max_price']) ? floatval($_GET['max_price']) : null;
+            $freeOnly = isset($_GET['free_only']);
             $page = max(1, intval($_GET['page'] ?? 1));
             $limit = max(1, min(100, intval($_GET['limit'] ?? 10)));
             $offset = ($page - 1) * $limit;
@@ -78,10 +82,30 @@ switch ($method) {
                 $countSql .= " AND is_featured = 1";
             }
             
+            if ($popular) {
+                $countSql .= " AND is_popular = 1";
+            }
+            
+            if ($freeOnly) {
+                $countSql .= " AND (price IS NULL OR price = 0)";
+            } else {
+                if ($minPrice !== null) {
+                    $countSql .= " AND price >= ?";
+                    $params[] = $minPrice;
+                }
+                if ($maxPrice !== null) {
+                    $countSql .= " AND price <= ?";
+                    $params[] = $maxPrice;
+                }
+            }
+            
             // Get total count
             $stmt = $pdo->prepare($countSql);
             $stmt->execute($params);
             $total = (int)$stmt->fetchColumn();
+            
+            // Reset params for main query
+            $params = [];
             
             // Main query with pagination
             $sql = "SELECT a.*, 
@@ -90,14 +114,37 @@ switch ($method) {
             
             if ($category) {
                 $sql .= " AND category = ?";
+                $params[] = $category;
             }
             
             if ($search) {
                 $sql .= " AND (name LIKE ? OR name_km LIKE ? OR description LIKE ? OR developer LIKE ?)";
+                $searchParam = "%$search%";
+                $params[] = $searchParam;
+                $params[] = $searchParam;
+                $params[] = $searchParam;
+                $params[] = $searchParam;
             }
             
             if ($featured) {
                 $sql .= " AND is_featured = 1";
+            }
+            
+            if ($popular) {
+                $sql .= " AND is_popular = 1";
+            }
+            
+            if ($freeOnly) {
+                $sql .= " AND (price IS NULL OR price = 0)";
+            } else {
+                if ($minPrice !== null) {
+                    $sql .= " AND price >= ?";
+                    $params[] = $minPrice;
+                }
+                if ($maxPrice !== null) {
+                    $sql .= " AND price <= ?";
+                    $params[] = $maxPrice;
+                }
             }
             
             $sql .= " ORDER BY created_at DESC LIMIT ? OFFSET ?";
@@ -109,7 +156,7 @@ switch ($method) {
             $apps = $stmt->fetchAll();
             
             jsonResponse([
-                'data' => $apps,
+                'apps' => $apps,
                 'pagination' => [
                     'page' => $page,
                     'limit' => $limit,
@@ -123,7 +170,7 @@ switch ($method) {
     case 'POST':
         $data = json_decode(file_get_contents('php://input'), true);
         
-        $stmt = $pdo->prepare("INSERT INTO apps (name, name_km, description, description_km, category, icon_url, developer, website, is_featured) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        $stmt = $pdo->prepare("INSERT INTO apps (name, name_km, description, description_km, category, icon_url, developer, website, is_featured, is_popular, price) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
         $stmt->execute([
             $data['name'] ?? '',
             $data['name_km'] ?? null,
@@ -133,10 +180,24 @@ switch ($method) {
             $data['icon_url'] ?? null,
             $data['developer'] ?? null,
             $data['website'] ?? null,
-            $data['is_featured'] ?? false
+            $data['is_featured'] ?? false,
+            $data['is_popular'] ?? false,
+            $data['price'] ?? null
         ]);
         
         $appId = $pdo->lastInsertId();
+        
+        // Handle screenshots
+        if (isset($data['screenshots']) && is_array($data['screenshots'])) {
+            $screenshotStmt = $pdo->prepare("INSERT INTO app_screenshots (app_id, image_url, sort_order) VALUES (?, ?, ?)");
+            foreach ($data['screenshots'] as $index => $url) {
+                if (!empty($url)) {
+                    $screenshotStmt->execute([$appId, $url, $index]);
+                }
+            }
+        }
+        
+        jsonResponse(['success' => true, 'id' => $appId, 'message' => 'App created successfully'], 201);
         
         // Handle screenshots
         if (isset($data['screenshots']) && is_array($data['screenshots'])) {
@@ -159,7 +220,7 @@ switch ($method) {
             jsonResponse(['error' => 'App ID required'], 400);
         }
         
-        $stmt = $pdo->prepare("UPDATE apps SET name = ?, name_km = ?, description = ?, description_km = ?, category = ?, icon_url = ?, developer = ?, website = ?, is_featured = ? WHERE id = ?");
+        $stmt = $pdo->prepare("UPDATE apps SET name = ?, name_km = ?, description = ?, description_km = ?, category = ?, icon_url = ?, developer = ?, website = ?, is_featured = ?, is_popular = ?, price = ? WHERE id = ?");
         $stmt->execute([
             $data['name'] ?? '',
             $data['name_km'] ?? null,
@@ -170,6 +231,8 @@ switch ($method) {
             $data['developer'] ?? null,
             $data['website'] ?? null,
             $data['is_featured'] ?? false,
+            $data['is_popular'] ?? false,
+            $data['price'] ?? null,
             $id
         ]);
         
@@ -186,7 +249,7 @@ switch ($method) {
             }
         }
         
-        jsonResponse(['message' => 'App updated successfully']);
+        jsonResponse(['success' => true, 'message' => 'App updated successfully']);
         break;
         
     case 'DELETE':

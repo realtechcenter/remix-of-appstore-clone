@@ -98,6 +98,7 @@ const AppForm = ({ app, onSave, onCancel }: AppFormProps) => {
     developer: app?.developer || "",
     website: app?.website || "",
     is_featured: app?.is_featured || false,
+    is_popular: app?.is_popular || false,
     price: app?.price || 0,
   });
   // Initialize screenshots from existing app data
@@ -246,13 +247,23 @@ const AppForm = ({ app, onSave, onCancel }: AppFormProps) => {
         onUpdate={setScreenshots}
       />
 
-      <div className="flex items-center gap-2">
-        <Switch
-          id="is_featured"
-          checked={formData.is_featured}
-          onCheckedChange={(checked) => setFormData({ ...formData, is_featured: checked })}
-        />
-        <Label htmlFor="is_featured">Featured App (បង្ហាញជាពិសេស)</Label>
+      <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+        <div className="flex items-center gap-2">
+          <Switch
+            id="is_featured"
+            checked={formData.is_featured}
+            onCheckedChange={(checked) => setFormData({ ...formData, is_featured: checked })}
+          />
+          <Label htmlFor="is_featured">Featured App (បង្ហាញជាពិសេស)</Label>
+        </div>
+        <div className="flex items-center gap-2">
+          <Switch
+            id="is_popular"
+            checked={formData.is_popular}
+            onCheckedChange={(checked) => setFormData({ ...formData, is_popular: checked })}
+          />
+          <Label htmlFor="is_popular">Popular App (ពេញនិយម)</Label>
+        </div>
       </div>
 
       <div className="flex justify-end gap-3 pt-4 border-t border-border">
