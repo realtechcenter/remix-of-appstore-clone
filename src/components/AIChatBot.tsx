@@ -25,19 +25,20 @@ interface ParsedApp {
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/app-recommend-chat`;
 
 // Parse [APP:id:name:icon_url:is_popular:download_count:description] tags from message content
+// icon_url can be relative (e.g., /icons/app.png) or absolute (https://...)
 const parseAppTags = (content: string): { text: string; apps: ParsedApp[] }[] => {
-  // Use a global regex to find all APP tags first
-  const appTagRegex = /\[APP:(\d+):([^:]+):(https?:\/\/[^:]+):([^:]*):(\d*):([^\]]+)\]/g;
-  const fourPartRegex = /\[APP:(\d+):([^:]+):(https?:\/\/[^:]+):([^\]]+)\]/g;
+  // Use a global regex to find all APP tags first - support both relative and absolute URLs
+  const appTagRegex = /\[APP:(\d+):([^:]+):((?:https?:\/\/[^:]+|\/[^:]+)):([^:]*):(\d*):([^\]]+)\]/g;
+  const fourPartRegex = /\[APP:(\d+):([^:]+):((?:https?:\/\/[^:]+|\/[^:]+)):([^\]]+)\]/g;
   const oldFormatRegex = /\[APP:(\d+):([^:]+):([^\]]+)\]/g;
   
   let apps: ParsedApp[] = [];
   let cleanText = content;
   
-  // Try 6-part format first (with is_popular and download_count)
+  // Try 6-part format first (with is_popular and download_count) - support relative and absolute URLs
   let match;
   const sixPartMatches: ParsedApp[] = [];
-  const appTagRegexLocal = /\[APP:(\d+):([^:]+):(https?:\/\/[^:]+):([^:]*):(\d*):([^\]]+)\]/g;
+  const appTagRegexLocal = /\[APP:(\d+):([^:]+):((?:https?:\/\/[^:]+|\/[^:]+)):([^:]*):(\d*):([^\]]+)\]/g;
   while ((match = appTagRegexLocal.exec(content)) !== null) {
     sixPartMatches.push({
       id: parseInt(match[1], 10),
@@ -53,8 +54,8 @@ const parseAppTags = (content: string): { text: string; apps: ParsedApp[] }[] =>
   if (sixPartMatches.length > 0) {
     apps = sixPartMatches;
   } else {
-    // Try 4-part format with URL
-    const fourPartRegexLocal = /\[APP:(\d+):([^:]+):(https?:\/\/[^:]+):([^\]]+)\]/g;
+    // Try 4-part format with URL - support relative and absolute URLs
+    const fourPartRegexLocal = /\[APP:(\d+):([^:]+):((?:https?:\/\/[^:]+|\/[^:]+)):([^\]]+)\]/g;
     const fourPartMatches: ParsedApp[] = [];
     while ((match = fourPartRegexLocal.exec(content)) !== null) {
       fourPartMatches.push({
@@ -107,6 +108,9 @@ const formatDownloads = (count: number): string => {
   return count.toString();
 };
 
+// Base URL for icons - your own server
+const ICON_BASE_URL = "https://api.realtechcomputer.com";
+
 // App Card Component for chat recommendations
 const AppRecommendCard = ({ app, onClick, isFullPage }: { app: ParsedApp; onClick: () => void; isFullPage?: boolean }) => {
   const { language } = useLanguage();
@@ -120,10 +124,10 @@ const AppRecommendCard = ({ app, onClick, isFullPage }: { app: ParsedApp; onClic
   
   const gradientIndex = app.id % gradients.length;
   
-  // Build full icon URL - handle relative paths
+  // Build full icon URL - handle relative paths from your server
   let iconUrl = app.icon_url || "";
   if (iconUrl && !iconUrl.startsWith('http')) {
-    iconUrl = `https://api.realtechcomputer.com${iconUrl.startsWith('/') ? '' : '/'}${iconUrl}`;
+    iconUrl = `${ICON_BASE_URL}${iconUrl.startsWith('/') ? '' : '/'}${iconUrl}`;
   }
   const hasIcon = iconUrl.length > 0;
   
