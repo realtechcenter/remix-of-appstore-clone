@@ -16,6 +16,7 @@ use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\UserStatusController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\AppSubmissionController;
+use App\Http\Controllers\AIChatController;
 
 /*
 |--------------------------------------------------------------------------
@@ -40,6 +41,10 @@ Route::post('/otp/resend', [OtpController::class, 'resendOtp']);
 Route::get('/apps', [AppController::class, 'index']);
 Route::get('/apps/{id}', [AppController::class, 'show']);
 Route::get('/versions', [VersionController::class, 'index']);
+
+// AI Chat (public)
+Route::post('/ai/chat', [AIChatController::class, 'chat']);
+Route::post('/ai/chat/stream', [AIChatController::class, 'streamChat']);
 
 // Protected admin routes
 Route::middleware('auth.admin')->group(function () {
