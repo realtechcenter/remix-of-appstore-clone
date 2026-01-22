@@ -1,5 +1,6 @@
-import { useState, useEffect, useMemo } from "react";
+import { useEffect, useMemo, useCallback } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useSearchParams } from "react-router-dom";
 import { AppCard } from "./AppCard";
 import { useTranslations } from "@/contexts/LanguageContext";
 import { usePaginatedApps } from "@/hooks/useApps";
@@ -35,7 +36,23 @@ const EmptyState = ({ message }: { message: string }) => (
 
 export const GamesGrid = ({ searchQuery = "", itemsPerPage = 10 }: GamesGridProps) => {
   const t = useTranslations();
-  const [currentPage, setCurrentPage] = useState(1);
+  const [searchParams, setSearchParams] = useSearchParams();
+  
+  // Get page from URL params, default to 1
+  const currentPage = parseInt(searchParams.get('gamePage') || '1', 10);
+  
+  const setCurrentPage = useCallback((page: number | ((prev: number) => number)) => {
+    const newPage = typeof page === 'function' ? page(currentPage) : page;
+    setSearchParams(prev => {
+      const newParams = new URLSearchParams(prev);
+      if (newPage === 1) {
+        newParams.delete('gamePage');
+      } else {
+        newParams.set('gamePage', String(newPage));
+      }
+      return newParams;
+    }, { replace: true });
+  }, [currentPage, setSearchParams]);
   
   const { data, isLoading, error, isFetching } = usePaginatedApps({
     category: "games",
@@ -59,7 +76,9 @@ export const GamesGrid = ({ searchQuery = "", itemsPerPage = 10 }: GamesGridProp
 
   // Reset to page 1 when search changes
   useEffect(() => {
-    setCurrentPage(1);
+    if (currentPage !== 1) {
+      setCurrentPage(1);
+    }
   }, [searchQuery]);
 
   const games = data?.data || [];
