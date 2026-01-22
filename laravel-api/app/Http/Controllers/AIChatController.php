@@ -268,8 +268,10 @@ class AIChatController extends Controller
      */
     private function getAppsFromDatabase()
     {
-        // Fetch ALL apps without limit to ensure AI can recommend any app in the catalog
+        // Fetch up to 2000 apps to ensure AI can recommend most apps while preventing timeout
         return App::select(['id', 'name', 'name_km', 'description', 'description_km', 'icon_url', 'price', 'category', 'is_popular', 'download_count'])
+            ->orderBy('download_count', 'desc')
+            ->limit(2000)
             ->get()
             ->map(function ($app) {
                 return [
