@@ -24,6 +24,12 @@ Deno.serve(async (req) => {
   }
 
   try {
+    // Get the authorization header from the incoming request
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      throw new Error("Missing authorization header");
+    }
+
     const { messages } = await req.json();
     
     // Fetch apps from Laravel API
@@ -76,11 +82,13 @@ Example response:
 
 Both are excellent choices for professional photography work!"`;
 
+    console.log("Calling AI Gateway with model: google/gemini-3-flash-preview");
+    
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: { 
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${Deno.env.get("SUPABASE_ANON_KEY")}`
+        "Authorization": authHeader
       },
       body: JSON.stringify({
         model: "google/gemini-3-flash-preview",
