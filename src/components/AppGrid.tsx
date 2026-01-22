@@ -1,5 +1,6 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useSearchParams } from "react-router-dom";
 import { AppCard } from "./AppCard";
 import { useTranslations } from "@/contexts/LanguageContext";
 import { usePaginatedApps } from "@/hooks/useApps";
@@ -45,8 +46,24 @@ export const AppGrid = ({
   showFilters = true 
 }: AppGridProps) => {
   const t = useTranslations();
-  const [currentPage, setCurrentPage] = useState(1);
+  const [searchParams, setSearchParams] = useSearchParams();
   const [filters, setFilters] = useState<FilterOptions>({});
+  
+  // Get page from URL params, default to 1
+  const currentPage = parseInt(searchParams.get('appPage') || '1', 10);
+  
+  const setCurrentPage = useCallback((page: number | ((prev: number) => number)) => {
+    const newPage = typeof page === 'function' ? page(currentPage) : page;
+    setSearchParams(prev => {
+      const newParams = new URLSearchParams(prev);
+      if (newPage === 1) {
+        newParams.delete('appPage');
+      } else {
+        newParams.set('appPage', String(newPage));
+      }
+      return newParams;
+    }, { replace: true });
+  }, [currentPage, setSearchParams]);
   
   const { data, isLoading, error, isFetching } = usePaginatedApps({
     search: searchQuery || undefined,
@@ -73,7 +90,9 @@ export const AppGrid = ({
 
   // Reset to page 1 when search or filters change
   useEffect(() => {
-    setCurrentPage(1);
+    if (currentPage !== 1) {
+      setCurrentPage(1);
+    }
   }, [searchQuery, filters]);
 
   const apps = data?.data || [];
