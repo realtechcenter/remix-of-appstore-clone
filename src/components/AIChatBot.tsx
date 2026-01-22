@@ -225,13 +225,28 @@ const MessageContent = ({ content, onAppClick, isFullPage }: { content: string; 
 export const AIChatBot = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isFullPage, setIsFullPage] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<Message[]>(() => {
+    // Load chat history from sessionStorage on mount
+    try {
+      const saved = sessionStorage.getItem('ai-chat-history');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const { language } = useLanguage();
   const navigate = useNavigate();
+
+  // Save chat history to sessionStorage whenever messages change
+  useEffect(() => {
+    if (messages.length > 0) {
+      sessionStorage.setItem('ai-chat-history', JSON.stringify(messages));
+    }
+  }, [messages]);
 
   useEffect(() => {
     if (scrollRef.current) {
