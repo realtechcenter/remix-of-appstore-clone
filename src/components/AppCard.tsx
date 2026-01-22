@@ -15,6 +15,7 @@ interface AppCardProps {
   iconBg?: string;
   hasUpdate?: boolean;
   size?: string;
+  purchased?: boolean;
 }
 
 const getGradientFromName = (name: string): string => {
@@ -124,7 +125,11 @@ export const AppCard = (props: AppCardProps) => {
         <p className="text-[10px] sm:text-xs text-muted-foreground line-clamp-2 leading-relaxed">{displayDescription}</p>
         
         {/* Price badge */}
-        {isPaidApp ? (
+        {props.purchased ? (
+          <div className="absolute top-2 right-2 bg-green-600 text-white text-[10px] sm:text-xs font-semibold px-2 py-0.5 rounded-full shadow-md">
+            {language === 'km' ? 'បានទិញ' : 'Paid'}
+          </div>
+        ) : isPaidApp ? (
           <div className="absolute top-2 right-2 bg-primary text-primary-foreground text-[10px] sm:text-xs font-semibold px-2 py-0.5 rounded-full shadow-md flex items-center gap-0.5">
             <DollarSign className="w-3 h-3" />
             <span>{priceNum.toFixed(2)}</span>
