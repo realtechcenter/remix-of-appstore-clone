@@ -187,7 +187,7 @@ const AppRecommendCard = ({ app, onClick, isFullPage }: { app: ParsedApp; onClic
         {app.download_count > 0 && (
           <div className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5">
             <Download className="h-3 w-3" />
-            <span>{formatDownloads(app.download_count)} {language === 'km' ? 'ទាញយក' : 'downloads'}</span>
+            <span>{formatDownloads(app.download_count)} {language === 'km' ? 'ទាញយក' : (app.download_count === 1 ? 'download' : 'downloads')}</span>
           </div>
         )}
         <p className={cn(
