@@ -14,6 +14,144 @@ export type Database = {
   }
   public: {
     Tables: {
+      analytics_daily: {
+        Row: {
+          active_users: number | null
+          created_at: string
+          date: string
+          id: string
+          new_users: number | null
+          paid_orders: number | null
+          total_downloads: number | null
+          total_orders: number | null
+          total_revenue: number | null
+          total_users: number | null
+          updated_at: string
+        }
+        Insert: {
+          active_users?: number | null
+          created_at?: string
+          date: string
+          id?: string
+          new_users?: number | null
+          paid_orders?: number | null
+          total_downloads?: number | null
+          total_orders?: number | null
+          total_revenue?: number | null
+          total_users?: number | null
+          updated_at?: string
+        }
+        Update: {
+          active_users?: number | null
+          created_at?: string
+          date?: string
+          id?: string
+          new_users?: number | null
+          paid_orders?: number | null
+          total_downloads?: number | null
+          total_orders?: number | null
+          total_revenue?: number | null
+          total_users?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      app_submissions: {
+        Row: {
+          app_id: number
+          created_at: string
+          id: string
+          rejection_reason: string | null
+          review_notes: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: Database["public"]["Enums"]["app_status"]
+          submitted_at: string
+          submitted_by: string
+          updated_at: string
+          version: string
+        }
+        Insert: {
+          app_id: number
+          created_at?: string
+          id?: string
+          rejection_reason?: string | null
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: Database["public"]["Enums"]["app_status"]
+          submitted_at?: string
+          submitted_by: string
+          updated_at?: string
+          version: string
+        }
+        Update: {
+          app_id?: number
+          created_at?: string
+          id?: string
+          rejection_reason?: string | null
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: Database["public"]["Enums"]["app_status"]
+          submitted_at?: string
+          submitted_by?: string
+          updated_at?: string
+          version?: string
+        }
+        Relationships: []
+      }
+      notifications: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          expires_at: string | null
+          id: string
+          is_read_by: string[] | null
+          message: string
+          message_km: string | null
+          published_at: string | null
+          specific_user_ids: string[] | null
+          target_users: string
+          title: string
+          title_km: string | null
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string | null
+          id?: string
+          is_read_by?: string[] | null
+          message: string
+          message_km?: string | null
+          published_at?: string | null
+          specific_user_ids?: string[] | null
+          target_users?: string
+          title: string
+          title_km?: string | null
+          type?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string | null
+          id?: string
+          is_read_by?: string[] | null
+          message?: string
+          message_km?: string | null
+          published_at?: string | null
+          specific_user_ids?: string[] | null
+          target_users?: string
+          title?: string
+          title_km?: string | null
+          type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       orders: {
         Row: {
           amount: number
@@ -145,15 +283,111 @@ export type Database = {
         }
         Relationships: []
       }
+      user_activity_logs: {
+        Row: {
+          action: string
+          created_at: string
+          details: Json | null
+          id: string
+          ip_address: string | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          ip_address?: string | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          ip_address?: string | null
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_status: {
+        Row: {
+          created_at: string
+          id: string
+          reason: string | null
+          status: string
+          suspended_until: string | null
+          updated_at: string
+          updated_by: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          reason?: string | null
+          status?: string
+          suspended_until?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          reason?: string | null
+          status?: string
+          suspended_until?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "moderator" | "user"
+      app_status:
+        | "draft"
+        | "pending_review"
+        | "approved"
+        | "rejected"
+        | "suspended"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -280,6 +514,15 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "moderator", "user"],
+      app_status: [
+        "draft",
+        "pending_review",
+        "approved",
+        "rejected",
+        "suspended",
+      ],
+    },
   },
 } as const
