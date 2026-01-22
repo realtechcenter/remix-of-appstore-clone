@@ -35,15 +35,19 @@ Deno.serve(async (req) => {
 
     const { messages } = await req.json();
     
-    // Fetch apps from Laravel API
+    // Fetch ALL apps from Laravel API (increased limit to get full catalog)
     let apps: App[] = [];
     try {
-      console.log("Fetching apps from:", `${LARAVEL_API_URL}/api/apps?limit=100`);
-      const appsResponse = await fetch(`${LARAVEL_API_URL}/api/apps?limit=100`);
+      console.log("Fetching apps from:", `${LARAVEL_API_URL}/api/apps?limit=500`);
+      const appsResponse = await fetch(`${LARAVEL_API_URL}/api/apps?limit=500`);
       if (appsResponse.ok) {
         const data = await appsResponse.json();
         apps = data.data || data.apps || [];
         console.log("Fetched apps count:", apps.length);
+        
+        // Log if Microsoft Office apps are found
+        const officeApps = apps.filter(a => a.name.toLowerCase().includes('microsoft office'));
+        console.log("Microsoft Office apps found:", officeApps.length, officeApps.map(a => a.name));
       } else {
         console.error("Failed to fetch apps:", appsResponse.status);
       }
