@@ -1,9 +1,16 @@
 import { useState, useRef, useCallback } from 'react';
-import ReactCrop, { Crop, PixelCrop, centerCrop, makeAspectCrop } from 'react-image-crop';
+import ReactCrop, { type Crop, type PixelCrop, centerCrop, makeAspectCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { useTranslations } from '@/contexts/LanguageContext';
+
+// Add custom styles for circular crop overlay
+const circularCropStyles = `
+.ReactCrop__crop-selection {
+  border-radius: 50% !important;
+}
+`;
 
 interface ImageCropperProps {
   isOpen: boolean;
@@ -96,6 +103,7 @@ export const ImageCropper = ({ isOpen, onClose, imageSrc, onCropComplete }: Imag
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-lg">
+        <style>{circularCropStyles}</style>
         <DialogHeader>
           <DialogTitle>{t.cropImage}</DialogTitle>
         </DialogHeader>

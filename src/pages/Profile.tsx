@@ -60,9 +60,8 @@ export default function Profile() {
     try {
       const formData = new FormData();
       formData.append('file', croppedBlob, 'avatar.jpg');
-      formData.append('type', 'avatars');
 
-      const response = await fetch(`${API_BASE_URL}/api/upload`, {
+      const response = await fetch(`${API_BASE_URL}/api/users/upload-avatar`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
