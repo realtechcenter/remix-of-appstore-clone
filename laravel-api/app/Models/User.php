@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class User extends Authenticatable
 {
@@ -32,5 +33,25 @@ class User extends Authenticatable
     public function orders(): HasMany
     {
         return $this->hasMany(Order::class);
+    }
+
+    public function status(): HasOne
+    {
+        return $this->hasOne(UserStatus::class);
+    }
+
+    public function roles(): HasMany
+    {
+        return $this->hasMany(UserRole::class);
+    }
+
+    public function activityLogs(): HasMany
+    {
+        return $this->hasMany(UserActivityLog::class);
+    }
+
+    public function hasRole(string $role): bool
+    {
+        return $this->roles()->where('role', $role)->exists();
     }
 }

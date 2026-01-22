@@ -1,9 +1,8 @@
 import { useState } from "react";
 import { 
-  CheckCircle, XCircle, Clock, Eye, MessageSquare, 
-  ChevronDown, Filter, Search 
+  CheckCircle, XCircle, Clock, Eye, Filter, Search 
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -11,23 +10,10 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { submissionsApi, type AppSubmission } from "@/lib/api";
 import { toast } from "sonner";
 
 type AppStatus = "draft" | "pending_review" | "approved" | "rejected" | "suspended";
-
-interface AppSubmission {
-  id: string;
-  app_id: number;
-  version: string;
-  status: AppStatus;
-  submitted_by: string;
-  reviewed_by: string | null;
-  review_notes: string | null;
-  rejection_reason: string | null;
-  submitted_at: string;
-  reviewed_at: string | null;
-}
 
 const statusConfig: Record<AppStatus, { label: string; color: string; icon: React.ElementType }> = {
   draft: { label: "Draft", color: "bg-gray-500/20 text-gray-600", icon: Clock },
@@ -46,45 +32,23 @@ export const AppReviewSystem = () => {
   const [rejectionReason, setRejectionReason] = useState("");
   const [showReviewDialog, setShowReviewDialog] = useState(false);
 
-  // Fetch submissions
-  const { data: submissions, isLoading } = useQuery({
+  // Fetch submissions from Laravel API
+  const { data, isLoading } = useQuery({
     queryKey: ["app-submissions", statusFilter],
-    queryFn: async () => {
-      let query = supabase
-        .from("app_submissions")
-        .select("*")
-        .order("submitted_at", { ascending: false });
-      
-      if (statusFilter !== "all") {
-        query = query.eq("status", statusFilter);
-      }
-      
-      const { data, error } = await query;
-      if (error) throw error;
-      return (data || []) as AppSubmission[];
-    }
+    queryFn: () => submissionsApi.getAll(statusFilter === "all" ? undefined : statusFilter),
   });
+
+  const submissions = data?.submissions || [];
+  const pendingCount = data?.stats?.pending || 0;
 
   // Update submission status
   const updateSubmission = useMutation({
-    mutationFn: async ({ id, status, notes, reason }: { 
-      id: string; 
+    mutationFn: ({ id, status, notes, reason }: { 
+      id: number; 
       status: AppStatus; 
       notes?: string;
       reason?: string;
-    }) => {
-      const { error } = await supabase
-        .from("app_submissions")
-        .update({
-          status,
-          review_notes: notes,
-          rejection_reason: reason,
-          reviewed_at: new Date().toISOString()
-        })
-        .eq("id", id);
-      
-      if (error) throw error;
-    },
+    }) => submissionsApi.update(id, { status, review_notes: notes, rejection_reason: reason }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["app-submissions"] });
       toast.success("Submission updated successfully");
@@ -129,12 +93,10 @@ export const AppReviewSystem = () => {
     });
   };
 
-  const filteredSubmissions = submissions?.filter(sub => 
+  const filteredSubmissions = submissions.filter(sub => 
     sub.version.toLowerCase().includes(searchQuery.toLowerCase()) ||
     sub.app_id.toString().includes(searchQuery)
   );
-
-  const pendingCount = submissions?.filter(s => s.status === "pending_review").length || 0;
 
   return (
     <div className="space-y-6">
@@ -185,14 +147,14 @@ export const AppReviewSystem = () => {
               Loading submissions...
             </CardContent>
           </Card>
-        ) : filteredSubmissions?.length === 0 ? (
+        ) : filteredSubmissions.length === 0 ? (
           <Card>
             <CardContent className="py-8 text-center text-muted-foreground">
               No submissions found
             </CardContent>
           </Card>
         ) : (
-          filteredSubmissions?.map((submission) => {
+          filteredSubmissions.map((submission) => {
             const statusInfo = statusConfig[submission.status];
             const StatusIcon = statusInfo.icon;
             
@@ -206,7 +168,9 @@ export const AppReviewSystem = () => {
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
-                          <span className="font-medium">App #{submission.app_id}</span>
+                          <span className="font-medium">
+                            {submission.app?.name || `App #${submission.app_id}`}
+                          </span>
                           <Badge variant="outline">v{submission.version}</Badge>
                         </div>
                         <p className="text-sm text-muted-foreground">
@@ -253,8 +217,10 @@ export const AppReviewSystem = () => {
             <div className="space-y-4">
               <div className="p-4 rounded-lg bg-muted/50 space-y-2">
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">App ID</span>
-                  <span className="font-medium">{selectedSubmission.app_id}</span>
+                  <span className="text-muted-foreground">App</span>
+                  <span className="font-medium">
+                    {selectedSubmission.app?.name || `#${selectedSubmission.app_id}`}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Version</span>
