@@ -1,8 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { AppCard } from "./AppCard";
 import { useTranslations } from "@/contexts/LanguageContext";
 import { usePaginatedApps } from "@/hooks/useApps";
+import { useOrders } from "@/hooks/useOrders";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 
@@ -43,6 +44,19 @@ export const GamesGrid = ({ searchQuery = "", itemsPerPage = 10 }: GamesGridProp
     limit: itemsPerPage,
   });
 
+  // Get user's purchased orders
+  const { data: orders } = useOrders();
+  
+  // Create a Set of purchased app IDs for quick lookup
+  const purchasedAppIds = useMemo(() => {
+    if (!orders) return new Set<number>();
+    return new Set(
+      orders
+        .filter(order => order.status === 'paid')
+        .map(order => order.app_id)
+    );
+  }, [orders]);
+
   // Reset to page 1 when search changes
   useEffect(() => {
     setCurrentPage(1);
@@ -82,7 +96,7 @@ export const GamesGrid = ({ searchQuery = "", itemsPerPage = 10 }: GamesGridProp
         <div className={isFetching ? "opacity-70 transition-opacity" : ""}>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
             {games.map((game) => (
-              <AppCard key={game.id} app={game} />
+              <AppCard key={game.id} app={game} purchased={purchasedAppIds.has(game.id)} />
             ))}
           </div>
           

@@ -1,8 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { AppCard } from "./AppCard";
 import { useTranslations } from "@/contexts/LanguageContext";
 import { usePaginatedApps } from "@/hooks/useApps";
+import { useOrders } from "@/hooks/useOrders";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { AppFilters, type FilterOptions } from "./AppFilters";
@@ -57,6 +58,19 @@ export const AppGrid = ({
     freeOnly: filters.freeOnly || undefined,
   });
 
+  // Get user's purchased orders
+  const { data: orders } = useOrders();
+  
+  // Create a Set of purchased app IDs for quick lookup
+  const purchasedAppIds = useMemo(() => {
+    if (!orders) return new Set<number>();
+    return new Set(
+      orders
+        .filter(order => order.status === 'paid')
+        .map(order => order.app_id)
+    );
+  }, [orders]);
+
   // Reset to page 1 when search or filters change
   useEffect(() => {
     setCurrentPage(1);
@@ -103,7 +117,7 @@ export const AppGrid = ({
         <div className={isFetching ? "opacity-70 transition-opacity" : ""}>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
             {apps.map((app) => (
-              <AppCard key={app.id} app={app} />
+              <AppCard key={app.id} app={app} purchased={purchasedAppIds.has(app.id)} />
             ))}
           </div>
           
