@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { MessageCircle, X, Send, Bot, User, Loader2, Sparkles, Maximize2, Minimize2, TrendingUp, Download, Trash2 } from "lucide-react";
+import { MessageCircle, X, Send, Bot, User, Sparkles, Maximize2, Minimize2, TrendingUp, Download, Trash2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -108,6 +108,15 @@ const formatDownloads = (count: number): string => {
   if (count >= 1000) return `${(count / 1000).toFixed(1)}K`;
   return count.toString();
 };
+
+// Typing dots animation component
+const TypingDots = () => (
+  <div className="flex items-center gap-1 py-1">
+    <span className="w-2 h-2 rounded-full bg-muted-foreground/60 animate-bounce" style={{ animationDelay: '0ms', animationDuration: '1s' }} />
+    <span className="w-2 h-2 rounded-full bg-muted-foreground/60 animate-bounce" style={{ animationDelay: '150ms', animationDuration: '1s' }} />
+    <span className="w-2 h-2 rounded-full bg-muted-foreground/60 animate-bounce" style={{ animationDelay: '300ms', animationDuration: '1s' }} />
+  </div>
+);
 
 // App Card Component for chat recommendations
 const AppRecommendCard = ({ app, onClick, isFullPage }: { app: ParsedApp; onClick: () => void; isFullPage?: boolean }) => {
@@ -485,7 +494,7 @@ export const AIChatBot = () => {
                   <Bot className="h-5 w-5 text-primary" />
                 </div>
                 <div className="bg-muted rounded-2xl rounded-tl-sm px-5 py-4">
-                  <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                  <TypingDots />
                 </div>
               </div>
             )}
@@ -650,7 +659,7 @@ export const AIChatBot = () => {
                     <Bot className="h-4 w-4 text-primary" />
                   </div>
                   <div className="bg-muted rounded-2xl rounded-tl-sm px-4 py-3">
-                    <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                    <TypingDots />
                   </div>
                 </div>
               )}
