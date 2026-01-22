@@ -26,6 +26,8 @@ Deno.serve(async (req) => {
   try {
     // Get the LOVABLE_API_KEY for AI Gateway authentication
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    console.log("LOVABLE_API_KEY present:", !!LOVABLE_API_KEY, "Length:", LOVABLE_API_KEY?.length || 0);
+    
     if (!LOVABLE_API_KEY) {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
