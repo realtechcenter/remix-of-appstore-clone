@@ -28,7 +28,7 @@ const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/app-recommen
 // icon_url can be relative (e.g., /icons/app.png) or absolute (https://...)
 const parseAppTags = (content: string): { text: string; apps: ParsedApp[] }[] => {
   // Use a global regex to find all APP tags first - support both relative and absolute URLs
-  const appTagRegex = /\[APP:(\d+):([^:]+):((?:https?:\/\/[^:]+|\/[^:]+)):([^:]*):(\d*):([^\]]+)\]/g;
+  const appTagRegex = /\[APP:(\d+):([^:]+):([^:]+):([^:]*):(\d*):([^\]]+)\]/g;
   const fourPartRegex = /\[APP:(\d+):([^:]+):((?:https?:\/\/[^:]+|\/[^:]+)):([^\]]+)\]/g;
   const oldFormatRegex = /\[APP:(\d+):([^:]+):([^\]]+)\]/g;
   
@@ -38,7 +38,7 @@ const parseAppTags = (content: string): { text: string; apps: ParsedApp[] }[] =>
   // Try 6-part format first (with is_popular and download_count) - support relative and absolute URLs
   let match;
   const sixPartMatches: ParsedApp[] = [];
-  const appTagRegexLocal = /\[APP:(\d+):([^:]+):((?:https?:\/\/[^:]+|\/[^:]+)):([^:]*):(\d*):([^\]]+)\]/g;
+  const appTagRegexLocal = /\[APP:(\d+):([^:]+):([^:]+):([^:]*):(\d*):([^\]]+)\]/g;
   while ((match = appTagRegexLocal.exec(content)) !== null) {
     sixPartMatches.push({
       id: parseInt(match[1], 10),
@@ -54,8 +54,8 @@ const parseAppTags = (content: string): { text: string; apps: ParsedApp[] }[] =>
   if (sixPartMatches.length > 0) {
     apps = sixPartMatches;
   } else {
-    // Try 4-part format with URL - support relative and absolute URLs
-    const fourPartRegexLocal = /\[APP:(\d+):([^:]+):((?:https?:\/\/[^:]+|\/[^:]+)):([^\]]+)\]/g;
+    // Try 4-part format with URL
+    const fourPartRegexLocal = /\[APP:(\d+):([^:]+):([^:]+):([^\]]+)\]/g;
     const fourPartMatches: ParsedApp[] = [];
     while ((match = fourPartRegexLocal.exec(content)) !== null) {
       fourPartMatches.push({
