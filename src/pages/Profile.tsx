@@ -17,7 +17,7 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://api.realtechcomput
 export default function Profile() {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { user, token } = useAuth();
+  const { user, token, updateUser } = useAuth();
   const { language } = useLanguage();
   const t = useTranslations();
 
@@ -98,13 +98,8 @@ export default function Profile() {
 
       setAvatarUrl(newAvatarUrl);
       
-      // Update local storage
-      const storedUser = localStorage.getItem('auth_user');
-      if (storedUser) {
-        const userData = JSON.parse(storedUser);
-        userData.avatar_url = newAvatarUrl;
-        localStorage.setItem('auth_user', JSON.stringify(userData));
-      }
+      // Update user state in context
+      updateUser({ avatar_url: newAvatarUrl });
       
       toast({
         title: language === 'km' ? 'ជោគជ័យ' : 'Success',
@@ -143,23 +138,17 @@ export default function Profile() {
         throw new Error(data.message || 'Update failed');
       }
 
-      // Update local storage
-      const storedUser = localStorage.getItem('auth_user');
-      if (storedUser) {
-        const userData = JSON.parse(storedUser);
-        userData.full_name = fullName;
-        userData.phone = phone;
-        userData.avatar_url = avatarUrl;
-        localStorage.setItem('auth_user', JSON.stringify(userData));
-      }
+      // Update user state in context (no page reload needed)
+      updateUser({
+        full_name: fullName,
+        phone,
+        avatar_url: avatarUrl,
+      });
 
       toast({
         title: language === 'km' ? 'ជោគជ័យ' : 'Success',
         description: language === 'km' ? 'ព័ត៌មានផ្ទាល់ខ្លួនត្រូវបានធ្វើបច្ចុប្បន្នភាព' : 'Profile updated successfully',
       });
-
-      // Reload to reflect changes
-      window.location.reload();
     } catch (error) {
       toast({
         title: language === 'km' ? 'កំហុស' : 'Error',
