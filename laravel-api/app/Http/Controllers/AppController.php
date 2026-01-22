@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\App;
 use App\Models\AppScreenshot;
+use App\Http\Controllers\AIChatController;
 use Illuminate\Http\Request;
 
 class AppController extends Controller
@@ -117,6 +118,9 @@ class AppController extends Controller
             }
         }
 
+        // Clear AI chat cache when new app is added
+        AIChatController::clearAppsCache();
+
         return response()->json([
             'success' => true,
             'id' => $app->id,
@@ -158,6 +162,9 @@ class AppController extends Controller
             }
         }
 
+        // Clear AI chat cache when app is updated
+        AIChatController::clearAppsCache();
+
         return response()->json([
             'success' => true,
             'message' => 'App updated successfully',
@@ -173,6 +180,9 @@ class AppController extends Controller
         }
 
         $app->delete();
+
+        // Clear AI chat cache when app is deleted
+        AIChatController::clearAppsCache();
 
         return response()->json([
             'success' => true,
