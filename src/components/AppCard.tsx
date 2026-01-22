@@ -1,5 +1,5 @@
 import { ArrowUp, Package, HardDrive, DollarSign } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
 import type { App } from "@/lib/api";
 
@@ -46,6 +46,7 @@ const createSlug = (name: string): string => {
 export const AppCard = (props: AppCardProps) => {
   const { t, language } = useLanguage();
   const navigate = useNavigate();
+  const location = useLocation();
   
   const name = props.app?.name || props.name || "";
   const nameKm = props.app?.name_km || props.name_km;
@@ -71,8 +72,11 @@ export const AppCard = (props: AppCardProps) => {
   const handleClick = () => {
     if (props.app) {
       // Navigate to app detail page with URL format: /123-app-name
+      // Store current location with search params in state so back navigation works
       const slug = createSlug(props.app.name);
-      navigate(`/${props.app.id}-${slug}`);
+      navigate(`/${props.app.id}-${slug}`, { 
+        state: { from: location.pathname + location.search } 
+      });
     }
   };
 
