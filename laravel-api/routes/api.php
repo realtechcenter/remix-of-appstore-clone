@@ -9,7 +9,6 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\UploadController;
 use App\Http\Controllers\VersionController;
 use App\Http\Controllers\AdminUserController;
-use App\Http\Controllers\OtpController;
 
 /*
 |--------------------------------------------------------------------------
@@ -21,13 +20,6 @@ use App\Http\Controllers\OtpController;
 Route::post('/auth/login', [AuthController::class, 'login']);
 Route::post('/auth/register', [UserController::class, 'register']);
 Route::post('/users/login', [UserController::class, 'login']);
-
-// OTP routes (public)
-Route::post('/otp/send-registration', [OtpController::class, 'sendRegistrationOtp']);
-Route::post('/otp/verify-registration', [OtpController::class, 'verifyRegistrationOtp']);
-Route::post('/otp/send-password-reset', [OtpController::class, 'sendPasswordResetOtp']);
-Route::post('/otp/verify-password-reset', [OtpController::class, 'verifyPasswordResetOtp']);
-Route::post('/otp/resend', [OtpController::class, 'resendOtp']);
 
 // Apps (public read)
 Route::get('/apps', [AppController::class, 'index']);
