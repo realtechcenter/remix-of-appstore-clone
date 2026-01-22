@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Sidebar } from "@/components/Sidebar";
 import { Header } from "@/components/Header";
 import { HeroSlider } from "@/components/HeroSlider";
+import { PopularApps } from "@/components/PopularApps";
 import { AppGrid } from "@/components/AppGrid";
 import { GamesGrid } from "@/components/GamesGrid";
 import { PageTransition } from "@/components/PageTransition";
@@ -58,9 +59,10 @@ const Index = () => {
           </div>
         );
       default:
-        // "all" or any other - show both programs and games
+        // "all" or any other - show popular apps, then programs and games
         return (
           <>
+            <PopularApps />
             <AppGrid searchQuery={searchQuery} />
             <GamesGrid searchQuery={searchQuery} />
           </>
