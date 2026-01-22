@@ -6,6 +6,7 @@ import { HeroSlider } from "@/components/HeroSlider";
 import { AppGrid } from "@/components/AppGrid";
 import { GamesGrid } from "@/components/GamesGrid";
 import { PageTransition } from "@/components/PageTransition";
+import { AIChatBot } from "@/components/AIChatBot";
 import { useLanguage, useTranslations } from "@/contexts/LanguageContext";
 
 const Index = () => {
@@ -101,6 +102,9 @@ const Index = () => {
           {renderContent()}
         </PageTransition>
       </main>
+
+      {/* AI Chat Bot */}
+      <AIChatBot />
     </div>
   );
 };
