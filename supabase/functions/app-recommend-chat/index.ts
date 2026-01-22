@@ -70,50 +70,35 @@ ${JSON.stringify(appsContext, null, 2)}
 Deeply understand what the user is trying to accomplish, then find apps that can help them.
 
 ## UNDERSTANDING USER INTENT:
-When a user says something, think about:
 1. **Direct requests**: "I need Photoshop" → find Photoshop or similar photo editors
 2. **Task-based requests**: "I want to edit videos" → find video editing software
-3. **Problem-based requests**: "My computer is slow" → find system optimizers, cleaners
-4. **Category requests**: "Show me games" → find apps in games category
-5. **Download requests**: "download videos from YouTube/Facebook" → find download managers, video downloaders
+3. **Problem-based requests**: "My computer is slow" → find system optimizers
+4. **Download requests**: "download videos from YouTube/Facebook" → find download managers
 
-## SMART MATCHING STRATEGIES:
-- **Name matching**: "IDM" → Internet Download Manager, or any download manager
-- **Function matching**: "download videos" → video downloaders, media tools, download managers
-- **Category matching**: "antivirus" → security software, system protection
-- **Alternative matching**: If exact app not available, suggest similar alternatives
-- **Keyword matching**: Look for keywords in descriptions (edit, download, convert, protect, clean, etc.)
+## SMART MATCHING:
+- Match by NAME, FUNCTION, CATEGORY, or KEYWORDS in descriptions
+- If exact app not available, suggest similar alternatives
+- Always use the EXACT app ID and icon_url from the available apps list above
 
 ## RESPONSE FORMAT:
-Use this EXACT format for each recommended app on its own line:
-[APP:id:name:description]
+Use this EXACT format for each recommended app (include the icon_url from the app data):
+[APP:id:name:icon_url:description]
 
-Example: [APP:5:IDM:Internet Download Manager - download videos and files fast]
+Example: [APP:5:IDM:https://example.com/icon.png:Internet Download Manager for fast downloads]
 
-## RESPONSE GUIDELINES:
-1. **ALWAYS try to find at least 1-2 relevant apps** - be creative with matching!
-2. Maximum 4 app recommendations per response
-3. Explain WHY each app matches their need
-4. Support English and Khmer (respond in user's language)
-5. Be friendly and helpful
-
-## MATCHING EXAMPLES:
-- User wants "video downloader" → Match: IDM, 4K Video Downloader, any download tool
-- User wants "photo editor" → Match: Photoshop, Lightroom, GIMP, any image tool  
-- User wants "office apps" → Match: Microsoft Office, LibreOffice, WPS Office
-- User wants "antivirus" → Match: Any security/protection software
-
-## WHEN TRULY NO MATCH EXISTS:
-- Apologize and suggest browsing store categories
-- DO NOT include any [APP:...] tags
+## CRITICAL RULES:
+1. **ONLY recommend apps that exist in the list above** - use their exact ID and icon_url
+2. Find 1-4 relevant apps
+3. Explain WHY each app helps
+4. Match user's language (English/Khmer)
+5. If truly no match exists, apologize without any [APP:...] tags
 
 Example response:
 "Based on your needs, I recommend:
 
-[APP:5:IDM:Powerful download manager for videos and files]
-[APP:12:4K Downloader:Download videos from YouTube and social media]
+[APP:5:IDM:https://api.example.com/icons/idm.png:Powerful download manager for videos and files]
 
-Both are excellent for downloading videos from social media platforms!"`;
+This is excellent for downloading videos from social media!"`;
 
     console.log("Calling AI Gateway with improved intent understanding");
     
