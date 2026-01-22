@@ -61,6 +61,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       });
       
       if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        
+        // Handle banned/suspended users
+        if (response.status === 403 && (data.status === 'banned' || data.status === 'suspended')) {
+          localStorage.removeItem('auth_token');
+          localStorage.removeItem('auth_user');
+          setToken(null);
+          setUser(null);
+          // Store the ban/suspend message to show on login page
+          sessionStorage.setItem('auth_error', data.error || 'Your account has been restricted.');
+          return;
+        }
+        
         // Token invalid, clear storage
         localStorage.removeItem('auth_token');
         localStorage.removeItem('auth_user');
@@ -131,6 +144,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       });
       
       const data = await response.json();
+      
+      // Handle banned/suspended users
+      if (response.status === 403 && (data.status === 'banned' || data.status === 'suspended')) {
+        return { error: new Error(data.error || 'Your account has been restricted.') };
+      }
       
       if (!response.ok || data.error) {
         return { error: new Error(data.error || data.message || 'Login failed') };
