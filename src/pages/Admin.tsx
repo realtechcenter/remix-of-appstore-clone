@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Edit, Trash2, LogOut, Package, Layers, Search, X, Save, ArrowLeft, ChevronLeft, ChevronRight, Users } from "lucide-react";
+import { Plus, Edit, Trash2, LogOut, Package, Layers, Search, X, Save, ArrowLeft, ChevronLeft, ChevronRight, Users, BarChart3, Bell, Shield, Activity, UserX } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -13,6 +13,12 @@ import { toast } from "sonner";
 import { appsApi, versionsApi, authApi, type App, type AppVersion } from "@/lib/api";
 import { FileUpload, ScreenshotUpload } from "@/components/FileUpload";
 import { UserManagement } from "@/components/admin/UserManagement";
+import { AnalyticsDashboard } from "@/components/admin/AnalyticsDashboard";
+import { AppReviewSystem } from "@/components/admin/AppReviewSystem";
+import { NotificationSystem } from "@/components/admin/NotificationSystem";
+import { RoleManagement } from "@/components/admin/RoleManagement";
+import { ActivityLogs } from "@/components/admin/ActivityLogs";
+import { UserStatusManagement } from "@/components/admin/UserStatusManagement";
 
 const AdminLogin = ({ onLogin }: { onLogin: () => void }) => {
   const [username, setUsername] = useState("");
@@ -594,17 +600,41 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
       </header>
 
       <div className="max-w-7xl mx-auto p-3 sm:p-4">
-        <Tabs defaultValue="apps" className="w-full">
-          <TabsList className="mb-4">
+        <Tabs defaultValue="analytics" className="w-full">
+          <TabsList className="mb-4 flex-wrap h-auto gap-1">
+            <TabsTrigger value="analytics" className="gap-2">
+              <BarChart3 className="w-4 h-4" />
+              <span className="hidden sm:inline">Analytics</span>
+            </TabsTrigger>
             <TabsTrigger value="apps" className="gap-2">
               <Package className="w-4 h-4" />
-              Apps
+              <span className="hidden sm:inline">Apps</span>
             </TabsTrigger>
             <TabsTrigger value="users" className="gap-2">
               <Users className="w-4 h-4" />
-              Users
+              <span className="hidden sm:inline">Users</span>
+            </TabsTrigger>
+            <TabsTrigger value="roles" className="gap-2">
+              <Shield className="w-4 h-4" />
+              <span className="hidden sm:inline">Roles</span>
+            </TabsTrigger>
+            <TabsTrigger value="notifications" className="gap-2">
+              <Bell className="w-4 h-4" />
+              <span className="hidden sm:inline">Notifications</span>
+            </TabsTrigger>
+            <TabsTrigger value="activity" className="gap-2">
+              <Activity className="w-4 h-4" />
+              <span className="hidden sm:inline">Activity</span>
+            </TabsTrigger>
+            <TabsTrigger value="status" className="gap-2">
+              <UserX className="w-4 h-4" />
+              <span className="hidden sm:inline">Ban/Suspend</span>
             </TabsTrigger>
           </TabsList>
+          
+          <TabsContent value="analytics">
+            <AnalyticsDashboard />
+          </TabsContent>
           
           <TabsContent value="apps">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
@@ -854,6 +884,22 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
           
           <TabsContent value="users">
             <UserManagement />
+          </TabsContent>
+          
+          <TabsContent value="roles">
+            <RoleManagement />
+          </TabsContent>
+          
+          <TabsContent value="notifications">
+            <NotificationSystem />
+          </TabsContent>
+          
+          <TabsContent value="activity">
+            <ActivityLogs />
+          </TabsContent>
+          
+          <TabsContent value="status">
+            <UserStatusManagement />
           </TabsContent>
         </Tabs>
       </div>
