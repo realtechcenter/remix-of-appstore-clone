@@ -24,14 +24,14 @@ export const Sidebar = ({ activeCategory, onCategoryChange, isOpen = false }: Si
   return (
     <aside className={`fixed left-0 top-0 h-full w-64 bg-background/95 backdrop-blur-xl py-6 px-4 flex flex-col z-50 transform transition-all duration-300 lg:translate-x-0 border-r border-border/50 ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
       {/* Logo */}
-      <div className="flex items-center gap-3 px-4 mb-8">
+      <div className="flex items-center gap-3 px-4 mb-8 mt-12 lg:mt-0">
         <div className="w-10 h-10 bg-gradient-to-br from-primary to-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-primary/25">
           <Sparkles className="w-5 h-5 text-white" />
         </div>
         <div>
           <span className="text-xl font-bold">
-            <span className="gradient-text">apps</span>
-            <span className="text-muted-foreground">torrent</span>
+            <span className="gradient-text">REAL</span>
+            <span className="text-muted-foreground">TECH</span>
           </span>
         </div>
       </div>
