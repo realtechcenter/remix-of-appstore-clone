@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\App;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -264,29 +265,39 @@ class AIChatController extends Controller
     }
 
     /**
-     * Get apps from database
+     * Get apps from database with caching for performance
      */
     private function getAppsFromDatabase()
     {
-        // Fetch up to 2000 apps to ensure AI can recommend most apps while preventing timeout
-        return App::select(['id', 'name', 'name_km', 'description', 'description_km', 'icon_url', 'price', 'category', 'is_popular', 'download_count'])
-            ->orderBy('download_count', 'desc')
-            ->limit(2000)
-            ->get()
-            ->map(function ($app) {
-                return [
-                    'id' => $app->id,
-                    'name' => $app->name,
-                    'name_km' => $app->name_km ?? $app->name,
-                    'description' => $app->description ?? '',
-                    'description_km' => $app->description_km ?? $app->description ?? '',
-                    'icon_url' => $app->icon_url ?? '',
-                    'price' => $app->price ?? 0,
-                    'category' => $app->category ?? 'programs',
-                    'is_popular' => $app->is_popular ?? false,
-                    'download_count' => $app->download_count ?? 0,
-                ];
-            });
+        // Cache apps for 10 minutes to prevent repeated database queries
+        return Cache::remember('ai_chat_apps_catalog', 600, function () {
+            return App::select(['id', 'name', 'name_km', 'description', 'description_km', 'icon_url', 'price', 'category', 'is_popular', 'download_count'])
+                ->orderBy('download_count', 'desc')
+                ->limit(2000)
+                ->get()
+                ->map(function ($app) {
+                    return [
+                        'id' => $app->id,
+                        'name' => $app->name,
+                        'name_km' => $app->name_km ?? $app->name,
+                        'description' => $app->description ?? '',
+                        'description_km' => $app->description_km ?? $app->description ?? '',
+                        'icon_url' => $app->icon_url ?? '',
+                        'price' => $app->price ?? 0,
+                        'category' => $app->category ?? 'programs',
+                        'is_popular' => $app->is_popular ?? false,
+                        'download_count' => $app->download_count ?? 0,
+                    ];
+                });
+        });
+    }
+
+    /**
+     * Clear the apps catalog cache (call when apps are updated)
+     */
+    public static function clearAppsCache(): void
+    {
+        Cache::forget('ai_chat_apps_catalog');
     }
 
     /**
