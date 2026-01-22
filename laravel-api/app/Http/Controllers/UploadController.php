@@ -51,6 +51,28 @@ class UploadController extends Controller
         ]);
     }
 
+    public function uploadAvatar(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|file|mimes:jpeg,png,gif,webp|max:5120',
+        ]);
+
+        $file = $request->file('file');
+        
+        // Generate unique filename
+        $extension = $file->getClientOriginalExtension();
+        $filename = 'avatar_' . $request->user()->id . '_' . time() . '.' . $extension;
+
+        // Store file
+        $path = $file->storeAs("uploads/avatars", $filename, 'public');
+
+        return response()->json([
+            'success' => true,
+            'url' => asset('storage/' . $path),
+            'filename' => $filename,
+        ]);
+    }
+
     private function getAllowedMimes(string $type): array
     {
         return match ($type) {
