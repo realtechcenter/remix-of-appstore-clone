@@ -172,7 +172,58 @@ class AIChatController extends Controller
                     ],
                     CURLOPT_RETURNTRANSFER => false,
                     CURLOPT_WRITEFUNCTION => function ($ch, $data) {
-                        echo $data;
+                        // Transform Gemini SSE format to OpenAI-compatible format
+                        $lines = explode("\n", $data);
+                        
+                        foreach ($lines as $line) {
+                            $line = trim($line);
+                            
+                            if (empty($line)) {
+                                continue;
+                            }
+                            
+                            // Handle SSE data lines
+                            if (str_starts_with($line, 'data: ')) {
+                                $jsonStr = substr($line, 6);
+                                
+                                if ($jsonStr === '[DONE]') {
+                                    echo "data: [DONE]\n\n";
+                                    continue;
+                                }
+                                
+                                try {
+                                    $geminiData = json_decode($jsonStr, true);
+                                    
+                                    if ($geminiData && isset($geminiData['candidates'][0]['content']['parts'][0]['text'])) {
+                                        $text = $geminiData['candidates'][0]['content']['parts'][0]['text'];
+                                        
+                                        // Convert to OpenAI-compatible format
+                                        $openAIFormat = [
+                                            'choices' => [
+                                                [
+                                                    'delta' => [
+                                                        'content' => $text
+                                                    ],
+                                                    'index' => 0,
+                                                    'finish_reason' => null
+                                                ]
+                                            ]
+                                        ];
+                                        
+                                        // Check if this is the final chunk
+                                        if (isset($geminiData['candidates'][0]['finishReason'])) {
+                                            $openAIFormat['choices'][0]['finish_reason'] = strtolower($geminiData['candidates'][0]['finishReason']);
+                                        }
+                                        
+                                        echo "data: " . json_encode($openAIFormat) . "\n\n";
+                                    }
+                                } catch (\Exception $e) {
+                                    // Log parse errors but continue
+                                    Log::warning('Failed to parse Gemini chunk', ['data' => $jsonStr]);
+                                }
+                            }
+                        }
+                        
                         if (ob_get_level() > 0) {
                             ob_flush();
                         }
@@ -188,6 +239,13 @@ class AIChatController extends Controller
                     Log::error('Gemini streaming curl error', ['error' => $error]);
                     echo "data: " . json_encode(['error' => 'Failed to connect to AI service']) . "\n\n";
                 }
+                
+                // Send [DONE] at the end
+                echo "data: [DONE]\n\n";
+                if (ob_get_level() > 0) {
+                    ob_flush();
+                }
+                flush();
                 
                 curl_close($ch);
             }, 200, $headers);
