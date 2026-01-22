@@ -166,16 +166,16 @@ interface LanguageContextType {
 }
 
 const defaultContextValue: LanguageContextType = {
-  language: "km",
+  language: "en",
   setLanguage: () => {},
-  t: (km, en) => km || en || "",
-  translations: translations.km,
+  t: (km, en) => en || km || "",
+  translations: translations.en,
 };
 
 const LanguageContext = createContext<LanguageContextType>(defaultContextValue);
 
 export const LanguageProvider = ({ children }: { children: ReactNode }) => {
-  const [language, setLanguage] = useState<Language>("km");
+  const [language, setLanguage] = useState<Language>("en");
 
   const value = useMemo((): LanguageContextType => {
     // Translation helper - returns text based on current language
