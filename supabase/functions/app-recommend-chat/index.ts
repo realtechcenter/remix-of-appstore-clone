@@ -34,6 +34,7 @@ Deno.serve(async (req) => {
     }
 
     const { messages } = await req.json();
+    console.log("Received messages count:", messages?.length, "Messages:", JSON.stringify(messages?.map((m: {role: string, content: string}) => ({ role: m.role, content: m.content.substring(0, 50) }))));
     
     // Fetch ALL apps from Laravel API by paginating through all pages
     let apps: App[] = [];
