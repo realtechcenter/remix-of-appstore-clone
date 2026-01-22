@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { MessageCircle, X, Send, Bot, User, Loader2, Sparkles, Maximize2, Minimize2, TrendingUp, Download } from "lucide-react";
+import { MessageCircle, X, Send, Bot, User, Loader2, Sparkles, Maximize2, Minimize2, TrendingUp, Download, Trash2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -108,9 +108,6 @@ const formatDownloads = (count: number): string => {
   return count.toString();
 };
 
-// Base URL for icons - your own server
-const ICON_BASE_URL = "https://api.realtechcomputer.com";
-
 // App Card Component for chat recommendations
 const AppRecommendCard = ({ app, onClick, isFullPage }: { app: ParsedApp; onClick: () => void; isFullPage?: boolean }) => {
   const { language } = useLanguage();
@@ -124,11 +121,8 @@ const AppRecommendCard = ({ app, onClick, isFullPage }: { app: ParsedApp; onClic
   
   const gradientIndex = app.id % gradients.length;
   
-  // Build full icon URL - handle relative paths from your server
-  let iconUrl = app.icon_url || "";
-  if (iconUrl && !iconUrl.startsWith('http')) {
-    iconUrl = `${ICON_BASE_URL}${iconUrl.startsWith('/') ? '' : '/'}${iconUrl}`;
-  }
+  // Use icon URL directly as-is from API
+  const iconUrl = app.icon_url || "";
   const hasIcon = iconUrl.length > 0;
   
   return (
@@ -377,6 +371,11 @@ export const AIChatBot = () => {
     }
   };
 
+  const handleClearChat = () => {
+    setMessages([]);
+    sessionStorage.removeItem('ai-chat-history');
+  };
+
   const welcomeMessage = language === 'km' 
     ? "សួស្តី! 👋 ខ្ញុំជាជំនួយការ AI របស់អ្នក។ សូមប្រាប់ខ្ញុំអំពីអ្វីដែលអ្នកត្រូវការ ហើយខ្ញុំនឹងណែនាំកម្មវិធីដ៏ល្អបំផុតសម្រាប់អ្នក!"
     : "Hi there! 👋 I'm your AI assistant. Tell me what you need and I'll recommend the best apps for you!";
@@ -402,6 +401,17 @@ export const AIChatBot = () => {
               </div>
             </div>
             <div className="flex items-center gap-2">
+              {messages.length > 0 && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleClearChat}
+                  className="text-white hover:bg-white/20 h-10 w-10"
+                  title={language === 'km' ? 'សម្អាតការសន្ទនា' : 'Clear chat'}
+                >
+                  <Trash2 className="h-5 w-5" />
+                </Button>
+              )}
               <Button
                 variant="ghost"
                 size="icon"
@@ -556,6 +566,17 @@ export const AIChatBot = () => {
                 </div>
               </div>
               <div className="flex items-center gap-1">
+                {messages.length > 0 && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={handleClearChat}
+                    className="text-white hover:bg-white/20 h-8 w-8"
+                    title={language === 'km' ? 'សម្អាតការសន្ទនា' : 'Clear chat'}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                )}
                 <Button
                   variant="ghost"
                   size="icon"
