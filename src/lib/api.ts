@@ -298,3 +298,185 @@ export const adminUsersApi = {
     return apiRequest(`admin/orders${queryString ? `?${queryString}` : ''}`);
   },
 };
+
+// Analytics Types
+export interface AnalyticsStats {
+  total_users: number;
+  new_users: number;
+  total_orders: number;
+  paid_orders: number;
+  total_revenue: number;
+  avg_order_value: number;
+  conversion_rate: number;
+}
+
+export interface RevenueByDate {
+  date: string;
+  revenue: number;
+  orders: number;
+}
+
+export interface OrdersByStatus {
+  status: string;
+  count: number;
+}
+
+// Analytics API
+export const analyticsApi = {
+  getDashboard: async (days: number = 30): Promise<{
+    stats: AnalyticsStats;
+    revenue_by_date: RevenueByDate[];
+    orders_by_status: OrdersByStatus[];
+    recent_orders: AdminOrder[];
+    top_apps: { app_id: number; app_name: string; revenue: number; sales: number }[];
+  }> => {
+    return apiRequest(`admin/analytics?days=${days}`);
+  },
+};
+
+// Roles Types
+export interface UserWithRoles {
+  user_id: number;
+  full_name: string | null;
+  email: string | null;
+  roles: ('admin' | 'moderator' | 'user')[];
+}
+
+// Roles API
+export const rolesApi = {
+  getAll: async (): Promise<{ users: UserWithRoles[] }> => {
+    return apiRequest('admin/roles');
+  },
+  
+  add: async (userId: number, role: string): Promise<{ success: boolean; message: string }> => {
+    return apiRequest('admin/roles', { method: 'POST', body: { user_id: userId, role } });
+  },
+  
+  remove: async (userId: number, role: string): Promise<{ success: boolean; message: string }> => {
+    return apiRequest('admin/roles', { method: 'DELETE', body: { user_id: userId, role } });
+  },
+};
+
+// Activity Log Types
+export interface ActivityLog {
+  id: number;
+  user_id: number;
+  action: string;
+  details: Record<string, any> | null;
+  ip_address: string | null;
+  user_agent: string | null;
+  created_at: string;
+  user?: { id: number; email: string; full_name?: string };
+}
+
+// Activity Logs API
+export const activityLogsApi = {
+  getAll: async (params?: { days?: number; action?: string; limit?: number }): Promise<{
+    logs: ActivityLog[];
+    actions: string[];
+    stats: { total: number; logins: number; purchases: number; downloads: number };
+  }> => {
+    const query = new URLSearchParams();
+    if (params?.days) query.set('days', params.days.toString());
+    if (params?.action) query.set('action', params.action);
+    if (params?.limit) query.set('limit', params.limit.toString());
+    
+    const queryString = query.toString();
+    return apiRequest(`admin/activity-logs${queryString ? `?${queryString}` : ''}`);
+  },
+};
+
+// User Status Types
+export interface UserWithStatus {
+  user_id: number;
+  full_name: string | null;
+  email: string | null;
+  created_at: string;
+  status: {
+    id: number;
+    status: 'active' | 'suspended' | 'banned';
+    reason: string | null;
+    suspended_until: string | null;
+    updated_at: string;
+  } | null;
+}
+
+// User Status API
+export const userStatusApi = {
+  getAll: async (status?: string): Promise<{
+    users: UserWithStatus[];
+    stats: { active: number; suspended: number; banned: number };
+  }> => {
+    const query = status ? `?status=${status}` : '';
+    return apiRequest(`admin/user-status${query}`);
+  },
+  
+  update: async (userId: number, data: { status: string; reason?: string; suspended_until?: string }): Promise<{ success: boolean; message: string }> => {
+    return apiRequest('admin/user-status', { method: 'POST', body: { user_id: userId, ...data } });
+  },
+};
+
+// Notification Types
+export interface AdminNotification {
+  id: number;
+  title: string;
+  title_km: string | null;
+  message: string;
+  message_km: string | null;
+  type: 'announcement' | 'update' | 'promotion' | 'system';
+  target_users: 'all' | 'admins' | 'specific';
+  specific_user_ids: number[] | null;
+  published_at: string | null;
+  expires_at: string | null;
+  created_at: string;
+}
+
+// Notifications API
+export const notificationsApi = {
+  getAll: async (): Promise<{ notifications: AdminNotification[] }> => {
+    return apiRequest('admin/notifications');
+  },
+  
+  create: async (data: Omit<AdminNotification, 'id' | 'created_at'>): Promise<{ success: boolean; notification: AdminNotification }> => {
+    return apiRequest('admin/notifications', { method: 'POST', body: data });
+  },
+  
+  update: async (id: number, data: Partial<AdminNotification>): Promise<{ success: boolean; notification: AdminNotification }> => {
+    return apiRequest(`admin/notifications/${id}`, { method: 'PUT', body: data });
+  },
+  
+  delete: async (id: number): Promise<{ success: boolean; message: string }> => {
+    return apiRequest(`admin/notifications/${id}`, { method: 'DELETE' });
+  },
+};
+
+// App Submission Types
+export interface AppSubmission {
+  id: number;
+  app_id: number;
+  version: string;
+  status: 'draft' | 'pending_review' | 'approved' | 'rejected' | 'suspended';
+  submitted_by: number;
+  reviewed_by: number | null;
+  review_notes: string | null;
+  rejection_reason: string | null;
+  submitted_at: string;
+  reviewed_at: string | null;
+  app?: { id: number; name: string; icon_url?: string };
+  submittedBy?: { id: number; email: string; full_name?: string };
+}
+
+// App Submissions API
+export const submissionsApi = {
+  getAll: async (status?: string): Promise<{
+    submissions: AppSubmission[];
+    stats: { pending: number; approved: number; rejected: number; suspended: number };
+  }> => {
+    const query = status && status !== 'all' ? `?status=${status}` : '';
+    return apiRequest(`admin/submissions${query}`);
+  },
+  
+  update: async (id: number, data: { status: string; review_notes?: string; rejection_reason?: string }): Promise<{ success: boolean; submission: AppSubmission }> => {
+    return apiRequest(`admin/submissions/${id}`, { method: 'PUT', body: data });
+  },
+};

@@ -1,19 +1,18 @@
 import { useState, useMemo } from "react";
 import { 
-  TrendingUp, Users, ShoppingCart, DollarSign, Download, 
+  TrendingUp, Users, ShoppingCart, DollarSign, 
   Calendar, ArrowUpRight, ArrowDownRight 
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { analyticsApi } from "@/lib/api";
 import { 
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  BarChart, Bar, PieChart, Pie, Cell
+  PieChart, Pie, Cell
 } from "recharts";
 
-type TimeRange = "7d" | "30d" | "90d" | "1y";
+type TimeRange = "7" | "30" | "90" | "365";
 
 interface StatCardProps {
   title: string;
@@ -51,83 +50,17 @@ const StatCard = ({ title, value, change, icon: Icon, trend }: StatCardProps) =>
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
 
 export const AnalyticsDashboard = () => {
-  const [timeRange, setTimeRange] = useState<TimeRange>("30d");
+  const [timeRange, setTimeRange] = useState<TimeRange>("30");
   
-  // Fetch orders data for analytics
-  const { data: ordersData } = useQuery({
+  // Fetch analytics from Laravel API
+  const { data, isLoading } = useQuery({
     queryKey: ["admin-analytics", timeRange],
-    queryFn: async () => {
-      const daysMap: Record<TimeRange, number> = { "7d": 7, "30d": 30, "90d": 90, "1y": 365 };
-      const days = daysMap[timeRange];
-      const startDate = new Date();
-      startDate.setDate(startDate.getDate() - days);
-      
-      const { data: orders, error } = await supabase
-        .from("orders")
-        .select("*")
-        .gte("created_at", startDate.toISOString());
-      
-      if (error) throw error;
-      return orders || [];
-    }
+    queryFn: () => analyticsApi.getDashboard(parseInt(timeRange)),
   });
 
-  // Fetch profiles for user count
-  const { data: profilesData } = useQuery({
-    queryKey: ["admin-profiles-count"],
-    queryFn: async () => {
-      const { count, error } = await supabase
-        .from("profiles")
-        .select("*", { count: "exact", head: true });
-      
-      if (error) throw error;
-      return count || 0;
-    }
-  });
-
-  // Calculate statistics
-  const stats = useMemo(() => {
-    if (!ordersData) return null;
-    
-    const paidOrders = ordersData.filter(o => o.status === "paid");
-    const totalRevenue = paidOrders.reduce((sum, o) => sum + Number(o.amount), 0);
-    const avgOrderValue = paidOrders.length > 0 ? totalRevenue / paidOrders.length : 0;
-    
-    return {
-      totalUsers: profilesData || 0,
-      totalOrders: ordersData.length,
-      paidOrders: paidOrders.length,
-      totalRevenue,
-      avgOrderValue,
-      conversionRate: ordersData.length > 0 ? (paidOrders.length / ordersData.length) * 100 : 0
-    };
-  }, [ordersData, profilesData]);
-
-  // Prepare chart data
-  const revenueChartData = useMemo(() => {
-    if (!ordersData) return [];
-    
-    const groupedByDate: Record<string, number> = {};
-    ordersData
-      .filter(o => o.status === "paid")
-      .forEach(order => {
-        const date = new Date(order.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" });
-        groupedByDate[date] = (groupedByDate[date] || 0) + Number(order.amount);
-      });
-    
-    return Object.entries(groupedByDate).map(([date, revenue]) => ({ date, revenue }));
-  }, [ordersData]);
-
-  const ordersByStatus = useMemo(() => {
-    if (!ordersData) return [];
-    
-    const statusCounts: Record<string, number> = {};
-    ordersData.forEach(order => {
-      statusCounts[order.status] = (statusCounts[order.status] || 0) + 1;
-    });
-    
-    return Object.entries(statusCounts).map(([name, value]) => ({ name, value }));
-  }, [ordersData]);
+  const stats = data?.stats;
+  const revenueChartData = data?.revenue_by_date || [];
+  const ordersByStatus = data?.orders_by_status?.map(s => ({ name: s.status, value: s.count })) || [];
 
   return (
     <div className="space-y-6">
@@ -143,10 +76,10 @@ export const AnalyticsDashboard = () => {
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="7d">Last 7 days</SelectItem>
-            <SelectItem value="30d">Last 30 days</SelectItem>
-            <SelectItem value="90d">Last 90 days</SelectItem>
-            <SelectItem value="1y">Last year</SelectItem>
+            <SelectItem value="7">Last 7 days</SelectItem>
+            <SelectItem value="30">Last 30 days</SelectItem>
+            <SelectItem value="90">Last 90 days</SelectItem>
+            <SelectItem value="365">Last year</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -155,28 +88,28 @@ export const AnalyticsDashboard = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard 
           title="Total Users" 
-          value={stats?.totalUsers.toLocaleString() || "0"} 
+          value={stats?.total_users?.toLocaleString() || "0"} 
           icon={Users}
           change={12}
           trend="up"
         />
         <StatCard 
           title="Total Orders" 
-          value={stats?.totalOrders.toLocaleString() || "0"} 
+          value={stats?.total_orders?.toLocaleString() || "0"} 
           icon={ShoppingCart}
           change={8}
           trend="up"
         />
         <StatCard 
           title="Total Revenue" 
-          value={`$${stats?.totalRevenue.toFixed(2) || "0.00"}`} 
+          value={`$${stats?.total_revenue?.toFixed(2) || "0.00"}`} 
           icon={DollarSign}
           change={15}
           trend="up"
         />
         <StatCard 
           title="Conversion Rate" 
-          value={`${stats?.conversionRate.toFixed(1) || "0"}%`} 
+          value={`${stats?.conversion_rate?.toFixed(1) || "0"}%`} 
           icon={TrendingUp}
           change={-2}
           trend="down"
@@ -192,28 +125,34 @@ export const AnalyticsDashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={revenueChartData}>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                  <XAxis dataKey="date" className="text-xs" />
-                  <YAxis className="text-xs" />
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: 'hsl(var(--card))', 
-                      border: '1px solid hsl(var(--border))',
-                      borderRadius: '8px'
-                    }}
-                    formatter={(value: number) => [`$${value.toFixed(2)}`, 'Revenue']}
-                  />
-                  <Line 
-                    type="monotone" 
-                    dataKey="revenue" 
-                    stroke="hsl(var(--primary))" 
-                    strokeWidth={2}
-                    dot={{ fill: 'hsl(var(--primary))' }}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
+              {isLoading ? (
+                <div className="flex items-center justify-center h-full text-muted-foreground">Loading...</div>
+              ) : revenueChartData.length === 0 ? (
+                <div className="flex items-center justify-center h-full text-muted-foreground">No data</div>
+              ) : (
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={revenueChartData}>
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                    <XAxis dataKey="date" className="text-xs" />
+                    <YAxis className="text-xs" />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: 'hsl(var(--card))', 
+                        border: '1px solid hsl(var(--border))',
+                        borderRadius: '8px'
+                      }}
+                      formatter={(value: number) => [`$${value.toFixed(2)}`, 'Revenue']}
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="revenue" 
+                      stroke="hsl(var(--primary))" 
+                      strokeWidth={2}
+                      dot={{ fill: 'hsl(var(--primary))' }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -225,31 +164,37 @@ export const AnalyticsDashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={ordersByStatus}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={60}
-                    outerRadius={100}
-                    paddingAngle={5}
-                    dataKey="value"
-                    label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
-                  >
-                    {ordersByStatus.map((_, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: 'hsl(var(--card))', 
-                      border: '1px solid hsl(var(--border))',
-                      borderRadius: '8px'
-                    }}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
+              {isLoading ? (
+                <div className="flex items-center justify-center h-full text-muted-foreground">Loading...</div>
+              ) : ordersByStatus.length === 0 ? (
+                <div className="flex items-center justify-center h-full text-muted-foreground">No data</div>
+              ) : (
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={ordersByStatus}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={60}
+                      outerRadius={100}
+                      paddingAngle={5}
+                      dataKey="value"
+                      label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
+                    >
+                      {ordersByStatus.map((_, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: 'hsl(var(--card))', 
+                        border: '1px solid hsl(var(--border))',
+                        borderRadius: '8px'
+                      }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -262,7 +207,7 @@ export const AnalyticsDashboard = () => {
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            {ordersData?.slice(0, 5).map((order) => (
+            {data?.recent_orders?.slice(0, 5).map((order) => (
               <div key={order.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
                 <div>
                   <p className="font-medium">{order.app_name}</p>
@@ -271,7 +216,7 @@ export const AnalyticsDashboard = () => {
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className="font-medium">${Number(order.amount).toFixed(2)}</p>
+                  <p className="font-medium">${parseFloat(String(order.amount)).toFixed(2)}</p>
                   <span className={`text-xs px-2 py-0.5 rounded ${
                     order.status === "paid" ? "bg-green-500/20 text-green-600" : 
                     order.status === "pending" ? "bg-yellow-500/20 text-yellow-600" : 

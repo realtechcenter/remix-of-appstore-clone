@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { 
   Bell, Plus, Send, Trash2, Edit, Calendar, Users, 
-  Megaphone, Gift, AlertCircle, Settings, Eye
+  Megaphone, Gift, AlertCircle
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,25 +13,11 @@ import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { notificationsApi, type AdminNotification } from "@/lib/api";
 import { toast } from "sonner";
 
 type NotificationType = "announcement" | "update" | "promotion" | "system";
 type TargetUsers = "all" | "admins" | "specific";
-
-interface Notification {
-  id: string;
-  title: string;
-  title_km: string | null;
-  message: string;
-  message_km: string | null;
-  type: NotificationType;
-  target_users: TargetUsers;
-  specific_user_ids: string[] | null;
-  published_at: string | null;
-  expires_at: string | null;
-  created_at: string;
-}
 
 const typeConfig: Record<NotificationType, { label: string; icon: React.ElementType; color: string }> = {
   announcement: { label: "Announcement", icon: Megaphone, color: "bg-blue-500/20 text-blue-600" },
@@ -48,7 +34,7 @@ interface NotificationFormData {
   type: NotificationType;
   target_users: TargetUsers;
   publish_immediately: boolean;
-  scheduled_date: string;
+  published_at: string;
   expires_at: string;
 }
 
@@ -60,55 +46,43 @@ const defaultFormData: NotificationFormData = {
   type: "announcement",
   target_users: "all",
   publish_immediately: true,
-  scheduled_date: "",
+  published_at: "",
   expires_at: ""
 };
 
 export const NotificationSystem = () => {
   const queryClient = useQueryClient();
   const [showForm, setShowForm] = useState(false);
-  const [editingNotification, setEditingNotification] = useState<Notification | null>(null);
+  const [editingNotification, setEditingNotification] = useState<AdminNotification | null>(null);
   const [formData, setFormData] = useState<NotificationFormData>(defaultFormData);
 
-  // Fetch notifications
-  const { data: notifications, isLoading } = useQuery({
+  // Fetch notifications from Laravel API
+  const { data, isLoading } = useQuery({
     queryKey: ["admin-notifications"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("notifications")
-        .select("*")
-        .order("created_at", { ascending: false });
-      
-      if (error) throw error;
-      return (data || []) as Notification[];
-    }
+    queryFn: () => notificationsApi.getAll(),
   });
+
+  const notifications = data?.notifications || [];
 
   // Create/Update notification
   const saveNotification = useMutation({
-    mutationFn: async (data: NotificationFormData) => {
+    mutationFn: async (formData: NotificationFormData) => {
       const payload = {
-        title: data.title,
-        title_km: data.title_km || null,
-        message: data.message,
-        message_km: data.message_km || null,
-        type: data.type,
-        target_users: data.target_users,
-        published_at: data.publish_immediately ? new Date().toISOString() : (data.scheduled_date || null),
-        expires_at: data.expires_at || null
+        title: formData.title,
+        title_km: formData.title_km || null,
+        message: formData.message,
+        message_km: formData.message_km || null,
+        type: formData.type,
+        target_users: formData.target_users,
+        published_at: formData.publish_immediately ? new Date().toISOString() : (formData.published_at || null),
+        expires_at: formData.expires_at || null,
+        specific_user_ids: null,
       };
 
       if (editingNotification) {
-        const { error } = await supabase
-          .from("notifications")
-          .update(payload)
-          .eq("id", editingNotification.id);
-        if (error) throw error;
+        return notificationsApi.update(editingNotification.id, payload);
       } else {
-        const { error } = await supabase
-          .from("notifications")
-          .insert(payload);
-        if (error) throw error;
+        return notificationsApi.create(payload as any);
       }
     },
     onSuccess: () => {
@@ -123,13 +97,7 @@ export const NotificationSystem = () => {
 
   // Delete notification
   const deleteNotification = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase
-        .from("notifications")
-        .delete()
-        .eq("id", id);
-      if (error) throw error;
-    },
+    mutationFn: (id: number) => notificationsApi.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-notifications"] });
       toast.success("Notification deleted");
@@ -139,7 +107,7 @@ export const NotificationSystem = () => {
     }
   });
 
-  const handleOpenForm = (notification?: Notification) => {
+  const handleOpenForm = (notification?: AdminNotification) => {
     if (notification) {
       setEditingNotification(notification);
       setFormData({
@@ -150,7 +118,7 @@ export const NotificationSystem = () => {
         type: notification.type,
         target_users: notification.target_users,
         publish_immediately: false,
-        scheduled_date: notification.published_at || "",
+        published_at: notification.published_at || "",
         expires_at: notification.expires_at || ""
       });
     } else {
@@ -175,14 +143,22 @@ export const NotificationSystem = () => {
     saveNotification.mutate(formData);
   };
 
-  const isPublished = (notification: Notification) => {
+  const isPublished = (notification: AdminNotification) => {
     if (!notification.published_at) return false;
     return new Date(notification.published_at) <= new Date();
   };
 
-  const isExpired = (notification: Notification) => {
+  const isExpired = (notification: AdminNotification) => {
     if (!notification.expires_at) return false;
     return new Date(notification.expires_at) < new Date();
+  };
+
+  // Calculate stats
+  const stats = {
+    total: notifications.length,
+    active: notifications.filter(n => isPublished(n) && !isExpired(n)).length,
+    scheduled: notifications.filter(n => !isPublished(n)).length,
+    expired: notifications.filter(n => isExpired(n)).length,
   };
 
   return (
@@ -203,31 +179,25 @@ export const NotificationSystem = () => {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <Card>
           <CardContent className="pt-4">
-            <div className="text-2xl font-bold">{notifications?.length || 0}</div>
+            <div className="text-2xl font-bold">{stats.total}</div>
             <p className="text-sm text-muted-foreground">Total</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-4">
-            <div className="text-2xl font-bold text-green-600">
-              {notifications?.filter(n => isPublished(n) && !isExpired(n)).length || 0}
-            </div>
+            <div className="text-2xl font-bold text-green-600">{stats.active}</div>
             <p className="text-sm text-muted-foreground">Active</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-4">
-            <div className="text-2xl font-bold text-yellow-600">
-              {notifications?.filter(n => !isPublished(n)).length || 0}
-            </div>
+            <div className="text-2xl font-bold text-yellow-600">{stats.scheduled}</div>
             <p className="text-sm text-muted-foreground">Scheduled</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-4">
-            <div className="text-2xl font-bold text-gray-500">
-              {notifications?.filter(n => isExpired(n)).length || 0}
-            </div>
+            <div className="text-2xl font-bold text-gray-500">{stats.expired}</div>
             <p className="text-sm text-muted-foreground">Expired</p>
           </CardContent>
         </Card>
@@ -241,14 +211,14 @@ export const NotificationSystem = () => {
               Loading notifications...
             </CardContent>
           </Card>
-        ) : notifications?.length === 0 ? (
+        ) : notifications.length === 0 ? (
           <Card>
             <CardContent className="py-8 text-center text-muted-foreground">
               No notifications yet. Create your first one!
             </CardContent>
           </Card>
         ) : (
-          notifications?.map((notification) => {
+          notifications.map((notification) => {
             const typeInfo = typeConfig[notification.type];
             const TypeIcon = typeInfo.icon;
             const published = isPublished(notification);
@@ -426,8 +396,8 @@ export const NotificationSystem = () => {
                 <Label>Scheduled Date</Label>
                 <Input
                   type="datetime-local"
-                  value={formData.scheduled_date}
-                  onChange={(e) => setFormData({ ...formData, scheduled_date: e.target.value })}
+                  value={formData.published_at}
+                  onChange={(e) => setFormData({ ...formData, published_at: e.target.value })}
                   className="mt-1.5"
                 />
               </div>

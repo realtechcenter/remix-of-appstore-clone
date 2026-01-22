@@ -10,6 +10,12 @@ use App\Http\Controllers\UploadController;
 use App\Http\Controllers\VersionController;
 use App\Http\Controllers\AdminUserController;
 use App\Http\Controllers\OtpController;
+use App\Http\Controllers\AnalyticsController;
+use App\Http\Controllers\RoleController;
+use App\Http\Controllers\ActivityLogController;
+use App\Http\Controllers\UserStatusController;
+use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\AppSubmissionController;
 
 /*
 |--------------------------------------------------------------------------
@@ -55,6 +61,31 @@ Route::middleware('auth.admin')->group(function () {
     Route::post('/admin/users/{id}/grant-app', [AdminUserController::class, 'grantApp']);
     Route::delete('/admin/users/{userId}/revoke-app/{appId}', [AdminUserController::class, 'revokeApp']);
     Route::get('/admin/orders', [AdminUserController::class, 'allOrders']);
+    
+    // Analytics
+    Route::get('/admin/analytics', [AnalyticsController::class, 'dashboard']);
+    
+    // Roles management
+    Route::get('/admin/roles', [RoleController::class, 'index']);
+    Route::post('/admin/roles', [RoleController::class, 'store']);
+    Route::delete('/admin/roles', [RoleController::class, 'destroy']);
+    
+    // Activity logs
+    Route::get('/admin/activity-logs', [ActivityLogController::class, 'index']);
+    
+    // User status (ban/suspend)
+    Route::get('/admin/user-status', [UserStatusController::class, 'index']);
+    Route::post('/admin/user-status', [UserStatusController::class, 'update']);
+    
+    // Notifications management
+    Route::get('/admin/notifications', [NotificationController::class, 'index']);
+    Route::post('/admin/notifications', [NotificationController::class, 'store']);
+    Route::put('/admin/notifications/{id}', [NotificationController::class, 'update']);
+    Route::delete('/admin/notifications/{id}', [NotificationController::class, 'destroy']);
+    
+    // App submissions/review
+    Route::get('/admin/submissions', [AppSubmissionController::class, 'index']);
+    Route::put('/admin/submissions/{id}', [AppSubmissionController::class, 'update']);
 });
 
 // Protected user routes
@@ -68,6 +99,12 @@ Route::middleware('auth.user')->group(function () {
     Route::get('/orders/purchased', [OrderController::class, 'hasPurchased']);
     Route::post('/orders', [OrderController::class, 'store']);
     Route::put('/orders/{id}/confirm', [OrderController::class, 'confirm']);
+    
+    // User notifications
+    Route::get('/notifications', [NotificationController::class, 'userNotifications']);
+    
+    // App submission by users
+    Route::post('/submissions', [AppSubmissionController::class, 'store']);
 });
 
 // Payment routes (need user auth for some, public for webhooks)
