@@ -61,6 +61,7 @@ Route::middleware('auth.admin')->group(function () {
 Route::middleware('auth.user')->group(function () {
     Route::get('/users/me', [UserController::class, 'me']);
     Route::put('/users/profile', [UserController::class, 'updateProfile']);
+    Route::post('/users/change-password', [UserController::class, 'changePassword']);
     
     Route::get('/orders', [OrderController::class, 'index']);
     Route::get('/orders/purchased', [OrderController::class, 'hasPurchased']);

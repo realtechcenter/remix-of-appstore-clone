@@ -62,6 +62,19 @@ export const translations = {
     done: "រួចរាល់",
     close: "បិទ",
     
+    // Profile
+    profileSettings: "ការកំណត់គណនី",
+    personalInfo: "ព័ត៌មានផ្ទាល់ខ្លួន",
+    email: "អ៊ីមែល",
+    fullName: "ឈ្មោះពេញ",
+    phone: "ទូរស័ព្ទ",
+    saveChanges: "រក្សាទុកការផ្លាស់ប្តូរ",
+    changePassword: "ផ្លាស់ប្តូរពាក្យសម្ងាត់",
+    cropImage: "កាត់រូបភាព",
+    cancel: "បោះបង់",
+    save: "រក្សាទុក",
+    profile: "គណនី",
+    
     // Errors
     invalidApp: "កម្មវិធីមិនត្រឹមត្រូវ",
     goBackHome: "ត្រឡប់ទៅទំព័រដើម",
@@ -123,6 +136,19 @@ export const translations = {
     downloadFailed: "Download failed",
     done: "Done",
     close: "Close",
+    
+    // Profile
+    profileSettings: "Profile Settings",
+    personalInfo: "Personal Information",
+    email: "Email",
+    fullName: "Full Name",
+    phone: "Phone",
+    saveChanges: "Save Changes",
+    changePassword: "Change Password",
+    cropImage: "Crop Image",
+    cancel: "Cancel",
+    save: "Save",
+    profile: "Profile",
     
     // Errors
     invalidApp: "Invalid App",
