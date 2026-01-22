@@ -11,7 +11,8 @@ const slides = [
     title_km: "ការជាវ Office 365",
     subtitle: "Best productivity suite for your work",
     subtitle_km: "ឧបករណ៍ផលិតភាពល្អបំផុតសម្រាប់ការងាររបស់អ្នក",
-    gradient: "from-blue-600 via-indigo-500 to-purple-600",
+    image: "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=1200&h=400&fit=crop",
+    overlay: "from-blue-900/80 via-blue-800/60 to-transparent",
     icon: Sparkles,
   },
   {
@@ -22,7 +23,8 @@ const slides = [
     title_km: "ហ្គេមផ្តាច់មុខ",
     subtitle: "Top rated games available now",
     subtitle_km: "ហ្គេមដែលមានការវាយតម្លៃខ្ពស់បំផុត",
-    gradient: "from-purple-600 via-pink-500 to-rose-500",
+    image: "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=1200&h=400&fit=crop",
+    overlay: "from-purple-900/80 via-purple-800/60 to-transparent",
     icon: Zap,
   },
   {
@@ -33,7 +35,8 @@ const slides = [
     title_km: "ការការពារកម្រិតខ្ពស់",
     subtitle: "Keep your system safe and secure",
     subtitle_km: "រក្សាប្រព័ន្ធរបស់អ្នកឱ្យមានសុវត្ថិភាព",
-    gradient: "from-emerald-600 via-teal-500 to-cyan-500",
+    image: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=1200&h=400&fit=crop",
+    overlay: "from-emerald-900/80 via-emerald-800/60 to-transparent",
     icon: Shield,
   },
 ];
@@ -57,12 +60,20 @@ export const HeroSlider = () => {
 
   return (
     <div className="relative mb-6 sm:mb-8 group">
-      <div className={`relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-br ${slide.gradient} h-48 sm:h-56 md:h-72 flex items-center justify-between px-6 sm:px-8 md:px-12 transition-all duration-700`}>
+      <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl h-48 sm:h-56 md:h-72 flex items-center justify-between px-6 sm:px-8 md:px-12 transition-all duration-700">
+        {/* Background image */}
+        <div 
+          className="absolute inset-0 bg-cover bg-center transition-all duration-700"
+          style={{ backgroundImage: `url(${slide.image})` }}
+        />
+        
+        {/* Gradient overlay for text readability */}
+        <div className={`absolute inset-0 bg-gradient-to-r ${slide.overlay}`} />
+        
         {/* Animated background elements */}
         <div className="absolute inset-0 overflow-hidden">
           <div className="absolute -top-20 -right-20 w-60 h-60 bg-white/10 rounded-full blur-3xl animate-float" />
           <div className="absolute -bottom-20 -left-20 w-80 h-80 bg-white/5 rounded-full blur-3xl animate-float" style={{ animationDelay: '1s' }} />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-gradient-to-b from-transparent via-white/5 to-transparent" />
         </div>
 
         {/* Content */}
