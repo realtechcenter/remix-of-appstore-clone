@@ -16,6 +16,8 @@ interface App {
   icon_url?: string;
   price?: number;
   category?: string;
+  is_popular?: boolean;
+  download_count?: number;
 }
 
 Deno.serve(async (req) => {
@@ -64,7 +66,9 @@ Deno.serve(async (req) => {
         description_km: app.description_km || app.description || "",
         icon_url: iconUrl,
         price: app.price || 0,
-        category: app.category || "programs"
+        category: app.category || "programs",
+        is_popular: app.is_popular || false,
+        download_count: app.download_count || 0
       };
     });
 
@@ -85,25 +89,25 @@ Deeply understand what the user is trying to accomplish, then find apps that can
 ## SMART MATCHING:
 - Match by NAME, FUNCTION, CATEGORY, or KEYWORDS in descriptions
 - If exact app not available, suggest similar alternatives
-- Always use the EXACT app ID and icon_url from the available apps list above
+- Always use the EXACT app ID, icon_url, is_popular, and download_count from the available apps list above
 
 ## RESPONSE FORMAT:
-Use this EXACT format for each recommended app (include the icon_url from the app data):
-[APP:id:name:icon_url:description]
+Use this EXACT format for each recommended app (include ALL fields from the app data):
+[APP:id:name:icon_url:is_popular:download_count:full_description]
 
-Example: [APP:5:IDM:https://example.com/icon.png:Internet Download Manager for fast downloads]
+Example: [APP:5:IDM:https://example.com/icon.png:true:15000:Internet Download Manager is a powerful tool for downloading files at high speed. It supports resume and scheduling features for convenient downloads.]
 
 ## CRITICAL RULES:
-1. **ONLY recommend apps that exist in the list above** - use their exact ID and icon_url
+1. **ONLY recommend apps that exist in the list above** - use their exact ID, icon_url, is_popular, and download_count
 2. Find 1-4 relevant apps
-3. Explain WHY each app helps
+3. Include the FULL description (not truncated) from the app data
 4. Match user's language (English/Khmer)
 5. If truly no match exists, apologize without any [APP:...] tags
 
 Example response:
 "Based on your needs, I recommend:
 
-[APP:5:IDM:https://api.example.com/icons/idm.png:Powerful download manager for videos and files]
+[APP:5:IDM:https://api.example.com/icons/idm.png:true:25000:Internet Download Manager is a powerful tool designed for high-speed file downloads with resume capability and browser integration.]
 
 This is excellent for downloading videos from social media!"`;
 
