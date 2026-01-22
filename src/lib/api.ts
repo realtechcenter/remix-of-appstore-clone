@@ -49,6 +49,7 @@ export interface App {
   developer?: string;
   website?: string;
   is_featured: boolean;
+  is_popular: boolean;
   download_count: number;
   latest_version?: string;
   versions?: AppVersion[];
@@ -93,6 +94,10 @@ export interface AppsQueryParams {
   category?: string;
   search?: string;
   featured?: boolean;
+  popular?: boolean;
+  minPrice?: number;
+  maxPrice?: number;
+  freeOnly?: boolean;
   page?: number;
   limit?: number;
 }
@@ -104,6 +109,10 @@ export const appsApi = {
     if (params?.category) query.set('category', params.category);
     if (params?.search) query.set('search', params.search);
     if (params?.featured) query.set('featured', 'true');
+    if (params?.popular) query.set('popular', 'true');
+    if (params?.minPrice !== undefined) query.set('min_price', params.minPrice.toString());
+    if (params?.maxPrice !== undefined) query.set('max_price', params.maxPrice.toString());
+    if (params?.freeOnly) query.set('free_only', 'true');
     if (params?.page) query.set('page', params.page.toString());
     if (params?.limit) query.set('limit', params.limit.toString());
     

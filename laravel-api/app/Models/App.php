@@ -17,12 +17,14 @@ class App extends Model
         'developer',
         'website',
         'is_featured',
+        'is_popular',
         'download_count',
         'price',
     ];
 
     protected $casts = [
         'is_featured' => 'boolean',
+        'is_popular' => 'boolean',
         'download_count' => 'integer',
         'price' => 'decimal:2',
     ];

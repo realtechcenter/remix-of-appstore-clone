@@ -26,6 +26,8 @@ export const translations = {
     loading: "កំពុងផ្ទុក...",
     noApps: "មិនមានកម្មវិធី",
     featured: "ពិសេស",
+    popular: "ពេញនិយម",
+    free: "ឥតគិតថ្លៃ",
     
     // Navigation
     home: "ទំព័រដើម",
@@ -86,6 +88,8 @@ export const translations = {
     loading: "Loading...",
     noApps: "No apps found",
     featured: "Featured",
+    popular: "Popular",
+    free: "Free",
     
     // Navigation
     home: "Home",
