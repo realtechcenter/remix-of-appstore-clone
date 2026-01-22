@@ -18,9 +18,7 @@ interface ParsedApp {
   description: string;
 }
 
-// Use Laravel API for better intent understanding and app matching
-const LARAVEL_API_URL = "https://api.realtechcomputer.com";
-const CHAT_URL = `${LARAVEL_API_URL}/api/ai/chat/stream`;
+const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/app-recommend-chat`;
 
 // Parse [APP:id:name:description] tags from message content
 const parseAppTags = (content: string): { text: string; apps: ParsedApp[] }[] => {
@@ -164,7 +162,7 @@ export const AIChatBot = () => {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Accept": "text/event-stream",
+        Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
       },
       body: JSON.stringify({ messages: userMessages }),
     });
@@ -199,12 +197,7 @@ export const AIChatBot = () => {
 
         try {
           const parsed = JSON.parse(jsonStr);
-          // Handle Gemini streaming format from Laravel
-          const geminiText = parsed.candidates?.[0]?.content?.parts?.[0]?.text;
-          // Handle OpenAI-like format
-          const openaiText = parsed.choices?.[0]?.delta?.content;
-          
-          const content = geminiText || openaiText;
+          const content = parsed.choices?.[0]?.delta?.content as string | undefined;
           if (content) {
             assistantContent += content;
             setMessages(prev => {
