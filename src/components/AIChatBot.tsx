@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { MessageCircle, X, Send, Bot, User, Loader2, Sparkles } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -11,7 +12,122 @@ interface Message {
   content: string;
 }
 
+interface ParsedApp {
+  id: number;
+  name: string;
+  description: string;
+}
+
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/app-recommend-chat`;
+
+// Parse [APP:id:name:description] tags from message content
+const parseAppTags = (content: string): { text: string; apps: ParsedApp[] }[] => {
+  const parts: { text: string; apps: ParsedApp[] }[] = [];
+  const appRegex = /\[APP:(\d+):([^:]+):([^\]]+)\]/g;
+  
+  let lastIndex = 0;
+  let match;
+  let currentApps: ParsedApp[] = [];
+  let textBeforeApps = "";
+  
+  const lines = content.split('\n');
+  let result: { text: string; apps: ParsedApp[] }[] = [];
+  let pendingText = "";
+  let pendingApps: ParsedApp[] = [];
+  
+  for (const line of lines) {
+    const appMatch = line.match(/\[APP:(\d+):([^:]+):([^\]]+)\]/);
+    if (appMatch) {
+      pendingApps.push({
+        id: parseInt(appMatch[1], 10),
+        name: appMatch[2],
+        description: appMatch[3]
+      });
+    } else {
+      if (pendingApps.length > 0) {
+        result.push({ text: pendingText, apps: pendingApps });
+        pendingText = line;
+        pendingApps = [];
+      } else {
+        pendingText += (pendingText ? '\n' : '') + line;
+      }
+    }
+  }
+  
+  // Push remaining content
+  if (pendingText || pendingApps.length > 0) {
+    result.push({ text: pendingText, apps: pendingApps });
+  }
+  
+  return result.length > 0 ? result : [{ text: content, apps: [] }];
+};
+
+const createSlug = (name: string): string => {
+  return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+};
+
+// App Card Component for chat recommendations
+const AppRecommendCard = ({ app, onClick }: { app: ParsedApp; onClick: () => void }) => {
+  const gradients = [
+    "from-blue-500 to-purple-600",
+    "from-green-500 to-teal-600", 
+    "from-orange-500 to-red-600",
+    "from-pink-500 to-rose-600",
+    "from-indigo-500 to-blue-600",
+  ];
+  
+  const gradientIndex = app.id % gradients.length;
+  
+  return (
+    <button
+      onClick={onClick}
+      className="flex items-start gap-3 p-3 rounded-xl bg-background border hover:bg-accent/50 hover:border-primary/50 transition-all duration-200 w-full text-left group"
+    >
+      <div className={cn(
+        "w-12 h-12 rounded-xl bg-gradient-to-br flex items-center justify-center text-white font-bold text-lg shrink-0 shadow-md group-hover:scale-105 transition-transform",
+        gradients[gradientIndex]
+      )}>
+        {app.name.charAt(0).toUpperCase()}
+      </div>
+      <div className="flex-1 min-w-0">
+        <h4 className="font-medium text-sm text-foreground truncate group-hover:text-primary transition-colors">
+          {app.name}
+        </h4>
+        <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">
+          {app.description}
+        </p>
+      </div>
+    </button>
+  );
+};
+
+// Message content renderer with app cards
+const MessageContent = ({ content, onAppClick }: { content: string; onAppClick: (id: number, name: string) => void }) => {
+  const parsed = parseAppTags(content);
+  
+  return (
+    <div className="space-y-2">
+      {parsed.map((section, idx) => (
+        <div key={idx}>
+          {section.text && (
+            <p className="text-sm whitespace-pre-wrap">{section.text}</p>
+          )}
+          {section.apps.length > 0 && (
+            <div className="space-y-2 mt-2">
+              {section.apps.map((app) => (
+                <AppRecommendCard 
+                  key={app.id} 
+                  app={app} 
+                  onClick={() => onAppClick(app.id, app.name)}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+};
 
 export const AIChatBot = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -21,6 +137,7 @@ export const AIChatBot = () => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const { language } = useLanguage();
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -33,6 +150,12 @@ export const AIChatBot = () => {
       inputRef.current.focus();
     }
   }, [isOpen]);
+
+  const handleAppClick = (id: number, name: string) => {
+    const slug = createSlug(name);
+    setIsOpen(false);
+    navigate(`/${id}-${slug}`);
+  };
 
   const streamChat = async (userMessages: Message[]) => {
     const resp = await fetch(CHAT_URL, {
@@ -163,7 +286,7 @@ export const AIChatBot = () => {
 
       {/* Chat Window */}
       {isOpen && (
-        <div className="fixed bottom-6 right-6 z-50 w-[380px] max-w-[calc(100vw-3rem)] animate-in slide-in-from-bottom-4 duration-300">
+        <div className="fixed bottom-6 right-6 z-50 w-[400px] max-w-[calc(100vw-3rem)] animate-in slide-in-from-bottom-4 duration-300">
           <div className="rounded-2xl border bg-background shadow-2xl overflow-hidden">
             {/* Header */}
             <div className="bg-gradient-to-r from-primary to-primary/80 p-4 flex items-center justify-between">
@@ -191,7 +314,7 @@ export const AIChatBot = () => {
             </div>
 
             {/* Messages */}
-            <ScrollArea className="h-[350px] p-4" ref={scrollRef}>
+            <ScrollArea className="h-[400px] p-4" ref={scrollRef}>
               {messages.length === 0 && (
                 <div className="flex gap-3 mb-4">
                   <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
@@ -228,7 +351,11 @@ export const AIChatBot = () => {
                       ? "bg-primary text-primary-foreground rounded-tr-sm"
                       : "bg-muted rounded-tl-sm"
                   )}>
-                    <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                    {message.role === "assistant" ? (
+                      <MessageContent content={message.content} onAppClick={handleAppClick} />
+                    ) : (
+                      <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                    )}
                   </div>
                 </div>
               ))}
