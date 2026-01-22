@@ -44,10 +44,35 @@ class UserController extends Controller
             'password' => 'required|string',
         ]);
 
-        $user = User::where('email', $request->email)->first();
+        $user = User::where('email', $request->email)->with('status')->first();
 
         if (!$user || !Hash::check($request->password, $user->password_hash)) {
             return response()->json(['error' => 'Invalid credentials'], 401);
+        }
+
+        // Check if user is banned or suspended
+        if ($user->status) {
+            if ($user->status->status === 'banned') {
+                return response()->json([
+                    'error' => 'Your account has been banned.',
+                    'reason' => $user->status->reason,
+                    'status' => 'banned'
+                ], 403);
+            }
+            
+            if ($user->status->status === 'suspended') {
+                // Check if suspension has expired
+                if ($user->status->suspended_until && now()->lt($user->status->suspended_until)) {
+                    return response()->json([
+                        'error' => 'Your account is suspended until ' . $user->status->suspended_until->format('Y-m-d H:i'),
+                        'reason' => $user->status->reason,
+                        'suspended_until' => $user->status->suspended_until,
+                        'status' => 'suspended'
+                    ], 403);
+                }
+                // If suspension expired, auto-reactivate
+                $user->status->update(['status' => 'active', 'reason' => null, 'suspended_until' => null]);
+            }
         }
 
         $token = $this->generateToken($user);
