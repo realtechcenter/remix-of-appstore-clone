@@ -15,33 +15,38 @@ interface Message {
 interface ParsedApp {
   id: number;
   name: string;
+  icon_url: string;
   description: string;
 }
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/app-recommend-chat`;
 
-// Parse [APP:id:name:description] tags from message content
+// Parse [APP:id:name:icon_url:description] tags from message content
 const parseAppTags = (content: string): { text: string; apps: ParsedApp[] }[] => {
-  const parts: { text: string; apps: ParsedApp[] }[] = [];
-  const appRegex = /\[APP:(\d+):([^:]+):([^\]]+)\]/g;
-  
-  let lastIndex = 0;
-  let match;
-  let currentApps: ParsedApp[] = [];
-  let textBeforeApps = "";
-  
   const lines = content.split('\n');
   let result: { text: string; apps: ParsedApp[] }[] = [];
   let pendingText = "";
   let pendingApps: ParsedApp[] = [];
   
   for (const line of lines) {
-    const appMatch = line.match(/\[APP:(\d+):([^:]+):([^\]]+)\]/);
+    // Match new format: [APP:id:name:icon_url:description]
+    const appMatch = line.match(/\[APP:(\d+):([^:]+):([^:]*):([^\]]+)\]/);
+    // Fallback to old format: [APP:id:name:description]
+    const oldFormatMatch = !appMatch ? line.match(/\[APP:(\d+):([^:]+):([^\]]+)\]/) : null;
+    
     if (appMatch) {
       pendingApps.push({
         id: parseInt(appMatch[1], 10),
         name: appMatch[2],
-        description: appMatch[3]
+        icon_url: appMatch[3],
+        description: appMatch[4]
+      });
+    } else if (oldFormatMatch) {
+      pendingApps.push({
+        id: parseInt(oldFormatMatch[1], 10),
+        name: oldFormatMatch[2],
+        icon_url: "",
+        description: oldFormatMatch[3]
       });
     } else {
       if (pendingApps.length > 0) {
@@ -77,15 +82,30 @@ const AppRecommendCard = ({ app, onClick }: { app: ParsedApp; onClick: () => voi
   ];
   
   const gradientIndex = app.id % gradients.length;
+  const hasIcon = app.icon_url && app.icon_url.trim() !== "";
   
   return (
     <button
       onClick={onClick}
       className="flex items-start gap-3 p-3 rounded-xl bg-background border hover:bg-accent/50 hover:border-primary/50 transition-all duration-200 w-full text-left group"
     >
+      {hasIcon ? (
+        <img 
+          src={app.icon_url} 
+          alt={app.name}
+          className="w-12 h-12 rounded-xl object-cover shrink-0 shadow-md group-hover:scale-105 transition-transform"
+          onError={(e) => {
+            // Fallback to gradient letter on image error
+            const target = e.target as HTMLImageElement;
+            target.style.display = 'none';
+            target.nextElementSibling?.classList.remove('hidden');
+          }}
+        />
+      ) : null}
       <div className={cn(
         "w-12 h-12 rounded-xl bg-gradient-to-br flex items-center justify-center text-white font-bold text-lg shrink-0 shadow-md group-hover:scale-105 transition-transform",
-        gradients[gradientIndex]
+        gradients[gradientIndex],
+        hasIcon && "hidden"
       )}>
         {app.name.charAt(0).toUpperCase()}
       </div>
