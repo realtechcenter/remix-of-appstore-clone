@@ -67,10 +67,13 @@ Deno.serve(async (req) => {
       console.error("Failed to fetch apps:", e);
     }
 
-    // Create a structured apps context for the AI - keep icon paths as-is (relative)
+    // Create a structured apps context for the AI - use full URL for icons
     const appsContext = apps.map(app => {
-      // Keep icon_url as relative path (e.g., /icons/navicat_premium.png)
-      const iconUrl = app.icon_url || "";
+      // Build full icon URL
+      let iconUrl = app.icon_url || "";
+      if (iconUrl && !iconUrl.startsWith('http')) {
+        iconUrl = `${LARAVEL_API_URL}${iconUrl.startsWith('/') ? '' : '/'}${iconUrl}`;
+      }
       return {
         id: app.id,
         name: app.name,
@@ -117,13 +120,13 @@ When user asks for a specific app (e.g., "Microsoft Office", "Photoshop", "Chrom
 **CRITICAL - THE DESCRIPTION FIELD MUST NEVER BE EMPTY!**
 - Always include a description - use the app's description from the data
 - If the app has no description in the data, write a helpful 1-2 sentence description based on the app name
-- Use the icon_url EXACTLY as provided in the app data (keep it as relative path like /icons/app_name.png)
+- Use the icon_url EXACTLY as provided in the app data (it's already a full URL like https://api.realtechcomputer.com/icons/app_name.png)
 
-✅ CORRECT: [APP:2054:Downie 4:/icons/downie_4.png:false:0:Downie 4 is a powerful video downloader for Mac that supports YouTube, Facebook, Vimeo and thousands of other sites.]
+✅ CORRECT: [APP:2054:Downie 4:https://api.realtechcomputer.com/icons/downie_4.png:false:0:Downie 4 is a powerful video downloader for Mac that supports YouTube, Facebook, Vimeo and thousands of other sites.]
 ❌ WRONG: [APP:2054:Downie 4:/icons/downie_4.png:false:0:]
 
 ## CRITICAL RULES:
-1. **ONLY recommend apps from the list above** - use their exact ID, icon_url (keep relative paths), is_popular, and download_count
+1. **ONLY recommend apps from the list above** - use their exact ID, icon_url (use the full URL as provided), is_popular, and download_count
 2. Find 1-4 relevant apps based on the user's need
 3. **DESCRIPTION IS MANDATORY** - Never leave it empty!
 4. Match user's language (English/Khmer)
@@ -133,7 +136,7 @@ When user asks for a specific app (e.g., "Microsoft Office", "Photoshop", "Chrom
 Example for "I need Microsoft Office":
 "Great choice for productivity! Here are some excellent office suite options available in our store:
 
-[APP:123:LibreOffice:/icons/libreoffice.png:true:5000:A powerful free office suite compatible with Microsoft Office formats, including Writer, Calc, and Impress for all your document needs.]
+[APP:123:LibreOffice:https://api.realtechcomputer.com/icons/libreoffice.png:true:5000:A powerful free office suite compatible with Microsoft Office formats, including Writer, Calc, and Impress for all your document needs.]
 
 This is a fantastic alternative that opens and edits Word, Excel, and PowerPoint files!"`;
 
