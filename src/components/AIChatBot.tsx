@@ -82,7 +82,13 @@ const AppRecommendCard = ({ app, onClick }: { app: ParsedApp; onClick: () => voi
   ];
   
   const gradientIndex = app.id % gradients.length;
-  const hasIcon = app.icon_url && app.icon_url.trim() !== "";
+  
+  // Build full icon URL - handle relative paths
+  let iconUrl = app.icon_url || "";
+  if (iconUrl && !iconUrl.startsWith('http')) {
+    iconUrl = `https://api.realtechcomputer.com${iconUrl.startsWith('/') ? '' : '/'}${iconUrl}`;
+  }
+  const hasIcon = iconUrl.length > 0;
   
   return (
     <button
@@ -91,22 +97,25 @@ const AppRecommendCard = ({ app, onClick }: { app: ParsedApp; onClick: () => voi
     >
       {hasIcon ? (
         <img 
-          src={app.icon_url} 
+          src={iconUrl} 
           alt={app.name}
           className="w-12 h-12 rounded-xl object-cover shrink-0 shadow-md group-hover:scale-105 transition-transform"
           onError={(e) => {
-            // Fallback to gradient letter on image error
+            // Hide image and show fallback on error
             const target = e.target as HTMLImageElement;
             target.style.display = 'none';
-            target.nextElementSibling?.classList.remove('hidden');
+            const fallback = target.nextElementSibling as HTMLElement;
+            if (fallback) fallback.style.display = 'flex';
           }}
         />
       ) : null}
-      <div className={cn(
-        "w-12 h-12 rounded-xl bg-gradient-to-br flex items-center justify-center text-white font-bold text-lg shrink-0 shadow-md group-hover:scale-105 transition-transform",
-        gradients[gradientIndex],
-        hasIcon && "hidden"
-      )}>
+      <div 
+        className={cn(
+          "w-12 h-12 rounded-xl bg-gradient-to-br items-center justify-center text-white font-bold text-lg shrink-0 shadow-md group-hover:scale-105 transition-transform",
+          gradients[gradientIndex]
+        )}
+        style={{ display: hasIcon ? 'none' : 'flex' }}
+      >
         {app.name.charAt(0).toUpperCase()}
       </div>
       <div className="flex-1 min-w-0">

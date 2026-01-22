@@ -49,17 +49,24 @@ Deno.serve(async (req) => {
       console.error("Failed to fetch apps:", e);
     }
 
-    // Create a structured apps context for the AI
-    const appsContext = apps.map(app => ({
-      id: app.id,
-      name: app.name,
-      name_km: app.name_km || app.name,
-      description: app.description || "",
-      description_km: app.description_km || app.description || "",
-      icon_url: app.icon_url || "",
-      price: app.price || 0,
-      category: app.category || "programs"
-    }));
+    // Create a structured apps context for the AI with full icon URLs
+    const appsContext = apps.map(app => {
+      let iconUrl = app.icon_url || "";
+      // Convert relative paths to full URLs
+      if (iconUrl && !iconUrl.startsWith('http')) {
+        iconUrl = `${LARAVEL_API_URL}${iconUrl.startsWith('/') ? '' : '/'}${iconUrl}`;
+      }
+      return {
+        id: app.id,
+        name: app.name,
+        name_km: app.name_km || app.name,
+        description: app.description || "",
+        description_km: app.description_km || app.description || "",
+        icon_url: iconUrl,
+        price: app.price || 0,
+        category: app.category || "programs"
+      };
+    });
 
     const systemPrompt = `You are an intelligent assistant for "Style Ghost" app store. Your mission is to UNDERSTAND what users need and recommend the BEST matching apps.
 
