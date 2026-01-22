@@ -117,58 +117,92 @@ class AIChatController extends Controller
      */
     public function streamChat(Request $request)
     {
-        $request->validate([
-            'messages' => 'required|array',
-            'messages.*.role' => 'required|string|in:user,assistant',
-            'messages.*.content' => 'required|string',
-        ]);
-
-        // Fetch apps from database for context
-        $apps = $this->getAppsFromDatabase();
-
-        // Build system prompt with enhanced internet search capability
-        $systemPrompt = $this->buildEnhancedSystemPrompt($apps->toArray());
-
-        // Convert messages to Gemini format
-        $geminiContents = $this->convertToGeminiFormat($request->messages, $systemPrompt);
-
-        $streamUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:streamGenerateContent?key={$this->apiKey}&alt=sse";
-
-        return response()->stream(function () use ($geminiContents, $streamUrl) {
-            $ch = curl_init();
-            
-            curl_setopt_array($ch, [
-                CURLOPT_URL => $streamUrl,
-                CURLOPT_POST => true,
-                CURLOPT_POSTFIELDS => json_encode([
-                    'contents' => $geminiContents,
-                    'generationConfig' => [
-                        'temperature' => 0.7,
-                        'topK' => 40,
-                        'topP' => 0.95,
-                        'maxOutputTokens' => 1024,
-                    ],
-                ]),
-                CURLOPT_HTTPHEADER => [
-                    'Content-Type: application/json',
-                ],
-                CURLOPT_RETURNTRANSFER => false,
-                CURLOPT_WRITEFUNCTION => function ($ch, $data) {
-                    echo $data;
-                    ob_flush();
-                    flush();
-                    return strlen($data);
-                },
+        try {
+            $request->validate([
+                'messages' => 'required|array',
+                'messages.*.role' => 'required|string|in:user,assistant',
+                'messages.*.content' => 'required|string',
             ]);
 
-            curl_exec($ch);
-            curl_close($ch);
-        }, 200, [
-            'Content-Type' => 'text/event-stream',
-            'Cache-Control' => 'no-cache',
-            'Connection' => 'keep-alive',
-            'X-Accel-Buffering' => 'no',
-        ]);
+            // Check if API key is configured
+            if (empty($this->apiKey)) {
+                Log::error('Gemini API key is not configured');
+                return response()->json([
+                    'error' => 'AI service is not configured properly',
+                ], 500);
+            }
+
+            // Fetch apps from database for context
+            $apps = $this->getAppsFromDatabase();
+
+            // Build system prompt with enhanced internet search capability
+            $systemPrompt = $this->buildEnhancedSystemPrompt($apps->toArray());
+
+            // Convert messages to Gemini format
+            $geminiContents = $this->convertToGeminiFormat($request->messages, $systemPrompt);
+
+            $streamUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:streamGenerateContent?key={$this->apiKey}&alt=sse";
+
+            $headers = [
+                'Content-Type' => 'text/event-stream',
+                'Cache-Control' => 'no-cache',
+                'Connection' => 'keep-alive',
+                'X-Accel-Buffering' => 'no',
+                'Access-Control-Allow-Origin' => '*',
+                'Access-Control-Allow-Headers' => 'Content-Type, Authorization',
+            ];
+
+            return response()->stream(function () use ($geminiContents, $streamUrl) {
+                $ch = curl_init();
+                
+                curl_setopt_array($ch, [
+                    CURLOPT_URL => $streamUrl,
+                    CURLOPT_POST => true,
+                    CURLOPT_POSTFIELDS => json_encode([
+                        'contents' => $geminiContents,
+                        'generationConfig' => [
+                            'temperature' => 0.7,
+                            'topK' => 40,
+                            'topP' => 0.95,
+                            'maxOutputTokens' => 1024,
+                        ],
+                    ]),
+                    CURLOPT_HTTPHEADER => [
+                        'Content-Type: application/json',
+                    ],
+                    CURLOPT_RETURNTRANSFER => false,
+                    CURLOPT_WRITEFUNCTION => function ($ch, $data) {
+                        echo $data;
+                        if (ob_get_level() > 0) {
+                            ob_flush();
+                        }
+                        flush();
+                        return strlen($data);
+                    },
+                ]);
+
+                $result = curl_exec($ch);
+                
+                if ($result === false) {
+                    $error = curl_error($ch);
+                    Log::error('Gemini streaming curl error', ['error' => $error]);
+                    echo "data: " . json_encode(['error' => 'Failed to connect to AI service']) . "\n\n";
+                }
+                
+                curl_close($ch);
+            }, 200, $headers);
+
+        } catch (\Exception $e) {
+            Log::error('AI Chat stream error', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'error' => 'An error occurred while processing your request',
+                'message' => config('app.debug') ? $e->getMessage() : 'Server error',
+            ], 500);
+        }
     }
 
     /**
