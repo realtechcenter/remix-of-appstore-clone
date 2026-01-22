@@ -268,9 +268,10 @@ class AIChatController extends Controller
      */
     private function getAppsFromDatabase()
     {
-        // Fetch all apps but with minimal fields to reduce context size
+        // Fetch top 1000 apps sorted by popularity to prevent timeout while still covering most apps
         return App::select(['id', 'name', 'name_km', 'description', 'description_km', 'icon_url', 'price', 'category', 'is_popular', 'download_count'])
             ->orderBy('download_count', 'desc')
+            ->limit(1000)
             ->get()
             ->map(function ($app) {
                 return [
