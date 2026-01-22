@@ -7,9 +7,9 @@ import { useOrders } from "@/hooks/useOrders";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const PopularAppsSkeleton = () => (
-  <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
-    {Array.from({ length: 6 }).map((_, i) => (
-      <div key={i} className="app-card min-w-[140px] sm:min-w-[160px]">
+  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
+    {Array.from({ length: 5 }).map((_, i) => (
+      <div key={i} className="app-card">
         <div className="flex flex-col items-center text-center">
           <Skeleton className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl mb-4" />
           <Skeleton className="h-4 w-20 sm:w-24 mb-2" />
@@ -23,7 +23,6 @@ const PopularAppsSkeleton = () => (
 
 export const PopularApps = () => {
   const { language } = useLanguage();
-  const t = useTranslations();
   
   const { data, isLoading } = usePaginatedApps({
     popular: true,
@@ -68,11 +67,9 @@ export const PopularApps = () => {
       {isLoading ? (
         <PopularAppsSkeleton />
       ) : (
-        <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
           {apps.map((app) => (
-            <div key={app.id} className="min-w-[140px] sm:min-w-[160px] flex-shrink-0">
-              <AppCard app={app} purchased={purchasedAppIds.has(app.id)} />
-            </div>
+            <AppCard key={app.id} app={app} purchased={purchasedAppIds.has(app.id)} />
           ))}
         </div>
       )}
