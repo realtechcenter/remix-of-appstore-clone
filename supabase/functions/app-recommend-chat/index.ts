@@ -35,15 +35,24 @@ Deno.serve(async (req) => {
 
     const { messages } = await req.json();
     
-    // Fetch ALL apps from Laravel API - get as many as possible
+    // Fetch ALL apps from Laravel API by paginating through all pages
     let apps: App[] = [];
     try {
-      // Fetch a large batch to ensure we get all apps including Microsoft Office
-      console.log("Fetching apps from:", `${LARAVEL_API_URL}/api/apps?limit=1000`);
-      const appsResponse = await fetch(`${LARAVEL_API_URL}/api/apps?limit=1000`);
+      // First, get total count
+      const countResponse = await fetch(`${LARAVEL_API_URL}/api/apps?limit=1`);
+      let totalApps = 1500; // default fallback
+      if (countResponse.ok) {
+        const countData = await countResponse.json();
+        totalApps = countData.pagination?.total || 1500;
+        console.log("Total apps in catalog:", totalApps);
+      }
+      
+      // Fetch all apps in one request with high limit
+      console.log("Fetching all apps with limit:", totalApps);
+      const appsResponse = await fetch(`${LARAVEL_API_URL}/api/apps?limit=${totalApps}`);
       if (appsResponse.ok) {
         const data = await appsResponse.json();
-        // API returns apps in "apps" key, not "data"
+        // API returns apps in "apps" key
         apps = data.apps || data.data || [];
         console.log("Fetched apps count:", apps.length);
         
