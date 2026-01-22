@@ -11,6 +11,7 @@ import Admin from "./pages/Admin";
 import AppDetail from "./pages/AppDetail";
 import Auth from "./pages/Auth";
 import MyPurchases from "./pages/MyPurchases";
+import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -29,6 +30,7 @@ const App = () => (
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/admin" element={<Admin />} />
                 <Route path="/my-purchases" element={<MyPurchases />} />
+                <Route path="/profile" element={<Profile />} />
                 <Route path="/:id" element={<AppDetail />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>

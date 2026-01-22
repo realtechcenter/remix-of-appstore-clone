@@ -85,17 +85,49 @@ class UserController extends Controller
         $request->validate([
             'full_name' => 'nullable|string|max:100',
             'phone' => 'nullable|string|max:20',
+            'avatar_url' => 'nullable|string|max:500',
         ]);
 
         $user = $request->user();
         $user->update([
             'full_name' => $request->full_name ?? $user->full_name,
             'phone' => $request->phone ?? $user->phone,
+            'avatar_url' => $request->avatar_url ?? $user->avatar_url,
         ]);
 
         return response()->json([
             'success' => true,
             'message' => 'Profile updated successfully',
+            'user' => [
+                'id' => $user->id,
+                'email' => $user->email,
+                'full_name' => $user->full_name,
+                'phone' => $user->phone,
+                'avatar_url' => $user->avatar_url,
+            ],
+        ]);
+    }
+
+    public function changePassword(Request $request)
+    {
+        $request->validate([
+            'current_password' => 'required|string',
+            'new_password' => 'required|string|min:6',
+        ]);
+
+        $user = $request->user();
+
+        if (!Hash::check($request->current_password, $user->password_hash)) {
+            return response()->json(['error' => 'Current password is incorrect'], 400);
+        }
+
+        $user->update([
+            'password_hash' => Hash::make($request->new_password),
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Password changed successfully',
         ]);
     }
 
