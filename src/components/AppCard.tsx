@@ -1,4 +1,4 @@
-import { ArrowUp, Package, HardDrive, DollarSign } from "lucide-react";
+import { ArrowUp, Package, HardDrive, DollarSign, Download } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
 import type { App } from "@/lib/api";
@@ -73,6 +73,19 @@ export const AppCard = (props: AppCardProps) => {
   // Get file size from latest version or props
   const fileSize = props.size || props.app?.versions?.[0]?.file_size;
   
+  // Get download count
+  const downloadCount = props.app?.download_count || 0;
+  
+  // Format download count for display
+  const formatDownloadCount = (count: number): string => {
+    if (count >= 1000000) {
+      return `${(count / 1000000).toFixed(1)}M`;
+    } else if (count >= 1000) {
+      return `${(count / 1000).toFixed(1)}K`;
+    }
+    return count.toString();
+  };
+  
   // Get price and determine if it's a paid app
   const priceValue = props.app?.price;
   const priceNum = typeof priceValue === 'string' ? parseFloat(priceValue) : (priceValue || 0);
@@ -138,6 +151,14 @@ export const AppCard = (props: AppCardProps) => {
         )}
 
         <p className="text-[10px] sm:text-xs text-muted-foreground">{getCategoryDisplay(category)}</p>
+        
+        {/* Download count */}
+        {downloadCount > 0 && (
+          <div className="flex items-center gap-1 text-[10px] sm:text-xs text-muted-foreground mt-1">
+            <Download className="w-3 h-3" />
+            <span>{formatDownloadCount(downloadCount)}</span>
+          </div>
+        )}
         
         {/* Price badge */}
         {props.purchased ? (
