@@ -27,6 +27,7 @@ Route::post('/otp/send-registration', [OtpController::class, 'sendRegistrationOt
 Route::post('/otp/verify-registration', [OtpController::class, 'verifyRegistrationOtp']);
 Route::post('/otp/send-password-reset', [OtpController::class, 'sendPasswordResetOtp']);
 Route::post('/otp/verify-password-reset', [OtpController::class, 'verifyPasswordResetOtp']);
+Route::post('/otp/verify-reset-code', [OtpController::class, 'verifyResetCode']);
 Route::post('/otp/resend', [OtpController::class, 'resendOtp']);
 
 // Apps (public read)
