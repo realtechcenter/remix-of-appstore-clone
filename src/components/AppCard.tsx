@@ -51,12 +51,24 @@ export const AppCard = (props: AppCardProps) => {
   const name = props.app?.name || props.name || "";
   const nameKm = props.app?.name_km || props.name_km;
   const version = props.app?.latest_version || props.version || "";
-  const description = props.app?.description || props.description || "";
-  const descriptionKm = props.app?.description_km || props.description_km;
   const iconUrl = props.app?.icon_url || props.icon_url;
   const icon = props.icon || "📦";
   const iconBg = props.iconBg || getGradientFromName(name);
   const hasUpdate = props.hasUpdate ?? false;
+  
+  // Get category
+  const category = props.app?.category || "programs";
+  
+  // Category display names
+  const getCategoryDisplay = (cat: string): string => {
+    const categories: Record<string, { en: string; km: string }> = {
+      programs: { en: "Programs", km: "កម្មវិធី" },
+      games: { en: "Games", km: "ហ្គេម" },
+      extensions: { en: "Extensions", km: "ផ្នែកបន្ថែម" },
+      os: { en: "OS", km: "ប្រព័ន្ធប្រតិបត្តិការ" },
+    };
+    return language === 'km' ? (categories[cat]?.km || cat) : (categories[cat]?.en || cat);
+  };
   
   // Get file size from latest version or props
   const fileSize = props.size || props.app?.versions?.[0]?.file_size;
@@ -67,7 +79,6 @@ export const AppCard = (props: AppCardProps) => {
   const isPaidApp = priceNum > 0;
 
   const displayName = t(nameKm, name);
-  const displayDescription = t(descriptionKm, description);
 
   const handleClick = () => {
     if (props.app) {
@@ -126,7 +137,7 @@ export const AppCard = (props: AppCardProps) => {
           </span>
         )}
 
-        <p className="text-[10px] sm:text-xs text-muted-foreground line-clamp-2 leading-relaxed">{displayDescription}</p>
+        <p className="text-[10px] sm:text-xs text-muted-foreground">{getCategoryDisplay(category)}</p>
         
         {/* Price badge */}
         {props.purchased ? (
