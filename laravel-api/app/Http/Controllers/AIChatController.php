@@ -6,7 +6,6 @@ use App\Models\App;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Log;
 
 class AIChatController extends Controller
 {
@@ -265,26 +264,12 @@ class AIChatController extends Controller
     }
 
     /**
-     * Get apps from database with caching for performance
+     * Get apps from database
      */
     private function getAppsFromDatabase()
     {
-        // Use file-based cache (10 minutes) to prevent repeated database queries
-        // File cache doesn't require database table setup
-        $cacheKey = 'ai_chat_apps_catalog';
-        $cachePath = storage_path('framework/cache/ai_apps_catalog.json');
-        $cacheTime = 600; // 10 minutes
-        
-        // Check if cache file exists and is still valid
-        if (file_exists($cachePath) && (time() - filemtime($cachePath)) < $cacheTime) {
-            $cached = json_decode(file_get_contents($cachePath), true);
-            if ($cached) {
-                return collect($cached);
-            }
-        }
-        
-        // Fetch from database and cache
-        $apps = App::select(['id', 'name', 'name_km', 'description', 'description_km', 'icon_url', 'price', 'category', 'is_popular', 'download_count'])
+        // Fetch up to 2000 apps to ensure AI can recommend most apps while preventing timeout
+        return App::select(['id', 'name', 'name_km', 'description', 'description_km', 'icon_url', 'price', 'category', 'is_popular', 'download_count'])
             ->orderBy('download_count', 'desc')
             ->limit(2000)
             ->get()
@@ -302,22 +287,6 @@ class AIChatController extends Controller
                     'download_count' => $app->download_count ?? 0,
                 ];
             });
-        
-        // Save to file cache
-        file_put_contents($cachePath, json_encode($apps->toArray()));
-        
-        return $apps;
-    }
-
-    /**
-     * Clear the apps catalog cache (call when apps are updated)
-     */
-    public static function clearAppsCache(): void
-    {
-        $cachePath = storage_path('framework/cache/ai_apps_catalog.json');
-        if (file_exists($cachePath)) {
-            unlink($cachePath);
-        }
     }
 
     /**
