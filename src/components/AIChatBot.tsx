@@ -26,63 +26,75 @@ const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/app-recommen
 
 // Parse [APP:id:name:icon_url:is_popular:download_count:description] tags from message content
 const parseAppTags = (content: string): { text: string; apps: ParsedApp[] }[] => {
-  const lines = content.split('\n');
-  let result: { text: string; apps: ParsedApp[] }[] = [];
-  let pendingText = "";
-  let pendingApps: ParsedApp[] = [];
+  // Use a global regex to find all APP tags first
+  const appTagRegex = /\[APP:(\d+):([^:]+):(https?:\/\/[^:]+):([^:]*):(\d*):([^\]]+)\]/g;
+  const fourPartRegex = /\[APP:(\d+):([^:]+):(https?:\/\/[^:]+):([^\]]+)\]/g;
+  const oldFormatRegex = /\[APP:(\d+):([^:]+):([^\]]+)\]/g;
   
-  for (const line of lines) {
-    // Match new format: [APP:id:name:icon_url:is_popular:download_count:description]
-    const appMatch = line.match(/\[APP:(\d+):([^:]+):([^:]*):([^:]*):([^:]*):([^\]]+)\]/);
-    // Fallback to 4-part format: [APP:id:name:icon_url:description]
-    const fourPartMatch = !appMatch ? line.match(/\[APP:(\d+):([^:]+):([^:]*):([^\]]+)\]/) : null;
-    // Fallback to old 3-part format: [APP:id:name:description]
-    const oldFormatMatch = !appMatch && !fourPartMatch ? line.match(/\[APP:(\d+):([^:]+):([^\]]+)\]/) : null;
+  let apps: ParsedApp[] = [];
+  let cleanText = content;
+  
+  // Try 6-part format first (with is_popular and download_count)
+  let match;
+  const sixPartMatches: ParsedApp[] = [];
+  const appTagRegexLocal = /\[APP:(\d+):([^:]+):(https?:\/\/[^:]+):([^:]*):(\d*):([^\]]+)\]/g;
+  while ((match = appTagRegexLocal.exec(content)) !== null) {
+    sixPartMatches.push({
+      id: parseInt(match[1], 10),
+      name: match[2],
+      icon_url: match[3],
+      is_popular: match[4] === 'true',
+      download_count: parseInt(match[5], 10) || 0,
+      description: match[6]
+    });
+    cleanText = cleanText.replace(match[0], '');
+  }
+  
+  if (sixPartMatches.length > 0) {
+    apps = sixPartMatches;
+  } else {
+    // Try 4-part format with URL
+    const fourPartRegexLocal = /\[APP:(\d+):([^:]+):(https?:\/\/[^:]+):([^\]]+)\]/g;
+    const fourPartMatches: ParsedApp[] = [];
+    while ((match = fourPartRegexLocal.exec(content)) !== null) {
+      fourPartMatches.push({
+        id: parseInt(match[1], 10),
+        name: match[2],
+        icon_url: match[3],
+        is_popular: false,
+        download_count: 0,
+        description: match[4]
+      });
+      cleanText = cleanText.replace(match[0], '');
+    }
     
-    if (appMatch) {
-      pendingApps.push({
-        id: parseInt(appMatch[1], 10),
-        name: appMatch[2],
-        icon_url: appMatch[3],
-        is_popular: appMatch[4] === 'true',
-        download_count: parseInt(appMatch[5], 10) || 0,
-        description: appMatch[6]
-      });
-    } else if (fourPartMatch) {
-      pendingApps.push({
-        id: parseInt(fourPartMatch[1], 10),
-        name: fourPartMatch[2],
-        icon_url: fourPartMatch[3],
-        is_popular: false,
-        download_count: 0,
-        description: fourPartMatch[4]
-      });
-    } else if (oldFormatMatch) {
-      pendingApps.push({
-        id: parseInt(oldFormatMatch[1], 10),
-        name: oldFormatMatch[2],
-        icon_url: "",
-        is_popular: false,
-        download_count: 0,
-        description: oldFormatMatch[3]
-      });
+    if (fourPartMatches.length > 0) {
+      apps = fourPartMatches;
     } else {
-      if (pendingApps.length > 0) {
-        result.push({ text: pendingText, apps: pendingApps });
-        pendingText = line;
-        pendingApps = [];
-      } else {
-        pendingText += (pendingText ? '\n' : '') + line;
+      // Fallback to old 3-part format
+      const oldFormatRegexLocal = /\[APP:(\d+):([^:]+):([^\]]+)\]/g;
+      while ((match = oldFormatRegexLocal.exec(content)) !== null) {
+        apps.push({
+          id: parseInt(match[1], 10),
+          name: match[2],
+          icon_url: "",
+          is_popular: false,
+          download_count: 0,
+          description: match[3]
+        });
+        cleanText = cleanText.replace(match[0], '');
       }
     }
   }
   
-  // Push remaining content
-  if (pendingText || pendingApps.length > 0) {
-    result.push({ text: pendingText, apps: pendingApps });
+  // Clean up the text
+  cleanText = cleanText.split('\n').filter(line => line.trim()).join('\n').trim();
+  
+  if (apps.length > 0) {
+    return [{ text: cleanText, apps }];
   }
   
-  return result.length > 0 ? result : [{ text: content, apps: [] }];
+  return [{ text: content, apps: [] }];
 };
 
 const createSlug = (name: string): string => {
