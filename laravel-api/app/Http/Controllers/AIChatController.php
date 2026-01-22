@@ -268,10 +268,9 @@ class AIChatController extends Controller
      */
     private function getAppsFromDatabase()
     {
-        // Fetch up to 2000 apps to ensure AI can recommend most apps while preventing timeout
+        // Fetch all apps but with minimal fields to reduce context size
         return App::select(['id', 'name', 'name_km', 'description', 'description_km', 'icon_url', 'price', 'category', 'is_popular', 'download_count'])
             ->orderBy('download_count', 'desc')
-            ->limit(2000)
             ->get()
             ->map(function ($app) {
                 return [
@@ -287,6 +286,24 @@ class AIChatController extends Controller
                     'download_count' => $app->download_count ?? 0,
                 ];
             });
+    }
+    
+    /**
+     * Get condensed app list for AI context (minimal JSON size)
+     */
+    private function getAppsForAIContext(array $apps): string
+    {
+        // Limit to 500 most popular apps to keep context manageable
+        $limitedApps = array_slice($apps, 0, 500);
+        
+        // Create condensed format: "id|name|icon_url|is_popular|download_count|short_desc"
+        $lines = [];
+        foreach ($limitedApps as $app) {
+            $shortDesc = substr(str_replace(["\n", "\r", "|"], " ", $app['description']), 0, 80);
+            $lines[] = "{$app['id']}|{$app['name']}|{$app['icon_url']}|" . 
+                       ($app['is_popular'] ? '1' : '0') . "|{$app['download_count']}|{$shortDesc}";
+        }
+        return implode("\n", $lines);
     }
 
     /**
@@ -559,73 +576,49 @@ PROMPT;
      */
     private function buildEnhancedSystemPrompt(array $apps): string
     {
-        $appsJson = json_encode($apps, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+        // Use condensed format to reduce context size
+        $appsContext = $this->getAppsForAIContext($apps);
 
         return <<<PROMPT
 You are an intelligent assistant for "Style Ghost" app store. Your job is to UNDERSTAND what users need and recommend the BEST matching apps.
 
-Available apps in our store (JSON format with id, name, description, icon_url, is_popular, download_count):
-{$appsJson}
+Available apps (format: id|name|icon_url|is_popular|download_count|description):
+{$appsContext}
 
 ## YOUR CORE MISSION:
-Deeply understand what the user is trying to accomplish, then find ALL relevant apps that can help them. Always recommend MULTIPLE options when available.
+Deeply understand what the user needs and recommend the BEST matching apps from the list above.
 
 ## UNDERSTANDING USER INTENT:
-When a user says something, think about:
 1. **Direct requests**: "I need Photoshop" → find Photoshop AND similar photo editors
-2. **Task-based requests**: "I want to download videos" → find ALL video downloaders available
-3. **Problem-based requests**: "My computer is slow" → find system optimizers, cleaners, AND antivirus
-4. **Category requests**: "Show me games" → find multiple apps in games category
-5. **Vague requests**: "I need something for work" → suggest multiple productivity apps
-
-## SMART MATCHING STRATEGIES:
-- **Name matching**: "IDM" → Internet Download Manager AND other download managers
-- **Function matching**: "download videos from social media" → ALL video downloaders, media download tools
-- **Category matching**: "antivirus" → ALL security software, system protection tools
-- **Alternative matching**: Suggest similar apps as alternatives
-- **Keyword matching**: Look for keywords in descriptions (edit, download, convert, protect, clean, video, etc.)
+2. **Task-based requests**: "I want to download videos" → find ALL video downloaders
+3. **Problem-based requests**: "My computer is slow" → find optimizers, cleaners, antivirus
+4. **Category requests**: "Show me games" → find apps in games category
 
 ## CRITICAL RESPONSE FORMAT:
-You MUST use this EXACT 7-part format for EACH app recommendation (all on one line):
+You MUST use this EXACT 7-part format for EACH app (all on one line):
 [APP:id:name:icon_url:is_popular:download_count:description]
 
 Where:
-- id = the app's numeric ID from the database
-- name = the app's name
-- icon_url = the app's icon_url from the database
-- is_popular = true or false (from database)
-- download_count = number (from database)
-- description = short description (max 100 chars, NO colons allowed in description)
+- id = numeric ID from the list
+- name = app name from the list
+- icon_url = icon URL from the list (use relative path like /icons/app.png)
+- is_popular = true or false
+- download_count = number
+- description = short description (max 100 chars, NO colons)
 
-## RESPONSE GUIDELINES:
-1. **ALWAYS recommend 2-4 apps** when multiple relevant apps exist
-2. Prioritize popular apps (is_popular=true) and high download counts
-3. Explain WHY each app matches their need
-4. Support English and Khmer (respond in user's language)
+## RULES:
+1. ALWAYS recommend 2-4 apps when relevant apps exist
+2. Prioritize popular apps and high download counts
+3. Respond in user's language (English/Khmer)
+4. NEVER say "not available" - always suggest alternatives
 5. Be friendly and helpful
 
-## WHEN NO EXACT MATCH EXISTS:
-- Suggest the closest alternatives from available apps
-- Never say "we don't have that" - always find something similar
-- Explain what the alternatives can do
+Example:
+User: "video editing software"
+Response: "Here are great video editors:
 
-## EXAMPLE INTERACTIONS:
-
-User: "I need to download videos from Facebook"
-Response: "Great choice! Here are the best video downloaders in our store:
-
-[APP:15:Internet Download Manager:https://example.com/idm.png:true:50000:Powerful download manager for all file types including videos]
-[APP:23:4K Video Downloader:https://example.com/4k.png:true:35000:Download videos from YouTube Facebook and Instagram]
-[APP:31:JDownloader:https://example.com/jd.png:false:12000:Free open-source download manager with browser integration]
-
-All of these can help you save videos from social media!"
-
-User: "កម្មវិធីកែរូប"
-Response: "នេះជាកម្មវិធីកែរូបដ៏ល្អៗ:
-
-[APP:5:Adobe Photoshop:https://example.com/ps.png:true:80000:កម្មវិធីកែរូបវិជ្ជាជីវៈលំដាប់ពិភពលោក]
-[APP:12:Lightroom:https://example.com/lr.png:true:45000:កែពណ៌និងភាពភ្លឺសម្រាប់រូបថត]
-[APP:18:GIMP:https://example.com/gimp.png:false:25000:កម្មវិធីកែរូបឥតគិតថ្លៃ]"
+[APP:15:DaVinci Resolve:/icons/davinci.png:true:50000:Professional video editor with color grading]
+[APP:23:Filmora:/icons/filmora.png:true:35000:Easy video editor for beginners]"
 
 PROMPT;
     }
