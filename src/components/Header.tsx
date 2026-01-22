@@ -5,6 +5,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { ThemeToggle } from "./ThemeToggle";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "./ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -114,10 +115,15 @@ export const Header = ({ searchQuery, onSearchChange, onMenuToggle, isSidebarOpe
         {user ? (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="gap-2">
-                <User className="w-4 h-4" />
+              <Button variant="outline" size="sm" className="gap-2 pl-1.5">
+                <Avatar className="w-6 h-6">
+                  <AvatarImage src={user.avatar_url || ''} alt={user.full_name || user.email} />
+                  <AvatarFallback className="text-xs bg-primary text-primary-foreground">
+                    {user.full_name?.charAt(0) || user.email.charAt(0).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
                 <span className="hidden sm:inline max-w-[100px] truncate">
-                  {user.email?.split('@')[0]}
+                  {user.full_name || user.email?.split('@')[0]}
                 </span>
               </Button>
             </DropdownMenuTrigger>

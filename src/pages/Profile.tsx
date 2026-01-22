@@ -61,7 +61,8 @@ export default function Profile() {
       const formData = new FormData();
       formData.append('file', croppedBlob, 'avatar.jpg');
 
-      const response = await fetch(`${API_BASE_URL}/api/users/upload-avatar`, {
+      // Upload the image
+      const uploadResponse = await fetch(`${API_BASE_URL}/api/users/upload-avatar`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -69,16 +70,45 @@ export default function Profile() {
         body: formData,
       });
 
-      if (!response.ok) {
+      if (!uploadResponse.ok) {
         throw new Error('Upload failed');
       }
 
-      const data = await response.json();
-      setAvatarUrl(data.url);
+      const uploadData = await uploadResponse.json();
+      const newAvatarUrl = uploadData.url;
+      
+      // Automatically save the avatar URL to the profile
+      const profileResponse = await fetch(`${API_BASE_URL}/api/users/profile`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          full_name: fullName || user?.full_name,
+          phone: phone || user?.phone,
+          avatar_url: newAvatarUrl,
+        }),
+      });
+
+      if (!profileResponse.ok) {
+        throw new Error('Failed to save avatar');
+      }
+
+      setAvatarUrl(newAvatarUrl);
+      
+      // Update local storage
+      const storedUser = localStorage.getItem('auth_user');
+      if (storedUser) {
+        const userData = JSON.parse(storedUser);
+        userData.avatar_url = newAvatarUrl;
+        localStorage.setItem('auth_user', JSON.stringify(userData));
+      }
       
       toast({
         title: language === 'km' ? 'ជោគជ័យ' : 'Success',
-        description: language === 'km' ? 'រូបភាពត្រូវបានផ្ទុកឡើង' : 'Image uploaded successfully',
+        description: language === 'km' ? 'រូបភាពត្រូវបានរក្សាទុក' : 'Profile picture saved successfully',
       });
     } catch (error) {
       toast({
