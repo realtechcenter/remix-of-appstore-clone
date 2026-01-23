@@ -567,10 +567,12 @@ const AppDetail = () => {
               <input
                 type="text"
                 placeholder={translations.search}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
                 className="search-input pl-10 sm:pl-12 pr-4 py-2.5 sm:py-3 text-sm sm:text-base w-full"
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    navigate(`/?search=${(e.target as HTMLInputElement).value}`);
+                  if (e.key === 'Enter' && searchQuery.trim()) {
+                    navigate(`/?search=${encodeURIComponent(searchQuery.trim())}`);
                   }
                 }}
               />
