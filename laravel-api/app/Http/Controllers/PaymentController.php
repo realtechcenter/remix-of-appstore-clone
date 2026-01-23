@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Order;
 use App\Models\PaymentLog;
+use App\Http\Controllers\ReceiptController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
@@ -137,6 +138,13 @@ class PaymentController extends Controller
             // Send Telegram notification
             $this->sendTelegramNotification($order);
 
+            // Create and send receipt email
+            try {
+                ReceiptController::createFromOrder($order);
+            } catch (\Exception $e) {
+                \Log::error('Failed to create receipt: ' . $e->getMessage());
+            }
+
             return response()->json([
                 'status' => 'paid',
                 'message' => 'Payment successful',
@@ -182,6 +190,13 @@ class PaymentController extends Controller
 
         // Send Telegram notification
         $this->sendTelegramNotification($order);
+
+        // Create and send receipt email
+        try {
+            ReceiptController::createFromOrder($order);
+        } catch (\Exception $e) {
+            \Log::error('Failed to create receipt: ' . $e->getMessage());
+        }
 
         return response()->json([
             'success' => true,

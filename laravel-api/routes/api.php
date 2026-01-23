@@ -17,6 +17,7 @@ use App\Http\Controllers\UserStatusController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\AppSubmissionController;
 use App\Http\Controllers\AIChatController;
+use App\Http\Controllers\ReceiptController;
 
 /*
 |--------------------------------------------------------------------------
@@ -91,6 +92,9 @@ Route::middleware('auth.admin')->group(function () {
     // App submissions/review
     Route::get('/admin/submissions', [AppSubmissionController::class, 'index']);
     Route::put('/admin/submissions/{id}', [AppSubmissionController::class, 'update']);
+    
+    // Admin receipts
+    Route::get('/admin/receipts', [ReceiptController::class, 'adminIndex']);
 });
 
 // Protected user routes
@@ -104,6 +108,11 @@ Route::middleware('auth.user')->group(function () {
     Route::get('/orders/purchased', [OrderController::class, 'hasPurchased']);
     Route::post('/orders', [OrderController::class, 'store']);
     Route::put('/orders/{id}/confirm', [OrderController::class, 'confirm']);
+    
+    // Receipts
+    Route::get('/receipts', [ReceiptController::class, 'index']);
+    Route::get('/receipts/{id}', [ReceiptController::class, 'show']);
+    Route::post('/receipts/{id}/resend', [ReceiptController::class, 'resend']);
     
     // User notifications
     Route::get('/notifications', [NotificationController::class, 'userNotifications']);
