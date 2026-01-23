@@ -7,10 +7,11 @@ const getApiKey = () => localStorage.getItem('admin_api_key') || '';
 // Get user ID from localStorage (for download access verification)
 const getUserId = (): string | null => {
   try {
-    const userData = localStorage.getItem('user');
+    // Check auth_user (from AuthContext) first, then fall back to user
+    const userData = localStorage.getItem('auth_user') || localStorage.getItem('user');
     if (userData) {
       const user = JSON.parse(userData);
-      return user?.id || null;
+      return user?.id?.toString() || null;
     }
   } catch {
     return null;
