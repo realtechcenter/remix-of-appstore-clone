@@ -49,9 +49,7 @@ const VersionItem = ({
   const { t, language } = useLanguage();
   const translations = useTranslations();
   
-  // Filter out links with null URLs (paid apps where user hasn't purchased)
-  const downloadLinks = (version.download_links || []).filter(link => link.url !== null);
-  const hasDownloadLinks = downloadLinks.length > 0;
+  const hasDownloadUrl = version.download_url !== null && version.download_url !== undefined;
   
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
@@ -141,38 +139,14 @@ const VersionItem = ({
           </div>
         )}
         
-        {/* Download Links */}
+        {/* Download Button */}
         <div className="space-y-2">
           <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1">
             <FileDown className="w-3.5 h-3.5" />
-            {language === 'km' ? 'តំណទាញយក' : 'Download Links'}
+            {language === 'km' ? 'តំណទាញយក' : 'Download'}
           </div>
           
-          {hasDownloadLinks ? (
-            <div className="space-y-2">
-              {downloadLinks.map((link) => (
-                <a
-                  key={link.id}
-                  href={canDownload ? link.url : '#'}
-                  target={canDownload ? '_blank' : undefined}
-                  rel="noopener noreferrer"
-                  onClick={(e) => !canDownload && e.preventDefault()}
-                  className={`flex items-center justify-between p-3 rounded-lg border transition-colors ${
-                    canDownload 
-                      ? 'bg-primary/5 border-primary/20 hover:bg-primary/10 cursor-pointer' 
-                      : 'bg-muted/50 border-border/50 cursor-not-allowed opacity-60'
-                  }`}
-                >
-                  <span className="text-sm font-medium">{link.title}</span>
-                  {canDownload ? (
-                    <Download className="w-4 h-4 text-primary" />
-                  ) : (
-                    <Lock className="w-4 h-4 text-muted-foreground" />
-                  )}
-                </a>
-              ))}
-            </div>
-          ) : version.download_url ? (
+          {hasDownloadUrl ? (
             <a
               href={canDownload ? version.download_url : '#'}
               target={canDownload ? '_blank' : undefined}
@@ -195,7 +169,7 @@ const VersionItem = ({
             </a>
           ) : (
             <div className="text-sm text-muted-foreground italic p-3">
-              {language === 'km' ? 'គ្មានតំណទាញយក' : 'No download links available'}
+              {language === 'km' ? 'គ្មានតំណទាញយក' : 'No download link available'}
             </div>
           )}
         </div>
