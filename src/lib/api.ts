@@ -67,6 +67,13 @@ export interface AppDownloadLink {
   sort_order: number;
 }
 
+export interface AppDownloadLinkInput {
+  id?: number;
+  title: string;
+  url: string;
+  sort_order: number;
+}
+
 export interface AppVersion {
   id: number;
   app_id: number;
@@ -154,6 +161,11 @@ export const appsApi = {
     apiRequest<{ success: boolean; message: string }>(`apps/${id}`, { method: 'DELETE' }),
 };
 
+// Version input type for create/update (without full download_links)
+export type VersionInput = Omit<Partial<AppVersion>, 'download_links'> & {
+  download_links?: AppDownloadLinkInput[];
+};
+
 // Versions API - Laravel endpoints
 export const versionsApi = {
   getByAppId: async (appId: number) => {
@@ -161,10 +173,10 @@ export const versionsApi = {
     return response.versions;
   },
   
-  create: (data: Partial<AppVersion>) => 
+  create: (data: VersionInput) => 
     apiRequest<{ success: boolean; id: number; message: string }>('versions', { method: 'POST', body: data }),
   
-  update: (id: number, data: Partial<AppVersion>) => 
+  update: (id: number, data: VersionInput) => 
     apiRequest<{ success: boolean; message: string }>(`versions/${id}`, { method: 'PUT', body: data }),
   
   delete: (id: number) => 

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Edit, Trash2, LogOut, Package, Layers, Search, X, Save, ArrowLeft, ChevronLeft, ChevronRight, Users, BarChart3, Bell, Shield, Activity, UserX } from "lucide-react";
+import { Plus, Edit, Trash2, LogOut, Package, Layers, Search, X, Save, ArrowLeft, ChevronLeft, ChevronRight, Users, BarChart3, Bell, Shield, Activity, UserX, GripVertical, Link } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { appsApi, versionsApi, authApi, type App, type AppVersion } from "@/lib/api";
+import { appsApi, versionsApi, authApi, type App, type AppVersion, type AppDownloadLinkInput, type VersionInput } from "@/lib/api";
 import { FileUpload, ScreenshotUpload } from "@/components/FileUpload";
 import { UserManagement } from "@/components/admin/UserManagement";
 import { AnalyticsDashboard } from "@/components/admin/AnalyticsDashboard";
@@ -288,12 +288,12 @@ const AppForm = ({ app, onSave, onCancel }: AppFormProps) => {
 interface VersionFormProps {
   appId: number;
   version?: AppVersion;
-  onSave: (data: Partial<AppVersion>) => Promise<void>;
+  onSave: (data: VersionInput) => Promise<void>;
   onCancel: () => void;
 }
 
 const VersionForm = ({ appId, version, onSave, onCancel }: VersionFormProps) => {
-  const [formData, setFormData] = useState<Partial<AppVersion>>({
+  const [formData, setFormData] = useState<Omit<Partial<AppVersion>, 'download_links'>>({
     app_id: appId,
     version: version?.version || "",
     release_date: version?.release_date || new Date().toISOString().split("T")[0],
@@ -303,21 +303,62 @@ const VersionForm = ({ appId, version, onSave, onCancel }: VersionFormProps) => 
     download_url: version?.download_url || "",
     is_latest: version?.is_latest || false,
     min_os_version: version?.min_os_version || "",
+    architecture: version?.architecture || "",
   });
+  
+  // Download links state
+  const [downloadLinks, setDownloadLinks] = useState<AppDownloadLinkInput[]>(
+    version?.download_links?.map(link => ({
+      id: link.id,
+      title: link.title,
+      url: link.url,
+      sort_order: link.sort_order,
+    })) || []
+  );
+  
   const [saving, setSaving] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
     try {
-      await onSave(formData);
+      await onSave({ ...formData, download_links: downloadLinks });
     } finally {
       setSaving(false);
     }
   };
 
+  const addDownloadLink = () => {
+    setDownloadLinks([
+      ...downloadLinks,
+      { title: "", url: "", sort_order: downloadLinks.length }
+    ]);
+  };
+
+  const updateDownloadLink = (index: number, field: keyof AppDownloadLinkInput, value: string | number) => {
+    const updated = [...downloadLinks];
+    updated[index] = { ...updated[index], [field]: value };
+    setDownloadLinks(updated);
+  };
+
+  const removeDownloadLink = (index: number) => {
+    setDownloadLinks(downloadLinks.filter((_, i) => i !== index));
+  };
+
+  const moveDownloadLink = (index: number, direction: 'up' | 'down') => {
+    if ((direction === 'up' && index === 0) || (direction === 'down' && index === downloadLinks.length - 1)) {
+      return;
+    }
+    const updated = [...downloadLinks];
+    const newIndex = direction === 'up' ? index - 1 : index + 1;
+    [updated[index], updated[newIndex]] = [updated[newIndex], updated[index]];
+    // Update sort_order values
+    updated.forEach((link, i) => { link.sort_order = i; });
+    setDownloadLinks(updated);
+  };
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
           <Label htmlFor="version">Version *</Label>
@@ -352,8 +393,39 @@ const VersionForm = ({ appId, version, onSave, onCancel }: VersionFormProps) => 
         </div>
       </div>
 
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="min_os_version">Minimum OS Version</Label>
+          <Input
+            id="min_os_version"
+            value={formData.min_os_version}
+            onChange={(e) => setFormData({ ...formData, min_os_version: e.target.value })}
+            placeholder="macOS 12.0"
+            className="mt-1.5"
+          />
+        </div>
+        <div>
+          <Label htmlFor="architecture">Architecture</Label>
+          <Select
+            value={formData.architecture || ""}
+            onValueChange={(value) => setFormData({ ...formData, architecture: value })}
+          >
+            <SelectTrigger className="mt-1.5">
+              <SelectValue placeholder="Select architecture" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="x64">x64 (Intel/AMD)</SelectItem>
+              <SelectItem value="arm64">ARM64 (Apple Silicon)</SelectItem>
+              <SelectItem value="universal">Universal (x64 + ARM64)</SelectItem>
+              <SelectItem value="x86">x86 (32-bit)</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      {/* Legacy single download URL */}
       <div className="space-y-3">
-        <Label>Download File</Label>
+        <Label>Legacy Download URL (optional)</Label>
         <div className="flex items-start gap-4">
           <FileUpload
             type="versions"
@@ -371,17 +443,82 @@ const VersionForm = ({ appId, version, onSave, onCancel }: VersionFormProps) => 
             />
           </div>
         </div>
+        <p className="text-xs text-muted-foreground">Use "Download Links" below for multiple download options</p>
       </div>
 
-      <div>
-        <Label htmlFor="min_os_version">Minimum OS Version</Label>
-        <Input
-          id="min_os_version"
-          value={formData.min_os_version}
-          onChange={(e) => setFormData({ ...formData, min_os_version: e.target.value })}
-          placeholder="macOS 12.0"
-          className="mt-1.5"
-        />
+      {/* Download Links Section */}
+      <div className="space-y-3 border border-border rounded-lg p-4 bg-accent/30">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Link className="w-4 h-4 text-primary" />
+            <Label className="text-base font-medium">Download Links</Label>
+          </div>
+          <Button type="button" variant="outline" size="sm" onClick={addDownloadLink} className="gap-1">
+            <Plus className="w-3 h-3" />
+            Add Link
+          </Button>
+        </div>
+        
+        {downloadLinks.length === 0 ? (
+          <p className="text-sm text-muted-foreground text-center py-4">
+            No download links yet. Click "Add Link" to add download options.
+          </p>
+        ) : (
+          <div className="space-y-3">
+            {downloadLinks.map((link, index) => (
+              <div key={index} className="flex items-start gap-2 bg-background p-3 rounded-lg border border-border">
+                <div className="flex flex-col gap-1 pt-2">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6"
+                    onClick={() => moveDownloadLink(index, 'up')}
+                    disabled={index === 0}
+                  >
+                    <ChevronLeft className="w-3 h-3 rotate-90" />
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6"
+                    onClick={() => moveDownloadLink(index, 'down')}
+                    disabled={index === downloadLinks.length - 1}
+                  >
+                    <ChevronRight className="w-3 h-3 rotate-90" />
+                  </Button>
+                </div>
+                <div className="flex-1 space-y-2">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    <Input
+                      value={link.title}
+                      onChange={(e) => updateDownloadLink(index, 'title', e.target.value)}
+                      placeholder="Link title (e.g., 'Google Drive', 'Mega')"
+                      className="text-sm"
+                    />
+                    <Input
+                      type="url"
+                      value={link.url}
+                      onChange={(e) => updateDownloadLink(index, 'url', e.target.value)}
+                      placeholder="https://..."
+                      className="text-sm"
+                    />
+                  </div>
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-destructive hover:text-destructive"
+                  onClick={() => removeDownloadLink(index)}
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -416,7 +553,7 @@ const VersionForm = ({ appId, version, onSave, onCancel }: VersionFormProps) => 
         <Label htmlFor="is_latest">Mark as Latest Version (កំណែចុងក្រោយបំផុត)</Label>
       </div>
 
-      <div className="flex justify-end gap-3 pt-4 border-t border-border">
+      <div className="flex justify-end gap-3 pt-4 border-t border-border sticky bottom-0 bg-background">
         <Button type="button" variant="outline" onClick={onCancel}>
           Cancel
         </Button>
@@ -530,7 +667,7 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
     }
   };
 
-  const handleSaveVersion = async (data: Partial<AppVersion>) => {
+  const handleSaveVersion = async (data: VersionInput) => {
     try {
       if (editingVersion) {
         await versionsApi.update(editingVersion.id, data);
