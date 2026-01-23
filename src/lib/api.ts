@@ -4,14 +4,29 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://api.realtechcomput
 // Get API key from localStorage (set after login)
 const getApiKey = () => localStorage.getItem('admin_api_key') || '';
 
+// Get user ID from localStorage (for download access verification)
+const getUserId = (): string | null => {
+  try {
+    const userData = localStorage.getItem('user');
+    if (userData) {
+      const user = JSON.parse(userData);
+      return user?.id || null;
+    }
+  } catch {
+    return null;
+  }
+  return null;
+};
+
 interface ApiOptions {
   method?: string;
   body?: unknown;
   requiresAuth?: boolean;
+  includeUserId?: boolean; // For download access verification
 }
 
 async function apiRequest<T>(endpoint: string, options: ApiOptions = {}): Promise<T> {
-  const { method = 'GET', body, requiresAuth = true } = options;
+  const { method = 'GET', body, requiresAuth = true, includeUserId = false } = options;
   
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -20,6 +35,14 @@ async function apiRequest<T>(endpoint: string, options: ApiOptions = {}): Promis
   
   if (requiresAuth) {
     headers['Authorization'] = `Bearer ${getApiKey()}`;
+  }
+  
+  // Include user ID header for download access verification
+  if (includeUserId) {
+    const userId = getUserId();
+    if (userId) {
+      headers['X-User-Id'] = userId;
+    }
   }
   
   const response = await fetch(`${API_BASE_URL}/api/${endpoint}`, {
@@ -147,7 +170,8 @@ export const appsApi = {
   },
   
   getById: async (id: number): Promise<App> => {
-    const response = await apiRequest<{ app: App }>(`apps/${id}`, { requiresAuth: false });
+    // Include user ID for download access verification on paid apps
+    const response = await apiRequest<{ app: App }>(`apps/${id}`, { requiresAuth: false, includeUserId: true });
     return response.app;
   },
   
@@ -169,7 +193,8 @@ export type VersionInput = Omit<Partial<AppVersion>, 'download_links'> & {
 // Versions API - Laravel endpoints
 export const versionsApi = {
   getByAppId: async (appId: number) => {
-    const response = await apiRequest<{ versions: AppVersion[] }>(`versions?app_id=${appId}`, { requiresAuth: false });
+    // Include user ID for download access verification on paid apps
+    const response = await apiRequest<{ versions: AppVersion[] }>(`versions?app_id=${appId}`, { requiresAuth: false, includeUserId: true });
     return response.versions;
   },
   

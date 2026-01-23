@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\App;
 use App\Models\AppVersion;
 use App\Models\AppDownloadLink;
+use App\Models\Order;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -15,10 +17,45 @@ class VersionController extends Controller
             'app_id' => 'required|integer',
         ]);
 
+        $appId = $request->app_id;
+        
+        // Check if app is paid and if user has purchased it
+        $app = App::find($appId);
+        $canAccessDownloads = false;
+        
+        if ($app) {
+            // Free apps (no price or price = 0) allow downloads
+            if (!$app->price || $app->price == 0) {
+                $canAccessDownloads = true;
+            } else {
+                // For paid apps, check if user has purchased
+                $userId = $request->header('X-User-Id');
+                if ($userId) {
+                    $hasPurchased = Order::where('user_id', $userId)
+                        ->where('app_id', $appId)
+                        ->whereIn('status', ['paid', 'approved'])
+                        ->exists();
+                    $canAccessDownloads = $hasPurchased;
+                }
+            }
+        }
+
         $versions = AppVersion::with('download_links')
-            ->where('app_id', $request->app_id)
+            ->where('app_id', $appId)
             ->orderBy('created_at', 'desc')
             ->get();
+
+        // If user cannot access downloads, hide the URLs
+        if (!$canAccessDownloads) {
+            $versions = $versions->map(function ($version) {
+                $version->download_url = null;
+                $version->download_links = $version->download_links->map(function ($link) {
+                    $link->url = null;
+                    return $link;
+                });
+                return $version;
+            });
+        }
 
         return response()->json(['versions' => $versions]);
     }

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\App;
 use App\Models\AppScreenshot;
+use App\Models\Order;
 use Illuminate\Http\Request;
 
 class AppController extends Controller
@@ -63,6 +64,17 @@ class AppController extends Controller
         $total = $query->count();
         $apps = $query->skip($offset)->take($limit)->get();
 
+        // For app list, always hide download URLs (security)
+        $apps = $apps->map(function ($app) {
+            if ($app->versions) {
+                $app->versions = $app->versions->map(function ($version) {
+                    $version->download_url = null;
+                    return $version;
+                });
+            }
+            return $app;
+        });
+
         return response()->json([
             'apps' => $apps,
             'pagination' => [
@@ -74,12 +86,44 @@ class AppController extends Controller
         ]);
     }
 
-    public function show($id)
+    public function show(Request $request, $id)
     {
-        $app = App::with(['versions', 'screenshots'])->find($id);
+        $app = App::with(['versions.download_links', 'screenshots'])->find($id);
 
         if (!$app) {
             return response()->json(['error' => 'App not found'], 404);
+        }
+
+        // Check if user has access to download URLs
+        $canAccessDownloads = false;
+        
+        // Free apps allow downloads
+        if (!$app->price || $app->price == 0) {
+            $canAccessDownloads = true;
+        } else {
+            // For paid apps, check if user has purchased
+            $userId = $request->header('X-User-Id');
+            if ($userId) {
+                $hasPurchased = Order::where('user_id', $userId)
+                    ->where('app_id', $id)
+                    ->whereIn('status', ['paid', 'approved'])
+                    ->exists();
+                $canAccessDownloads = $hasPurchased;
+            }
+        }
+
+        // If user cannot access downloads, hide the URLs
+        if (!$canAccessDownloads && $app->versions) {
+            $app->versions = $app->versions->map(function ($version) {
+                $version->download_url = null;
+                if ($version->download_links) {
+                    $version->download_links = $version->download_links->map(function ($link) {
+                        $link->url = null;
+                        return $link;
+                    });
+                }
+                return $version;
+            });
         }
 
         return response()->json(['app' => $app]);
