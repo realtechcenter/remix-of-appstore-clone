@@ -33,6 +33,6 @@ class AppVersion extends Model
 
     public function download_links(): HasMany
     {
-        return $this->hasMany(AppDownloadLink::class, 'app_version_id')->orderBy('sort_order');
+        return $this->hasMany(AppDownloadLink::class, 'app_version_id');
     }
 }
