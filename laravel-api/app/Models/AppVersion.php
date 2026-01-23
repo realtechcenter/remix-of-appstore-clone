@@ -17,6 +17,7 @@ class AppVersion extends Model
         'download_url',
         'is_latest',
         'min_os_version',
+        'architecture',
     ];
 
     protected $casts = [

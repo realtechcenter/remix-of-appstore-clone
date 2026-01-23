@@ -4,7 +4,7 @@ import {
   Download, Calendar, HardDrive, ExternalLink, Package, ChevronLeft, 
   ChevronRight, X, Shield, History, ArrowLeft, Home, Search, Sparkles,
   Box, Gamepad2, Puzzle, LayoutGrid, ChevronDown, ShoppingCart, Lock,
-  ShoppingBag
+  ShoppingBag, Monitor, Cpu, FileDown
 } from "lucide-react";
 import { useLanguage, useTranslations } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -14,6 +14,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { appsApi, versionsApi, type AppVersion } from "@/lib/api";
 import { useQuery } from "@tanstack/react-query";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -34,85 +35,210 @@ const getGradientFromName = (name: string | undefined): string => {
   return gradients[hash % gradients.length];
 };
 
-// Previous Versions Dialog
-const PreviousVersionsDialog = ({ 
+// Collapsible Version Item
+const VersionItem = ({ 
+  version, 
+  canDownload,
+  isLatest 
+}: { 
+  version: AppVersion; 
+  canDownload: boolean;
+  isLatest?: boolean;
+}) => {
+  const [isOpen, setIsOpen] = useState(isLatest || false);
+  const { t, language } = useLanguage();
+  const translations = useTranslations();
+  
+  const downloadLinks = version.download_links || [];
+  const hasDownloadLinks = downloadLinks.length > 0;
+  
+  return (
+    <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+      <CollapsibleTrigger asChild>
+        <button className="w-full flex items-center justify-between p-4 rounded-xl bg-muted/50 hover:bg-muted transition-colors text-left">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-primary/10">
+              <Package className="w-5 h-5 text-primary" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="font-semibold text-foreground">v{version.version}</span>
+                {isLatest && (
+                  <Badge variant="default" className="text-xs">{translations.latest}</Badge>
+                )}
+              </div>
+              <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
+                {version.release_date && (
+                  <span className="flex items-center gap-1">
+                    <Calendar className="w-3 h-3" />
+                    {new Date(version.release_date).toLocaleDateString()}
+                  </span>
+                )}
+                {version.file_size && (
+                  <span className="flex items-center gap-1">
+                    <HardDrive className="w-3 h-3" />
+                    {version.file_size}
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+          <ChevronDown className={`w-5 h-5 text-muted-foreground transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+        </button>
+      </CollapsibleTrigger>
+      
+      <CollapsibleContent className="mt-2 space-y-3 pl-4">
+        {/* Version Details */}
+        <div className="grid grid-cols-2 gap-3 p-4 bg-muted/30 rounded-xl border border-border/50">
+          {version.min_os_version && (
+            <div className="flex items-center gap-2">
+              <Monitor className="w-4 h-4 text-muted-foreground" />
+              <div>
+                <div className="text-xs text-muted-foreground">{translations.compatibility || 'Compatibility'}</div>
+                <div className="text-sm font-medium">{version.min_os_version}</div>
+              </div>
+            </div>
+          )}
+          
+          {version.file_size && (
+            <div className="flex items-center gap-2">
+              <HardDrive className="w-4 h-4 text-muted-foreground" />
+              <div>
+                <div className="text-xs text-muted-foreground">{translations.size}</div>
+                <div className="text-sm font-medium">{version.file_size}</div>
+              </div>
+            </div>
+          )}
+          
+          {version.architecture && (
+            <div className="flex items-center gap-2">
+              <Cpu className="w-4 h-4 text-muted-foreground" />
+              <div>
+                <div className="text-xs text-muted-foreground">{language === 'km' ? 'ស្ថាបត្យកម្ម' : 'Architecture'}</div>
+                <div className="text-sm font-medium">{version.architecture}</div>
+              </div>
+            </div>
+          )}
+          
+          {version.release_date && (
+            <div className="flex items-center gap-2">
+              <Calendar className="w-4 h-4 text-muted-foreground" />
+              <div>
+                <div className="text-xs text-muted-foreground">{translations.releaseDate}</div>
+                <div className="text-sm font-medium">{new Date(version.release_date).toLocaleDateString()}</div>
+              </div>
+            </div>
+          )}
+        </div>
+        
+        {/* Changelog */}
+        {(version.changelog || version.changelog_km) && (
+          <div className="p-3 bg-muted/20 rounded-lg border border-border/30">
+            <p className="text-sm text-muted-foreground">
+              {t(version.changelog_km, version.changelog)}
+            </p>
+          </div>
+        )}
+        
+        {/* Download Links */}
+        <div className="space-y-2">
+          <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1">
+            <FileDown className="w-3.5 h-3.5" />
+            {language === 'km' ? 'តំណទាញយក' : 'Download Links'}
+          </div>
+          
+          {hasDownloadLinks ? (
+            <div className="space-y-2">
+              {downloadLinks.map((link) => (
+                <a
+                  key={link.id}
+                  href={canDownload ? link.url : '#'}
+                  target={canDownload ? '_blank' : undefined}
+                  rel="noopener noreferrer"
+                  onClick={(e) => !canDownload && e.preventDefault()}
+                  className={`flex items-center justify-between p-3 rounded-lg border transition-colors ${
+                    canDownload 
+                      ? 'bg-primary/5 border-primary/20 hover:bg-primary/10 cursor-pointer' 
+                      : 'bg-muted/50 border-border/50 cursor-not-allowed opacity-60'
+                  }`}
+                >
+                  <span className="text-sm font-medium">{link.title}</span>
+                  {canDownload ? (
+                    <Download className="w-4 h-4 text-primary" />
+                  ) : (
+                    <Lock className="w-4 h-4 text-muted-foreground" />
+                  )}
+                </a>
+              ))}
+            </div>
+          ) : version.download_url ? (
+            <a
+              href={canDownload ? version.download_url : '#'}
+              target={canDownload ? '_blank' : undefined}
+              rel="noopener noreferrer"
+              onClick={(e) => !canDownload && e.preventDefault()}
+              className={`flex items-center justify-between p-3 rounded-lg border transition-colors ${
+                canDownload 
+                  ? 'bg-primary/5 border-primary/20 hover:bg-primary/10 cursor-pointer' 
+                  : 'bg-muted/50 border-border/50 cursor-not-allowed opacity-60'
+              }`}
+            >
+              <span className="text-sm font-medium">
+                {language === 'km' ? 'ទាញយក' : 'Download'} v{version.version}
+              </span>
+              {canDownload ? (
+                <Download className="w-4 h-4 text-primary" />
+              ) : (
+                <Lock className="w-4 h-4 text-muted-foreground" />
+              )}
+            </a>
+          ) : (
+            <div className="text-sm text-muted-foreground italic p-3">
+              {language === 'km' ? 'គ្មានតំណទាញយក' : 'No download links available'}
+            </div>
+          )}
+        </div>
+      </CollapsibleContent>
+    </Collapsible>
+  );
+};
+
+// Versions List Component
+const VersionsList = ({ 
   versions, 
-  open, 
-  onOpenChange,
-  appName,
   canDownload 
 }: { 
   versions: AppVersion[]; 
-  open: boolean; 
-  onOpenChange: (open: boolean) => void;
-  appName: string;
   canDownload: boolean;
 }) => {
-  const { t } = useLanguage();
-  const translations = useTranslations();
   const { language } = useLanguage();
+  const translations = useTranslations();
+  
+  if (!versions || versions.length === 0) {
+    return null;
+  }
   
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg">
-        <div className="flex items-center gap-3 mb-4">
-          <History className="w-5 h-5 text-muted-foreground" />
-          <h2 className="text-lg font-semibold">{appName} - {translations.previousVersions}</h2>
-        </div>
-        
-        <ScrollArea className="max-h-[60vh]">
-          <div className="space-y-3 pr-4">
-            {versions.map((version) => (
-              <div 
-                key={version.id}
-                className="flex items-center justify-between p-4 rounded-xl bg-muted/50 hover:bg-muted transition-colors"
-              >
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium">v{version.version}</span>
-                    {version.is_latest && (
-                      <Badge variant="default" className="text-xs">{translations.latest}</Badge>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                    {version.release_date && (
-                      <span className="flex items-center gap-1">
-                        <Calendar className="w-3 h-3" />
-                        {new Date(version.release_date).toLocaleDateString()}
-                      </span>
-                    )}
-                    {version.file_size && (
-                      <span className="flex items-center gap-1">
-                        <HardDrive className="w-3 h-3" />
-                        {version.file_size}
-                      </span>
-                    )}
-                  </div>
-                  {(version.changelog || version.changelog_km) && (
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {t(version.changelog_km, version.changelog)}
-                    </p>
-                  )}
-                </div>
-                
-                {version.download_url && canDownload ? (
-                  <a href={version.download_url} target="_blank" rel="noopener noreferrer">
-                    <Button size="sm" variant="outline" className="gap-1.5">
-                      <Download className="w-3.5 h-3.5" />
-                    </Button>
-                  </a>
-                ) : version.download_url ? (
-                  <Button size="sm" variant="outline" className="gap-1.5" disabled>
-                    <Lock className="w-3.5 h-3.5" />
-                    <span className="text-xs">{language === 'km' ? 'ទិញ' : 'Buy'}</span>
-                  </Button>
-                ) : null}
-              </div>
-            ))}
-          </div>
-        </ScrollArea>
-      </DialogContent>
-    </Dialog>
+    <div className="space-y-4">
+      <div className="flex items-center gap-2">
+        <History className="w-5 h-5 text-muted-foreground" />
+        <h3 className="text-lg font-semibold">
+          {language === 'km' ? 'កំណែទាំងអស់' : 'All Versions'}
+        </h3>
+        <Badge variant="secondary" className="text-xs">{versions.length}</Badge>
+      </div>
+      
+      <div className="space-y-3">
+        {versions.map((version, index) => (
+          <VersionItem 
+            key={version.id} 
+            version={version} 
+            canDownload={canDownload}
+            isLatest={index === 0 || version.is_latest}
+          />
+        ))}
+      </div>
+    </div>
   );
 };
 
@@ -318,7 +444,6 @@ const AppDetail = () => {
   const translations = useTranslations();
   const { user } = useAuth();
   const [selectedScreenshot, setSelectedScreenshot] = useState(0);
-  const [showVersions, setShowVersions] = useState(false);
   const [showLangMenu, setShowLangMenu] = useState(false);
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
   const { language, setLanguage } = useLanguage();
@@ -723,18 +848,6 @@ const AppDetail = () => {
                       );
                     })()}
 
-                    {/* Previous Versions Button */}
-                    {versions && versions.length > 1 && (
-                      <Button 
-                        variant="outline"
-                        className="w-full h-11 gap-2"
-                        onClick={() => setShowVersions(true)}
-                      >
-                        <History className="w-4 h-4" />
-                        {translations.previousVersions}
-                      </Button>
-                    )}
-
                     {/* Security Badge */}
                     <div className="flex items-center gap-2 text-sm text-muted-foreground p-3 bg-green-500/10 rounded-lg border border-green-500/20">
                       <Shield className="w-4 h-4 text-green-500" />
@@ -756,20 +869,22 @@ const AppDetail = () => {
                     </div>
                   </div>
                 )}
+
+                {/* All Versions Section */}
+                {versions && versions.length > 0 && (
+                  <div className="mt-10">
+                    <Separator className="mb-8" />
+                    <VersionsList 
+                      versions={versions} 
+                      canDownload={!appData?.price || appData.price === 0 || !!hasPurchased}
+                    />
+                  </div>
+                )}
               </div>
             </div>
           )}
         </div>
       </main>
-
-      {/* Previous Versions Dialog */}
-      <PreviousVersionsDialog
-        versions={versions || []}
-        open={showVersions}
-        onOpenChange={setShowVersions}
-        appName={displayName}
-        canDownload={!appData?.price || appData.price === 0 || !!hasPurchased}
-      />
       
       {/* Payment Dialog */}
       {appData && appData.price && appData.price > 0 && (

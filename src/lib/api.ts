@@ -59,6 +59,14 @@ export interface App {
   updated_at: string;
 }
 
+export interface AppDownloadLink {
+  id: number;
+  app_version_id: number;
+  title: string;
+  url: string;
+  sort_order: number;
+}
+
 export interface AppVersion {
   id: number;
   app_id: number;
@@ -70,6 +78,9 @@ export interface AppVersion {
   download_url?: string;
   is_latest: boolean;
   min_os_version?: string;
+  architecture?: string;
+  compatibility?: string;
+  download_links?: AppDownloadLink[];
   created_at: string;
 }
 
