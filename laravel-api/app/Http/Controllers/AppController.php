@@ -88,7 +88,7 @@ class AppController extends Controller
 
     public function show(Request $request, $id)
     {
-        $app = App::with(['versions.download_links', 'screenshots'])->find($id);
+        $app = App::with(['versions', 'screenshots'])->find($id);
 
         if (!$app) {
             return response()->json(['error' => 'App not found'], 404);
@@ -116,12 +116,6 @@ class AppController extends Controller
         if (!$canAccessDownloads && $app->versions) {
             $app->versions = $app->versions->map(function ($version) {
                 $version->download_url = null;
-                if ($version->download_links) {
-                    $version->download_links = $version->download_links->map(function ($link) {
-                        $link->url = null;
-                        return $link;
-                    });
-                }
                 return $version;
             });
         }

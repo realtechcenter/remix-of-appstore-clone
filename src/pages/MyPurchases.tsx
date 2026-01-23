@@ -165,10 +165,7 @@ interface VersionItemProps {
 }
 
 const VersionItem = ({ version, language }: VersionItemProps) => {
-  // Filter out links with null URLs
-  const downloadLinks = (version.download_links || []).filter(link => link.url !== null);
-  const hasDownloadUrl = version.download_url !== null;
-  const hasAnyDownloads = hasDownloadUrl || downloadLinks.length > 0;
+  const hasDownloadUrl = version.download_url !== null && version.download_url !== undefined;
 
   return (
     <div className="p-4">
@@ -224,46 +221,22 @@ const VersionItem = ({ version, language }: VersionItemProps) => {
         </div>
       )}
 
-      {/* Download Links */}
-      {hasAnyDownloads ? (
-        <div className="space-y-2">
-          {/* Legacy single download URL */}
-          {hasDownloadUrl && (
-            <a
-              href={version.download_url!}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="block"
-            >
-              <Button size="sm" className="gap-2 w-full sm:w-auto bg-green-600 hover:bg-green-700">
-                <Download className="w-4 h-4" />
-                {language === 'km' ? 'ទាញយក' : 'Download'}
-              </Button>
-            </a>
-          )}
-          
-          {/* Multiple download links */}
-          {downloadLinks.length > 0 && (
-            <div className="flex flex-wrap gap-2">
-              {downloadLinks.map((link) => (
-                <a
-                  key={link.id}
-                  href={link.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <Button size="sm" variant="outline" className="gap-2">
-                    <Download className="w-4 h-4" />
-                    {link.title}
-                  </Button>
-                </a>
-              ))}
-            </div>
-          )}
-        </div>
+      {/* Download Button */}
+      {hasDownloadUrl ? (
+        <a
+          href={version.download_url!}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="block"
+        >
+          <Button size="sm" className="gap-2 w-full sm:w-auto bg-green-600 hover:bg-green-700">
+            <Download className="w-4 h-4" />
+            {language === 'km' ? 'ទាញយក' : 'Download'} v{version.version}
+          </Button>
+        </a>
       ) : (
         <p className="text-sm text-muted-foreground italic">
-          {language === 'km' ? 'គ្មានតំណទាញយកទេ' : 'No download links available'}
+          {language === 'km' ? 'គ្មានតំណទាញយកទេ' : 'No download link available'}
         </p>
       )}
     </div>
