@@ -49,7 +49,8 @@ const VersionItem = ({
   const { t, language } = useLanguage();
   const translations = useTranslations();
   
-  const downloadLinks = version.download_links || [];
+  // Filter out links with null URLs (paid apps where user hasn't purchased)
+  const downloadLinks = (version.download_links || []).filter(link => link.url !== null);
   const hasDownloadLinks = downloadLinks.length > 0;
   
   return (
