@@ -42,7 +42,8 @@ class VersionController extends Controller
 
         $versions = AppVersion::with('download_links')
             ->where('app_id', $appId)
-            ->orderBy('created_at', 'desc')
+            ->orderByDesc('is_latest')
+            ->orderByDesc('id')
             ->get();
 
         // If user cannot access downloads, hide the URLs
