@@ -610,8 +610,10 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
   const loadAppVersions = async (appId: number) => {
     try {
       const versions = await versionsApi.getByAppId(appId);
+      console.log('Loaded versions:', versions);
       setAppVersions(versions);
     } catch (error) {
+      console.error('Failed to load versions:', error);
       toast.error("Failed to load versions");
     }
   };

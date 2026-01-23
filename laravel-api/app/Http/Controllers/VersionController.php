@@ -15,7 +15,7 @@ class VersionController extends Controller
             'app_id' => 'required|integer',
         ]);
 
-        $versions = AppVersion::with('downloadLinks')
+        $versions = AppVersion::with('download_links')
             ->where('app_id', $request->app_id)
             ->orderBy('created_at', 'desc')
             ->get();
