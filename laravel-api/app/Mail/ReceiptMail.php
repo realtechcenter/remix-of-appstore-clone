@@ -31,6 +31,9 @@ class ReceiptMail extends Mailable
     {
         return new Content(
             view: 'emails.receipt',
+            with: [
+                'receipt' => $this->receipt,
+            ],
         );
     }
 
