@@ -796,7 +796,8 @@ const AppDetail = () => {
                       
                       const canDownload = !isPaidApp || hasPurchased === true;
                       
-                      if (!latestVersion?.download_url) {
+                      // Check if any version exists (not download_url, since it's null for unpurchased paid apps)
+                      if (!latestVersion) {
                         return (
                           <Button 
                             className="w-full h-14 text-base font-semibold gap-2"
