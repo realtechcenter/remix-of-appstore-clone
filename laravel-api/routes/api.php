@@ -18,6 +18,7 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\AppSubmissionController;
 use App\Http\Controllers\AIChatController;
 use App\Http\Controllers\ReceiptController;
+use App\Http\Controllers\MailTestController;
 
 /*
 |--------------------------------------------------------------------------
@@ -46,6 +47,10 @@ Route::get('/versions', [VersionController::class, 'index']);
 // AI Chat (public)
 Route::post('/ai/chat', [AIChatController::class, 'chat']);
 Route::post('/ai/chat/stream', [AIChatController::class, 'streamChat']);
+
+// Mail test routes (public for testing)
+Route::post('/test/send-receipt-email', [MailTestController::class, 'testReceiptEmail']);
+Route::get('/test/mail-config', [MailTestController::class, 'testMailConfig']);
 
 // Protected admin routes
 Route::middleware('auth.admin')->group(function () {
