@@ -7,11 +7,10 @@ const getApiKey = () => localStorage.getItem('admin_api_key') || '';
 // Get user ID from localStorage (for download access verification)
 const getUserId = (): string | null => {
   try {
-    // Check auth_user (from AuthContext) first, then fall back to user
-    const userData = localStorage.getItem('auth_user') || localStorage.getItem('user');
+    const userData = localStorage.getItem('user');
     if (userData) {
       const user = JSON.parse(userData);
-      return user?.id?.toString() || null;
+      return user?.id || null;
     }
   } catch {
     return null;
@@ -83,6 +82,21 @@ export interface App {
   updated_at: string;
 }
 
+export interface AppDownloadLink {
+  id: number;
+  app_version_id: number;
+  title: string;
+  url: string;
+  sort_order: number;
+}
+
+export interface AppDownloadLinkInput {
+  id?: number;
+  title: string;
+  url: string;
+  sort_order: number;
+}
+
 export interface AppVersion {
   id: number;
   app_id: number;
@@ -96,6 +110,7 @@ export interface AppVersion {
   min_os_version?: string;
   architecture?: string;
   compatibility?: string;
+  download_links?: AppDownloadLink[];
   created_at: string;
 }
 
@@ -170,8 +185,10 @@ export const appsApi = {
     apiRequest<{ success: boolean; message: string }>(`apps/${id}`, { method: 'DELETE' }),
 };
 
-// Version input type for create/update
-export type VersionInput = Partial<AppVersion>;
+// Version input type for create/update (without full download_links)
+export type VersionInput = Omit<Partial<AppVersion>, 'download_links'> & {
+  download_links?: AppDownloadLinkInput[];
+};
 
 // Versions API - Laravel endpoints
 export const versionsApi = {

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Edit, Trash2, LogOut, Package, Layers, Search, X, Save, ArrowLeft, ChevronLeft, ChevronRight, Users, BarChart3, Bell, Shield, Activity, UserX } from "lucide-react";
+import { Plus, Edit, Trash2, LogOut, Package, Layers, Search, X, Save, ArrowLeft, ChevronLeft, ChevronRight, Users, BarChart3, Bell, Shield, Activity, UserX, GripVertical, Link } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { appsApi, versionsApi, authApi, type App, type AppVersion, type VersionInput } from "@/lib/api";
+import { appsApi, versionsApi, authApi, type App, type AppVersion, type AppDownloadLinkInput, type VersionInput } from "@/lib/api";
 import { FileUpload, ScreenshotUpload } from "@/components/FileUpload";
 import { UserManagement } from "@/components/admin/UserManagement";
 import { AnalyticsDashboard } from "@/components/admin/AnalyticsDashboard";
@@ -293,7 +293,7 @@ interface VersionFormProps {
 }
 
 const VersionForm = ({ appId, version, onSave, onCancel }: VersionFormProps) => {
-  const [formData, setFormData] = useState<Partial<AppVersion>>({
+  const [formData, setFormData] = useState<Omit<Partial<AppVersion>, 'download_links'>>({
     app_id: appId,
     version: version?.version || "",
     release_date: version?.release_date || new Date().toISOString().split("T")[0],
@@ -306,16 +306,55 @@ const VersionForm = ({ appId, version, onSave, onCancel }: VersionFormProps) => 
     architecture: version?.architecture || "",
   });
   
+  // Download links state
+  const [downloadLinks, setDownloadLinks] = useState<AppDownloadLinkInput[]>(
+    version?.download_links?.map(link => ({
+      id: link.id,
+      title: link.title,
+      url: link.url,
+      sort_order: link.sort_order,
+    })) || []
+  );
+  
   const [saving, setSaving] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
     try {
-      await onSave(formData);
+      await onSave({ ...formData, download_links: downloadLinks });
     } finally {
       setSaving(false);
     }
+  };
+
+  const addDownloadLink = () => {
+    setDownloadLinks([
+      ...downloadLinks,
+      { title: "", url: "", sort_order: downloadLinks.length }
+    ]);
+  };
+
+  const updateDownloadLink = (index: number, field: keyof AppDownloadLinkInput, value: string | number) => {
+    const updated = [...downloadLinks];
+    updated[index] = { ...updated[index], [field]: value };
+    setDownloadLinks(updated);
+  };
+
+  const removeDownloadLink = (index: number) => {
+    setDownloadLinks(downloadLinks.filter((_, i) => i !== index));
+  };
+
+  const moveDownloadLink = (index: number, direction: 'up' | 'down') => {
+    if ((direction === 'up' && index === 0) || (direction === 'down' && index === downloadLinks.length - 1)) {
+      return;
+    }
+    const updated = [...downloadLinks];
+    const newIndex = direction === 'up' ? index - 1 : index + 1;
+    [updated[index], updated[newIndex]] = [updated[newIndex], updated[index]];
+    // Update sort_order values
+    updated.forEach((link, i) => { link.sort_order = i; });
+    setDownloadLinks(updated);
   };
 
   return (
@@ -384,9 +423,9 @@ const VersionForm = ({ appId, version, onSave, onCancel }: VersionFormProps) => 
         </div>
       </div>
 
-      {/* Download URL */}
+      {/* Legacy single download URL */}
       <div className="space-y-3">
-        <Label>Download URL</Label>
+        <Label>Legacy Download URL (optional)</Label>
         <div className="flex items-start gap-4">
           <FileUpload
             type="versions"
@@ -404,6 +443,82 @@ const VersionForm = ({ appId, version, onSave, onCancel }: VersionFormProps) => 
             />
           </div>
         </div>
+        <p className="text-xs text-muted-foreground">Use "Download Links" below for multiple download options</p>
+      </div>
+
+      {/* Download Links Section */}
+      <div className="space-y-3 border border-border rounded-lg p-4 bg-accent/30">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Link className="w-4 h-4 text-primary" />
+            <Label className="text-base font-medium">Download Links</Label>
+          </div>
+          <Button type="button" variant="outline" size="sm" onClick={addDownloadLink} className="gap-1">
+            <Plus className="w-3 h-3" />
+            Add Link
+          </Button>
+        </div>
+        
+        {downloadLinks.length === 0 ? (
+          <p className="text-sm text-muted-foreground text-center py-4">
+            No download links yet. Click "Add Link" to add download options.
+          </p>
+        ) : (
+          <div className="space-y-3">
+            {downloadLinks.map((link, index) => (
+              <div key={index} className="flex items-start gap-2 bg-background p-3 rounded-lg border border-border">
+                <div className="flex flex-col gap-1 pt-2">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6"
+                    onClick={() => moveDownloadLink(index, 'up')}
+                    disabled={index === 0}
+                  >
+                    <ChevronLeft className="w-3 h-3 rotate-90" />
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6"
+                    onClick={() => moveDownloadLink(index, 'down')}
+                    disabled={index === downloadLinks.length - 1}
+                  >
+                    <ChevronRight className="w-3 h-3 rotate-90" />
+                  </Button>
+                </div>
+                <div className="flex-1 space-y-2">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    <Input
+                      value={link.title}
+                      onChange={(e) => updateDownloadLink(index, 'title', e.target.value)}
+                      placeholder="Link title (e.g., 'Google Drive', 'Mega')"
+                      className="text-sm"
+                    />
+                    <Input
+                      type="url"
+                      value={link.url}
+                      onChange={(e) => updateDownloadLink(index, 'url', e.target.value)}
+                      placeholder="https://..."
+                      className="text-sm"
+                    />
+                  </div>
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-destructive hover:text-destructive"
+                  onClick={() => removeDownloadLink(index)}
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

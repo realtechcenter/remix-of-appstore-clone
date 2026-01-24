@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class AppVersion extends Model
 {
@@ -28,5 +29,10 @@ class AppVersion extends Model
     public function app(): BelongsTo
     {
         return $this->belongsTo(App::class);
+    }
+
+    public function download_links(): HasMany
+    {
+        return $this->hasMany(AppDownloadLink::class, 'app_version_id');
     }
 }
