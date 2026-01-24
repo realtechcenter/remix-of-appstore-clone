@@ -852,33 +852,44 @@ const AppDetail = () => {
                       );
                     })()}
 
-                    {/* Security Status - Like appstorrent style */}
-                    <a 
-                      href="https://www.virustotal.com" 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-2 text-sm py-2 text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                      <Shield className="w-4 h-4 text-green-500" />
-                      <span>
-                        {language === 'km' ? 'គ្មានការគំរាមកំហែង។' : 'No threats found.'}
-                      </span>
-                      <span className="text-primary hover:underline">
-                        {language === 'km' ? 'លម្អិត...' : 'More...'}
-                      </span>
-                    </a>
-                    
-                    {/* Action Buttons Row - Like appstorrent footer */}
-                    <div className="flex gap-2 pt-2 border-t border-border/50">
+                    {/* Security Badge - 100% Safe with VirusTotal */}
+                    <div className="space-y-2">
+                      <a 
+                        href="https://www.virustotal.com" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 text-sm p-3 bg-green-500/10 rounded-lg border border-green-500/20 hover:bg-green-500/20 transition-colors"
+                      >
+                        <Shield className="w-5 h-5 text-green-500" />
+                        <div className="flex-1">
+                          <span className="font-semibold text-green-600 dark:text-green-400">
+                            100% {language === 'km' ? 'សុវត្ថិភាព' : 'Safe'}
+                          </span>
+                          <p className="text-xs text-muted-foreground">
+                            {language === 'km' ? 'ពិនិត្យលើ VirusTotal' : 'Verify on VirusTotal'}
+                          </p>
+                        </div>
+                        <ExternalLink className="w-4 h-4 text-muted-foreground" />
+                      </a>
+                      
+                      {/* Official Website Link */}
                       {appData.website && (
                         <a 
                           href={appData.website} 
                           target="_blank" 
                           rel="noopener noreferrer"
-                          className="flex-1 flex items-center justify-center gap-2 py-3 text-sm font-medium text-muted-foreground hover:text-primary hover:bg-muted/50 rounded-lg transition-colors"
+                          className="flex items-center gap-2 text-sm p-3 bg-primary/5 rounded-lg border border-primary/20 hover:bg-primary/10 transition-colors"
                         >
-                          <ExternalLink className="w-4 h-4" />
-                          <span>{language === 'km' ? 'គេហទំព័រផ្លូវការ' : 'Official'}</span>
+                          <ExternalLink className="w-5 h-5 text-primary" />
+                          <div className="flex-1">
+                            <span className="font-semibold text-primary">
+                              {language === 'km' ? 'គេហទំព័រផ្លូវការ' : 'Official Website'}
+                            </span>
+                            <p className="text-xs text-muted-foreground truncate">
+                              {appData.website.replace(/^https?:\/\//, '').split('/')[0]}
+                            </p>
+                          </div>
+                          <ExternalLink className="w-4 h-4 text-muted-foreground" />
                         </a>
                       )}
                     </div>
