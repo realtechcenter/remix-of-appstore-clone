@@ -101,14 +101,22 @@ class AppController extends Controller
         if (!$app->price || $app->price == 0) {
             $canAccessDownloads = true;
         } else {
-            // For paid apps, check if user has purchased
-            $userId = $request->header('X-User-Id');
-            if ($userId) {
-                $hasPurchased = Order::where('user_id', $userId)
-                    ->where('app_id', $id)
-                    ->whereIn('status', ['paid', 'approved'])
-                    ->exists();
-                $canAccessDownloads = $hasPurchased;
+            // For paid apps, verify user authentication via JWT token
+            $token = $request->bearerToken();
+            if ($token) {
+                try {
+                    $decoded = \Firebase\JWT\JWT::decode($token, new \Firebase\JWT\Key(config('app.jwt_secret'), 'HS256'));
+                    $userId = $decoded->user_id;
+                    
+                    $hasPurchased = Order::where('user_id', $userId)
+                        ->where('app_id', $id)
+                        ->whereIn('status', ['paid', 'approved'])
+                        ->exists();
+                    $canAccessDownloads = $hasPurchased;
+                } catch (\Exception $e) {
+                    // Invalid or missing token - user cannot access paid downloads
+                    $canAccessDownloads = false;
+                }
             }
         }
 
