@@ -163,9 +163,20 @@ const VersionItem = ({
                       : 'bg-muted/50 border-border/50 cursor-not-allowed opacity-60'
                   }`}
                 >
-                  <span className="text-sm font-medium">{link.title}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium">{link.title}</span>
+                    {link.link_type === 'page' && (
+                      <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                        {language === 'km' ? 'ទំព័រ' : 'Page'}
+                      </Badge>
+                    )}
+                  </div>
                   {canDownload ? (
-                    <Download className="w-4 h-4 text-primary" />
+                    link.link_type === 'page' ? (
+                      <ExternalLink className="w-4 h-4 text-primary" />
+                    ) : (
+                      <Download className="w-4 h-4 text-primary" />
+                    )
                   ) : (
                     <Lock className="w-4 h-4 text-muted-foreground" />
                   )}

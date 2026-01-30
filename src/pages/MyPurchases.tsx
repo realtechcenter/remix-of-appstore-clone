@@ -253,8 +253,15 @@ const VersionItem = ({ version, language }: VersionItemProps) => {
                   rel="noopener noreferrer"
                 >
                   <Button size="sm" variant="outline" className="gap-2">
-                    <Download className="w-4 h-4" />
+                    {link.link_type === 'page' ? (
+                      <ExternalLink className="w-4 h-4" />
+                    ) : (
+                      <Download className="w-4 h-4" />
+                    )}
                     {link.title}
+                    {link.link_type === 'page' && (
+                      <span className="text-[10px] text-muted-foreground">({language === 'km' ? 'ទំព័រ' : 'Page'})</span>
+                    )}
                   </Button>
                 </a>
               ))}

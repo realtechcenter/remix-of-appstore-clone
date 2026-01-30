@@ -11,6 +11,7 @@ class AppDownloadLink extends Model
         'app_version_id',
         'title',
         'url',
+        'link_type',
         'sort_order',
     ];
 
