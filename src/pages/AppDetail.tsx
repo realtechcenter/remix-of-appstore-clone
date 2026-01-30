@@ -4,7 +4,7 @@ import {
   Download, Calendar, HardDrive, ExternalLink, Package, ChevronLeft, 
   ChevronRight, X, Shield, History, ArrowLeft, Home, Search, Sparkles,
   Box, Gamepad2, Puzzle, LayoutGrid, ChevronDown, ShoppingCart, Lock,
-  ShoppingBag, Monitor, Cpu, FileDown
+  ShoppingBag, Monitor, Cpu, FileDown, Play
 } from "lucide-react";
 import { useLanguage, useTranslations } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -33,6 +33,20 @@ const getGradientFromName = (name: string | undefined): string => {
   if (!name) return gradients[0];
   const hash = name.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0);
   return gradients[hash % gradients.length];
+};
+
+// Extract YouTube video ID from various URL formats
+const getYouTubeVideoId = (url: string): string | null => {
+  if (!url) return null;
+  const patterns = [
+    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/,
+    /youtube\.com\/shorts\/([a-zA-Z0-9_-]{11})/,
+  ];
+  for (const pattern of patterns) {
+    const match = url.match(pattern);
+    if (match) return match[1];
+  }
+  return null;
 };
 
 // Collapsible Version Item
@@ -917,6 +931,29 @@ const AppDetail = () => {
                       <p className="text-muted-foreground leading-relaxed whitespace-pre-wrap text-base">
                         {displayDescription}
                       </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* YouTube Tutorial Video */}
+                {appData.youtube_url && getYouTubeVideoId(appData.youtube_url) && (
+                  <div className="mt-10">
+                    <Separator className="mb-8" />
+                    <div>
+                      <h2 className="text-xl font-semibold mb-3 flex items-center gap-2">
+                        <Play className="w-5 h-5 text-red-500" />
+                        {language === 'km' ? 'វីដេអូណែនាំការដំឡើង' : 'Installation Guide'}
+                      </h2>
+                      <div className="w-16 h-1 bg-red-500 rounded-full mb-6" />
+                      <div className="aspect-video rounded-xl overflow-hidden bg-muted border border-border/50">
+                        <iframe
+                          src={`https://www.youtube.com/embed/${getYouTubeVideoId(appData.youtube_url)}`}
+                          title="Installation Guide"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowFullScreen
+                          className="w-full h-full"
+                        />
+                      </div>
                     </div>
                   </div>
                 )}

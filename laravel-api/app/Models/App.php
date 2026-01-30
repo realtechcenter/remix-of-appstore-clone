@@ -16,6 +16,7 @@ class App extends Model
         'icon_url',
         'developer',
         'website',
+        'youtube_url',
         'is_featured',
         'is_popular',
         'download_count',

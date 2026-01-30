@@ -71,6 +71,7 @@ export interface App {
   icon_url?: string;
   developer?: string;
   website?: string;
+  youtube_url?: string;
   is_featured: boolean;
   is_popular: boolean;
   download_count: number;
