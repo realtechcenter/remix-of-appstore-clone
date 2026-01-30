@@ -312,6 +312,7 @@ const VersionForm = ({ appId, version, onSave, onCancel }: VersionFormProps) => 
       id: link.id,
       title: link.title,
       url: link.url,
+      link_type: link.link_type || 'direct',
       sort_order: link.sort_order,
     })) || []
   );
@@ -331,7 +332,7 @@ const VersionForm = ({ appId, version, onSave, onCancel }: VersionFormProps) => 
   const addDownloadLink = () => {
     setDownloadLinks([
       ...downloadLinks,
-      { title: "", url: "", sort_order: downloadLinks.length }
+      { title: "", url: "", link_type: 'direct', sort_order: downloadLinks.length }
     ]);
   };
 
@@ -490,7 +491,7 @@ const VersionForm = ({ appId, version, onSave, onCancel }: VersionFormProps) => 
                   </Button>
                 </div>
                 <div className="flex-1 space-y-2">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
                     <Input
                       value={link.title}
                       onChange={(e) => updateDownloadLink(index, 'title', e.target.value)}
@@ -504,6 +505,14 @@ const VersionForm = ({ appId, version, onSave, onCancel }: VersionFormProps) => 
                       placeholder="https://..."
                       className="text-sm"
                     />
+                    <select
+                      value={link.link_type}
+                      onChange={(e) => updateDownloadLink(index, 'link_type', e.target.value)}
+                      className="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                    >
+                      <option value="direct">Direct Download</option>
+                      <option value="page">Download Page</option>
+                    </select>
                   </div>
                 </div>
                 <Button

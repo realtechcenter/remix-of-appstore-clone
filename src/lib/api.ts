@@ -87,6 +87,7 @@ export interface AppDownloadLink {
   app_version_id: number;
   title: string;
   url: string;
+  link_type: 'direct' | 'page';
   sort_order: number;
 }
 
@@ -94,6 +95,7 @@ export interface AppDownloadLinkInput {
   id?: number;
   title: string;
   url: string;
+  link_type: 'direct' | 'page';
   sort_order: number;
 }
 

@@ -97,6 +97,7 @@ class VersionController extends Controller
                             'app_version_id' => $version->id,
                             'title' => $link['title'],
                             'url' => $link['url'],
+                            'link_type' => $link['link_type'] ?? 'direct',
                             'sort_order' => $link['sort_order'] ?? 0,
                         ]);
                     }
@@ -168,6 +169,7 @@ class VersionController extends Controller
                                 ->update([
                                     'title' => $link['title'],
                                     'url' => $link['url'],
+                                    'link_type' => $link['link_type'] ?? 'direct',
                                     'sort_order' => $link['sort_order'] ?? 0,
                                 ]);
                         } else {
@@ -176,6 +178,7 @@ class VersionController extends Controller
                                 'app_version_id' => $version->id,
                                 'title' => $link['title'],
                                 'url' => $link['url'],
+                                'link_type' => $link['link_type'] ?? 'direct',
                                 'sort_order' => $link['sort_order'] ?? 0,
                             ]);
                         }
