@@ -31,8 +31,8 @@ export const Sidebar = ({ activeCategory, onCategoryChange, isOpen = false, onTo
         </div>
         <div>
           <span className="text-xl font-bold">
-            <span className="gradient-text">REAL</span>
-            <span className="text-muted-foreground">TECH</span>
+            <span className="gradient-text">Mac</span>
+            <span className="text-muted-foreground">sofy</span>
           </span>
         </div>
       </div>
