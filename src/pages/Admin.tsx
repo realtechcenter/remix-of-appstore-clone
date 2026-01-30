@@ -103,6 +103,7 @@ const AppForm = ({ app, onSave, onCancel }: AppFormProps) => {
     icon_url: app?.icon_url || "",
     developer: app?.developer || "",
     website: app?.website || "",
+    youtube_url: app?.youtube_url || "",
     is_featured: app?.is_featured || false,
     is_popular: app?.is_popular || false,
     price: app?.price || 0,
@@ -205,6 +206,17 @@ const AppForm = ({ app, onSave, onCancel }: AppFormProps) => {
             type="url"
             value={formData.website}
             onChange={(e) => setFormData({ ...formData, website: e.target.value })}
+            className="mt-1.5"
+          />
+        </div>
+        <div>
+          <Label htmlFor="youtube_url">YouTube Tutorial URL</Label>
+          <Input
+            id="youtube_url"
+            type="url"
+            value={formData.youtube_url}
+            onChange={(e) => setFormData({ ...formData, youtube_url: e.target.value })}
+            placeholder="https://youtube.com/watch?v=..."
             className="mt-1.5"
           />
         </div>
