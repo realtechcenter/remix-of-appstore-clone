@@ -152,6 +152,47 @@ class AdminUserController extends Controller
     }
 
     /**
+     * Manually approve a pending or expired order
+     */
+    public function approveOrder(Request $request, $orderId)
+    {
+        $order = Order::findOrFail($orderId);
+        
+        if ($order->status === 'paid') {
+            return response()->json([
+                'error' => 'Order is already paid',
+            ], 400);
+        }
+        
+        $order->update([
+            'status' => 'paid',
+            'paid_at' => now(),
+            'bakong_transaction_id' => 'ADMIN_APPROVED_' . time(),
+        ]);
+        
+        return response()->json([
+            'success' => true,
+            'message' => 'Order approved successfully',
+            'order' => $order,
+        ]);
+    }
+
+    /**
+     * Delete an order
+     */
+    public function deleteOrder(Request $request, $orderId)
+    {
+        $order = Order::findOrFail($orderId);
+        
+        $order->delete();
+        
+        return response()->json([
+            'success' => true,
+            'message' => 'Order deleted successfully',
+        ]);
+    }
+
+    /**
      * Get all orders (payment history) across all users
      */
     public function allOrders(Request $request)

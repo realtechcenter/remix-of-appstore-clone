@@ -348,6 +348,14 @@ export const adminUsersApi = {
     const queryString = query.toString();
     return apiRequest(`admin/orders${queryString ? `?${queryString}` : ''}`);
   },
+  
+  approveOrder: async (orderId: string): Promise<{ success: boolean; message: string; order: AdminOrder }> => {
+    return apiRequest(`admin/orders/${orderId}/approve`, { method: 'POST' });
+  },
+  
+  deleteOrder: async (orderId: string): Promise<{ success: boolean; message: string }> => {
+    return apiRequest(`admin/orders/${orderId}`, { method: 'DELETE' });
+  },
 };
 
 // Analytics Types
