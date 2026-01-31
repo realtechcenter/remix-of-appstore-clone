@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { 
-  Users, Search, Package, Plus, Trash2, Eye, ChevronLeft, ChevronRight,
-  Mail, Calendar, DollarSign, CheckCircle, Clock, XCircle, ShoppingBag
+  Users, Search, Package, Plus, Trash2, ChevronLeft, ChevronRight,
+  Mail, DollarSign, CheckCircle, Clock, XCircle, ShoppingBag, Check
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -129,6 +129,34 @@ export const UserManagement = () => {
       handleSelectUser(selectedUser);
     } catch (error: any) {
       toast.error(error.message || "Failed to revoke app");
+    }
+  };
+
+  const handleApproveOrder = async (order: AdminOrder) => {
+    if (!confirm(`Approve payment for "${order.app_name}"? This will grant access to the user.`)) return;
+
+    try {
+      await adminUsersApi.approveOrder(order.id);
+      toast.success(`Order approved - "${order.app_name}" access granted`);
+      if (selectedUser) {
+        handleSelectUser(selectedUser);
+      }
+    } catch (error: any) {
+      toast.error(error.message || "Failed to approve order");
+    }
+  };
+
+  const handleDeleteOrder = async (order: AdminOrder) => {
+    if (!confirm(`Delete this order for "${order.app_name}"? This action cannot be undone.`)) return;
+
+    try {
+      await adminUsersApi.deleteOrder(order.id);
+      toast.success(`Order deleted`);
+      if (selectedUser) {
+        handleSelectUser(selectedUser);
+      }
+    } catch (error: any) {
+      toast.error(error.message || "Failed to delete order");
     }
   };
 
@@ -320,12 +348,13 @@ export const UserManagement = () => {
               <div>
                 <h3 className="font-semibold mb-3 flex items-center gap-2">
                   <DollarSign className="w-4 h-4" />
-                  Other Transactions ({otherOrders.length})
+                  Payment History ({otherOrders.length})
                 </h3>
                 <div className="space-y-2">
                   {otherOrders.map((order) => {
                     const status = statusConfig[order.status] || statusConfig.pending;
                     const StatusIcon = status.icon;
+                    const canApprove = order.status === 'pending' || order.status === 'expired';
                     return (
                       <div key={order.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
                         <div className="flex items-center gap-3">
@@ -341,10 +370,32 @@ export const UserManagement = () => {
                             </div>
                           </div>
                         </div>
-                        <Badge variant="secondary" className={`flex items-center gap-1 ${status.className}`}>
-                          <StatusIcon className="w-3 h-3" />
-                          {status.label}
-                        </Badge>
+                        <div className="flex items-center gap-2">
+                          <Badge variant="secondary" className={`flex items-center gap-1 ${status.className}`}>
+                            <StatusIcon className="w-3 h-3" />
+                            {status.label}
+                          </Badge>
+                          {canApprove && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="text-green-500 hover:text-green-600 hover:bg-green-500/10"
+                              onClick={() => handleApproveOrder(order)}
+                              title="Approve payment"
+                            >
+                              <Check className="w-4 h-4" />
+                            </Button>
+                          )}
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                            onClick={() => handleDeleteOrder(order)}
+                            title="Delete order"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
                       </div>
                     );
                   })}

@@ -72,6 +72,8 @@ Route::middleware('auth.admin')->group(function () {
     Route::post('/admin/users/{id}/grant-app', [AdminUserController::class, 'grantApp']);
     Route::delete('/admin/users/{userId}/revoke-app/{appId}', [AdminUserController::class, 'revokeApp']);
     Route::get('/admin/orders', [AdminUserController::class, 'allOrders']);
+    Route::post('/admin/orders/{orderId}/approve', [AdminUserController::class, 'approveOrder']);
+    Route::delete('/admin/orders/{orderId}', [AdminUserController::class, 'deleteOrder']);
     
     // Analytics
     Route::get('/admin/analytics', [AnalyticsController::class, 'dashboard']);
