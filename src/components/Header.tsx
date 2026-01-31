@@ -13,6 +13,16 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const languages = [
   { code: "km" as const, name: "ខ្មែរ", flag: "🇰🇭" },
@@ -32,11 +42,13 @@ export const Header = ({ searchQuery, onSearchChange, onMenuToggle, isSidebarOpe
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const [showLangMenu, setShowLangMenu] = useState(false);
+  const [showLogoutDialog, setShowLogoutDialog] = useState(false);
 
   const currentLang = languages.find(l => l.code === language) || languages[0];
 
   const handleSignOut = async () => {
     await signOut();
+    setShowLogoutDialog(false);
     navigate('/');
   };
 
@@ -151,7 +163,7 @@ export const Header = ({ searchQuery, onSearchChange, onMenuToggle, isSidebarOpe
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleSignOut} className="text-destructive">
+              <DropdownMenuItem onClick={() => setShowLogoutDialog(true)} className="text-destructive">
                 <LogOut className="w-4 h-4 mr-2" />
                 {language === 'km' ? 'ចាកចេញ' : 'Sign Out'}
               </DropdownMenuItem>
@@ -166,6 +178,30 @@ export const Header = ({ searchQuery, onSearchChange, onMenuToggle, isSidebarOpe
           </Link>
         )}
       </div>
+
+      {/* Logout Confirmation Dialog */}
+      <AlertDialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {language === 'km' ? 'បញ្ជាក់ការចាកចេញ' : 'Confirm Sign Out'}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {language === 'km' 
+                ? 'តើអ្នកប្រាកដថាចង់ចាកចេញពីគណនីរបស់អ្នកមែនទេ?' 
+                : 'Are you sure you want to sign out of your account?'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>
+              {language === 'km' ? 'បោះបង់' : 'Cancel'}
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handleSignOut} className="bg-destructive hover:bg-destructive/90">
+              {language === 'km' ? 'ចាកចេញ' : 'Sign Out'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </header>
   );
 };
