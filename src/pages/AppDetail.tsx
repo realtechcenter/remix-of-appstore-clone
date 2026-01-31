@@ -229,6 +229,39 @@ const VersionItem = ({
   );
 };
 
+// Sort versions by version number (descending) - handles semantic versioning
+const sortVersions = (versions: AppVersion[]): AppVersion[] => {
+  return [...versions].sort((a, b) => {
+    // First, prioritize is_latest
+    if (a.is_latest && !b.is_latest) return -1;
+    if (!a.is_latest && b.is_latest) return 1;
+    
+    // Then sort by version number (descending)
+    const parseVersion = (v: string) => {
+      const parts = v.replace(/^v/i, '').split(/[.-]/).map(p => {
+        const num = parseInt(p, 10);
+        return isNaN(num) ? 0 : num;
+      });
+      return parts;
+    };
+    
+    const aParts = parseVersion(a.version);
+    const bParts = parseVersion(b.version);
+    
+    const maxLen = Math.max(aParts.length, bParts.length);
+    for (let i = 0; i < maxLen; i++) {
+      const aVal = aParts[i] || 0;
+      const bVal = bParts[i] || 0;
+      if (bVal !== aVal) return bVal - aVal; // Descending order
+    }
+    
+    // Finally, sort by release date if versions are equal
+    const aDate = a.release_date ? new Date(a.release_date).getTime() : 0;
+    const bDate = b.release_date ? new Date(b.release_date).getTime() : 0;
+    return bDate - aDate;
+  });
+};
+
 // Versions List Component
 const VersionsList = ({ 
   versions, 
@@ -244,6 +277,8 @@ const VersionsList = ({
     return null;
   }
   
+  const sortedVersions = sortVersions(versions);
+  
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2">
@@ -251,16 +286,16 @@ const VersionsList = ({
         <h3 className="text-lg font-semibold">
           {language === 'km' ? 'កំណែទាំងអស់' : 'All Versions'}
         </h3>
-        <Badge variant="secondary" className="text-xs">{versions.length}</Badge>
+        <Badge variant="secondary" className="text-xs">{sortedVersions.length}</Badge>
       </div>
       
       <div className="space-y-3">
-        {versions.map((version, index) => (
+        {sortedVersions.map((version, index) => (
           <VersionItem 
             key={version.id} 
             version={version} 
             canDownload={canDownload}
-            isLatest={index === 0 || version.is_latest}
+            isLatest={index === 0}
           />
         ))}
       </div>
