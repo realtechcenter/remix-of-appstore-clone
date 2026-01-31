@@ -322,8 +322,8 @@ const MyPurchases = () => {
                 <Sparkles className="w-4 h-4 text-white" />
               </div>
               <span className="font-bold">
-                <span className="gradient-text">apps</span>
-                <span className="text-muted-foreground">torrent</span>
+                <span className="gradient-text">Mac</span>
+                <span className="text-muted-foreground">sofy</span>
               </span>
             </Link>
           </div>

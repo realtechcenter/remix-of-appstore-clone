@@ -1,4 +1,4 @@
-import { Search, ChevronDown, X, User, LogOut, ShoppingBag, Menu, Settings } from "lucide-react";
+import { Search, ChevronDown, X, User, LogOut, ShoppingBag, Menu, Settings, CreditCard } from "lucide-react";
 import { useState } from "react";
 import { useLanguage, useTranslations } from "@/contexts/LanguageContext";
 import { Link, useNavigate } from "react-router-dom";
@@ -136,6 +136,12 @@ export const Header = ({ searchQuery, onSearchChange, onMenuToggle, isSidebarOpe
                 <Link to="/my-purchases" className="flex items-center">
                   <ShoppingBag className="w-4 h-4 mr-2" />
                   {language === 'km' ? 'កម្មវិធីដែលបានទិញ' : 'My Purchases'}
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link to="/payment-history" className="flex items-center">
+                  <CreditCard className="w-4 h-4 mr-2" />
+                  {language === 'km' ? 'ប្រវត្តិបង់ប្រាក់' : 'Payment History'}
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
