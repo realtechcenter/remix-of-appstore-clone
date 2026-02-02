@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Mail, Lock, User, Eye, EyeOff, Sparkles, ArrowLeft, KeyRound, ShieldX, Ban } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -18,8 +18,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import ReCAPTCHA from 'react-google-recaptcha';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://api.realtechcomputer.com';
+const RECAPTCHA_SITE_KEY = import.meta.env.VITE_RECAPTCHA_SITE_KEY || '';
 
 const loginSchema = z.object({
   email: z.string().trim().email({ message: "Invalid email address" }),
@@ -51,6 +53,7 @@ const Auth = () => {
   const { user, loading } = useAuth();
   const { language } = useLanguage();
   const t = useTranslations();
+  const recaptchaRef = useRef<ReCAPTCHA>(null);
   
   const [mode, setMode] = useState<AuthMode>('login');
   const [email, setEmail] = useState('');
@@ -65,6 +68,7 @@ const Auth = () => {
   const [resendCooldown, setResendCooldown] = useState(0);
   const [banDialogOpen, setBanDialogOpen] = useState(false);
   const [banInfo, setBanInfo] = useState<{ status: string; reason?: string; suspendedUntil?: string } | null>(null);
+  const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -110,14 +114,24 @@ const Auth = () => {
       return;
     }
 
+    // Validate reCAPTCHA if enabled
+    if (RECAPTCHA_SITE_KEY && !recaptchaToken) {
+      setErrors({ recaptcha: language === 'km' ? 'សូមបញ្ជាក់ CAPTCHA' : 'Please complete the CAPTCHA' });
+      return;
+    }
+
     try {
       const response = await fetch(`${API_BASE_URL}/api/users/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password, recaptcha_token: recaptchaToken }),
       });
       
       const data = await response.json();
+      
+      // Reset reCAPTCHA after submission
+      recaptchaRef.current?.reset();
+      setRecaptchaToken(null);
       
       // Handle banned/suspended users
       if (response.status === 403 && (data.status === 'banned' || data.status === 'suspended')) {
@@ -140,6 +154,8 @@ const Auth = () => {
       toast.success(language === 'km' ? 'ចូលបានជោគជ័យ!' : 'Logged in successfully!');
       window.location.href = '/';
     } catch (error) {
+      recaptchaRef.current?.reset();
+      setRecaptchaToken(null);
       toast.error(language === 'km' ? 'មានបញ្ហាកើតឡើង' : 'Something went wrong');
     }
   };
@@ -155,14 +171,24 @@ const Auth = () => {
       return;
     }
 
+    // Validate reCAPTCHA if enabled
+    if (RECAPTCHA_SITE_KEY && !recaptchaToken) {
+      setErrors({ recaptcha: language === 'km' ? 'សូមបញ្ជាក់ CAPTCHA' : 'Please complete the CAPTCHA' });
+      return;
+    }
+
     try {
       const response = await fetch(`${API_BASE_URL}/api/otp/send-registration`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email, recaptcha_token: recaptchaToken }),
       });
       
       const data = await response.json();
+      
+      // Reset reCAPTCHA after submission
+      recaptchaRef.current?.reset();
+      setRecaptchaToken(null);
       
       if (!response.ok || data.error) {
         toast.error(data.error || 'Failed to send OTP');
@@ -173,6 +199,8 @@ const Auth = () => {
       setMode('verify-registration');
       setResendCooldown(60);
     } catch (error) {
+      recaptchaRef.current?.reset();
+      setRecaptchaToken(null);
       toast.error(language === 'km' ? 'មានបញ្ហាកើតឡើង' : 'Something went wrong');
     }
   };
@@ -360,6 +388,8 @@ const Auth = () => {
     setFullName('');
     setOtp('');
     setErrors({});
+    setRecaptchaToken(null);
+    recaptchaRef.current?.reset();
   };
 
   if (loading) {
