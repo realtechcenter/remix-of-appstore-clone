@@ -1,17 +1,19 @@
 import { useState, useEffect } from "react";
 import { 
   Users, Search, Package, Plus, Trash2, ChevronLeft, ChevronRight,
-  Mail, DollarSign, CheckCircle, Clock, XCircle, ShoppingBag, Check
+  Mail, DollarSign, CheckCircle, Clock, XCircle, ShoppingBag, Check, ChevronsUpDown
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { adminUsersApi, appsApi, type AdminUser, type AdminOrder, type App } from "@/lib/api";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 
 const statusConfig: Record<string, { icon: typeof CheckCircle; className: string; label: string }> = {
   paid: { icon: CheckCircle, className: "text-green-500", label: "Paid" },
@@ -38,6 +40,8 @@ export const UserManagement = () => {
   const [apps, setApps] = useState<App[]>([]);
   const [selectedAppId, setSelectedAppId] = useState<string>("");
   const [grantAmount, setGrantAmount] = useState("0");
+  const [appSearchOpen, setAppSearchOpen] = useState(false);
+  const [appSearchQuery, setAppSearchQuery] = useState("");
   const [granting, setGranting] = useState(false);
 
   useEffect(() => {
@@ -432,18 +436,65 @@ export const UserManagement = () => {
             
             <div>
               <Label>Select App</Label>
-              <Select value={selectedAppId} onValueChange={setSelectedAppId}>
-                <SelectTrigger className="mt-1.5">
-                  <SelectValue placeholder="Choose a paid app..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {apps.map(app => (
-                    <SelectItem key={app.id} value={app.id.toString()}>
-                      {app.name} - ${(typeof app.price === 'string' ? parseFloat(app.price) : app.price)?.toFixed(2) || '0.00'}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Popover open={appSearchOpen} onOpenChange={setAppSearchOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={appSearchOpen}
+                    className="w-full justify-between mt-1.5"
+                  >
+                    {selectedAppId
+                      ? (() => {
+                          const app = apps.find(a => a.id.toString() === selectedAppId);
+                          return app ? `${app.name} - $${(typeof app.price === 'string' ? parseFloat(app.price) : app.price)?.toFixed(2) || '0.00'}` : "Choose a paid app...";
+                        })()
+                      : "Choose a paid app..."}
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-full p-0" align="start">
+                  <Command>
+                    <CommandInput 
+                      placeholder="Search apps..." 
+                      value={appSearchQuery}
+                      onValueChange={setAppSearchQuery}
+                    />
+                    <CommandList>
+                      <CommandEmpty>No app found.</CommandEmpty>
+                      <CommandGroup>
+                        {apps
+                          .filter(app => 
+                            app.name.toLowerCase().includes(appSearchQuery.toLowerCase()) ||
+                            app.developer?.toLowerCase().includes(appSearchQuery.toLowerCase())
+                          )
+                          .map(app => (
+                            <CommandItem
+                              key={app.id}
+                              value={app.name}
+                              onSelect={() => {
+                                setSelectedAppId(app.id.toString());
+                                setAppSearchOpen(false);
+                                setAppSearchQuery("");
+                              }}
+                            >
+                              <Check
+                                className={cn(
+                                  "mr-2 h-4 w-4",
+                                  selectedAppId === app.id.toString() ? "opacity-100" : "opacity-0"
+                                )}
+                              />
+                              <span className="flex-1">{app.name}</span>
+                              <span className="text-muted-foreground ml-2">
+                                ${(typeof app.price === 'string' ? parseFloat(app.price) : app.price)?.toFixed(2) || '0.00'}
+                              </span>
+                            </CommandItem>
+                          ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
             </div>
             
             <div>
