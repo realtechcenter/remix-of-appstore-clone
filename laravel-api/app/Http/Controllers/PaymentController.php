@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Order;
 use App\Models\PaymentLog;
+use App\Models\UserActivityLog;
 use App\Http\Controllers\ReceiptController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
@@ -133,6 +134,21 @@ class PaymentController extends Controller
             $paymentLog->update([
                 'status' => 'paid',
                 'status_text' => $statusResult['status_text'],
+            ]);
+
+            // Log purchase activity
+            UserActivityLog::create([
+                'user_id' => $order->user_id,
+                'action' => 'purchase',
+                'details' => [
+                    'order_id' => $order->id,
+                    'app_id' => $order->app_id,
+                    'app_name' => $order->app_name,
+                    'amount' => $order->amount,
+                    'currency' => $order->currency,
+                ],
+                'ip_address' => $request->ip(),
+                'user_agent' => $request->userAgent(),
             ]);
 
             // Send Telegram notification

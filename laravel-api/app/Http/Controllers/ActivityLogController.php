@@ -59,4 +59,35 @@ class ActivityLogController extends Controller
             'log' => $log,
         ]);
     }
+
+    public function trackDownload(Request $request)
+    {
+        $request->validate([
+            'app_id' => 'required|integer',
+            'app_name' => 'required|string',
+        ]);
+
+        $user = $request->user();
+
+        if (!$user) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+
+        UserActivityLog::create([
+            'user_id' => $user->id,
+            'action' => 'download',
+            'details' => [
+                'app_id' => $request->app_id,
+                'app_name' => $request->app_name,
+                'version' => $request->version,
+            ],
+            'ip_address' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Download tracked',
+        ]);
+    }
 }

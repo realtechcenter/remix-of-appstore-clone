@@ -443,6 +443,13 @@ export const activityLogsApi = {
     const queryString = query.toString();
     return apiRequest(`admin/activity-logs${queryString ? `?${queryString}` : ''}`);
   },
+  
+  trackDownload: async (appId: number, appName: string, version?: string): Promise<{ success: boolean }> => {
+    return apiRequest('track-download', { 
+      method: 'POST', 
+      body: { app_id: appId, app_name: appName, version } 
+    });
+  },
 };
 
 // User Status Types
