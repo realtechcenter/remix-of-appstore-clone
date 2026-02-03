@@ -15,7 +15,7 @@ import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { appsApi, versionsApi, type AppVersion } from "@/lib/api";
+import { appsApi, versionsApi, activityLogsApi, type AppVersion } from "@/lib/api";
 import { useQuery } from "@tanstack/react-query";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { PaymentDialog } from "@/components/PaymentDialog";
@@ -53,11 +53,15 @@ const getYouTubeVideoId = (url: string): string | null => {
 const VersionItem = ({ 
   version, 
   canDownload,
-  isLatest 
+  isLatest,
+  appId,
+  appName
 }: { 
   version: AppVersion; 
   canDownload: boolean;
   isLatest?: boolean;
+  appId: number;
+  appName: string;
 }) => {
   const [isOpen, setIsOpen] = useState(isLatest || false);
   const { t, language } = useLanguage();
@@ -66,6 +70,16 @@ const VersionItem = ({
   // Filter out links with null URLs (paid apps where user hasn't purchased)
   const downloadLinks = (version.download_links || []).filter(link => link.url !== null);
   const hasDownloadLinks = downloadLinks.length > 0;
+  
+  const handleDownloadClick = async () => {
+    if (canDownload) {
+      try {
+        await activityLogsApi.trackDownload(appId, appName, version.version);
+      } catch (error) {
+        console.error('Failed to track download:', error);
+      }
+    }
+  };
   
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
@@ -170,7 +184,13 @@ const VersionItem = ({
                   href={canDownload ? link.url : '#'}
                   target={canDownload ? '_blank' : undefined}
                   rel="noopener noreferrer"
-                  onClick={(e) => !canDownload && e.preventDefault()}
+                  onClick={(e) => {
+                    if (!canDownload) {
+                      e.preventDefault();
+                    } else {
+                      handleDownloadClick();
+                    }
+                  }}
                   className={`flex items-center justify-between p-3 rounded-lg border transition-colors ${
                     canDownload 
                       ? 'bg-primary/5 border-primary/20 hover:bg-primary/10 cursor-pointer' 
@@ -202,7 +222,13 @@ const VersionItem = ({
               href={canDownload ? version.download_url : '#'}
               target={canDownload ? '_blank' : undefined}
               rel="noopener noreferrer"
-              onClick={(e) => !canDownload && e.preventDefault()}
+              onClick={(e) => {
+                if (!canDownload) {
+                  e.preventDefault();
+                } else {
+                  handleDownloadClick();
+                }
+              }}
               className={`flex items-center justify-between p-3 rounded-lg border transition-colors ${
                 canDownload 
                   ? 'bg-primary/5 border-primary/20 hover:bg-primary/10 cursor-pointer' 
@@ -265,10 +291,14 @@ const sortVersions = (versions: AppVersion[]): AppVersion[] => {
 // Versions List Component
 const VersionsList = ({ 
   versions, 
-  canDownload 
+  canDownload,
+  appId,
+  appName
 }: { 
   versions: AppVersion[]; 
   canDownload: boolean;
+  appId: number;
+  appName: string;
 }) => {
   const { language } = useLanguage();
   const translations = useTranslations();
@@ -296,6 +326,8 @@ const VersionsList = ({
             version={version} 
             canDownload={canDownload}
             isLatest={index === 0}
+            appId={appId}
+            appName={appName}
           />
         ))}
       </div>
@@ -1000,6 +1032,8 @@ const AppDetail = () => {
                     <VersionsList 
                       versions={versions} 
                       canDownload={!appData?.price || appData.price === 0 || !!hasPurchased}
+                      appId={appData?.id || 0}
+                      appName={displayName}
                     />
                   </div>
                 )}

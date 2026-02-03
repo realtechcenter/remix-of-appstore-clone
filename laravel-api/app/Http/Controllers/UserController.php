@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Models\UserActivityLog;
 use App\Services\ReCaptchaService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -96,6 +97,15 @@ class UserController extends Controller
         }
 
         $token = $this->generateToken($user);
+
+        // Log successful login
+        UserActivityLog::create([
+            'user_id' => $user->id,
+            'action' => 'login',
+            'details' => ['email' => $user->email],
+            'ip_address' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+        ]);
 
         return response()->json([
             'success' => true,

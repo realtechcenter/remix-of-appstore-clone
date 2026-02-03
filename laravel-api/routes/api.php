@@ -126,6 +126,9 @@ Route::middleware('auth.user')->group(function () {
     
     // App submission by users
     Route::post('/submissions', [AppSubmissionController::class, 'store']);
+    
+    // Activity tracking (download)
+    Route::post('/track-download', [ActivityLogController::class, 'trackDownload']);
 });
 
 // Payment routes (need user auth for some, public for webhooks)
