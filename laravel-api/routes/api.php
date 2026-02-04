@@ -19,6 +19,7 @@ use App\Http\Controllers\AppSubmissionController;
 use App\Http\Controllers\AIChatController;
 use App\Http\Controllers\ReceiptController;
 use App\Http\Controllers\MailTestController;
+use App\Http\Controllers\CouponController;
 
 /*
 |--------------------------------------------------------------------------
@@ -102,6 +103,15 @@ Route::middleware('auth.admin')->group(function () {
     
     // Admin receipts
     Route::get('/admin/receipts', [ReceiptController::class, 'adminIndex']);
+    
+    // Coupon management
+    Route::get('/admin/coupons', [CouponController::class, 'index']);
+    Route::post('/admin/coupons', [CouponController::class, 'store']);
+    Route::put('/admin/coupons/{id}', [CouponController::class, 'update']);
+    Route::delete('/admin/coupons/{id}', [CouponController::class, 'destroy']);
+    Route::post('/admin/coupons/{id}/assign', [CouponController::class, 'assignToUsers']);
+    Route::get('/admin/coupons/{id}/users', [CouponController::class, 'getCouponUsers']);
+    Route::delete('/admin/coupons/{couponId}/users/{userId}', [CouponController::class, 'removeFromUser']);
 });
 
 // Protected user routes
@@ -129,6 +139,11 @@ Route::middleware('auth.user')->group(function () {
     
     // Activity tracking (download)
     Route::post('/track-download', [ActivityLogController::class, 'trackDownload']);
+    
+    // User coupons
+    Route::get('/coupons/my', [CouponController::class, 'myAvailableCoupons']);
+    Route::get('/coupons/applicable', [CouponController::class, 'getApplicableCoupons']);
+    Route::post('/coupons/apply', [CouponController::class, 'applyCoupon']);
 });
 
 // Payment routes (need user auth for some, public for webhooks)

@@ -15,10 +15,11 @@ import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { appsApi, versionsApi, activityLogsApi, type AppVersion } from "@/lib/api";
+import { appsApi, versionsApi, activityLogsApi, type AppVersion, type ApplicableCoupon } from "@/lib/api";
 import { useQuery } from "@tanstack/react-query";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { PaymentDialog } from "@/components/PaymentDialog";
+import { CouponSuggestion } from "@/components/CouponSuggestion";
 import { useHasPurchased } from "@/hooks/useOrders";
 
 const getGradientFromName = (name: string | undefined): string => {
@@ -539,6 +540,7 @@ const AppDetail = () => {
   const [selectedScreenshot, setSelectedScreenshot] = useState(0);
   const [showLangMenu, setShowLangMenu] = useState(false);
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
+  const [selectedCoupon, setSelectedCoupon] = useState<ApplicableCoupon | null>(null);
   const { language, setLanguage } = useLanguage();
   
   // Get the previous location from state or default to home
@@ -917,14 +919,32 @@ const AppDetail = () => {
                       
                       if (isPaidApp && !hasPurchased) {
                         // Logged in but not purchased - show buy button
+                        const finalPrice = selectedCoupon 
+                          ? priceNum - selectedCoupon.discount_amount 
+                          : priceNum;
+                        const finalPriceDisplay = `$${finalPrice.toFixed(2)}`;
+                        
                         return (
-                          <Button 
-                            className="w-full h-14 text-base font-semibold gap-2 bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg"
-                            onClick={() => setShowPaymentDialog(true)}
-                          >
-                            <ShoppingCart className="w-5 h-5" />
-                            {language === 'km' ? 'ទិញ' : 'Buy Now'} - {priceDisplay}
-                          </Button>
+                          <div className="space-y-3">
+                            <Button 
+                              className="w-full h-14 text-base font-semibold gap-2 bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg"
+                              onClick={() => setShowPaymentDialog(true)}
+                            >
+                              <ShoppingCart className="w-5 h-5" />
+                              {language === 'km' ? 'ទិញ' : 'Buy Now'} - {selectedCoupon ? (
+                                <span className="flex items-center gap-2">
+                                  <span className="line-through opacity-60">{priceDisplay}</span>
+                                  <span>{finalPriceDisplay}</span>
+                                </span>
+                              ) : priceDisplay}
+                            </Button>
+                            
+                            <CouponSuggestion
+                              price={priceNum}
+                              onSelectCoupon={setSelectedCoupon}
+                              selectedCoupon={selectedCoupon}
+                            />
+                          </div>
                         );
                       }
                       
@@ -1047,13 +1067,18 @@ const AppDetail = () => {
       {appData && appData.price && appData.price > 0 && (
         <PaymentDialog
           open={showPaymentDialog}
-          onOpenChange={setShowPaymentDialog}
+          onOpenChange={(open) => {
+            setShowPaymentDialog(open);
+            if (!open) setSelectedCoupon(null); // Reset coupon when closing
+          }}
           appId={appData.id}
           appName={displayName}
           price={appData.price}
           downloadUrl={latestVersion?.download_url}
+          coupon={selectedCoupon}
           onPaymentSuccess={() => {
             // Refresh purchase status - dialog stays open to show success
+            setSelectedCoupon(null);
           }}
         />
       )}

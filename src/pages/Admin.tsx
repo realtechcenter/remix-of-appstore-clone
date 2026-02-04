@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Edit, Trash2, LogOut, Package, Layers, Search, X, Save, ArrowLeft, ChevronLeft, ChevronRight, Users, BarChart3, Bell, Shield, Activity, UserX, GripVertical, Link } from "lucide-react";
+import { Plus, Edit, Trash2, LogOut, Package, Layers, Search, X, Save, ArrowLeft, ChevronLeft, ChevronRight, Users, BarChart3, Bell, Shield, Activity, UserX, GripVertical, Link, Tag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -19,6 +19,7 @@ import { NotificationSystem } from "@/components/admin/NotificationSystem";
 import { RoleManagement } from "@/components/admin/RoleManagement";
 import { ActivityLogs } from "@/components/admin/ActivityLogs";
 import { UserStatusManagement } from "@/components/admin/UserStatusManagement";
+import { CouponManagement } from "@/components/admin/CouponManagement";
 
 const AdminLogin = ({ onLogin }: { onLogin: () => void }) => {
   const [username, setUsername] = useState("");
@@ -790,6 +791,10 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
               <UserX className="w-4 h-4" />
               <span className="hidden sm:inline">Ban/Suspend</span>
             </TabsTrigger>
+            <TabsTrigger value="coupons" className="gap-2">
+              <Tag className="w-4 h-4" />
+              <span className="hidden sm:inline">Coupons</span>
+            </TabsTrigger>
           </TabsList>
           
           <TabsContent value="analytics">
@@ -1060,6 +1065,10 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
           
           <TabsContent value="status">
             <UserStatusManagement />
+          </TabsContent>
+          
+          <TabsContent value="coupons">
+            <CouponManagement />
           </TabsContent>
         </Tabs>
       </div>
