@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Loader2, CheckCircle, XCircle, Download, PartyPopper, Save } from 'lucide-react';
+import { Loader2, CheckCircle, XCircle, Download, PartyPopper, Save, Tag } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -8,6 +8,7 @@ import { useCreateOrder, generateKHQR, verifyPayment, confirmPaymentManual } fro
 import { toast } from 'sonner';
 import QRCode from 'qrcode';
 import { useQueryClient } from '@tanstack/react-query';
+import { couponsApi, type ApplicableCoupon } from '@/lib/api';
 
 interface PaymentDialogProps {
   open: boolean;
@@ -16,6 +17,7 @@ interface PaymentDialogProps {
   appName: string;
   price: number;
   downloadUrl?: string;
+  coupon?: ApplicableCoupon | null;
   onPaymentSuccess: () => void;
 }
 
@@ -44,6 +46,7 @@ export const PaymentDialog = ({
   appName,
   price,
   downloadUrl,
+  coupon,
   onPaymentSuccess,
 }: PaymentDialogProps) => {
   const { language } = useLanguage();
@@ -53,6 +56,8 @@ export const PaymentDialog = ({
   const qrRef = useRef<HTMLDivElement>(null);
   
   const priceNum = typeof price === 'string' ? parseFloat(price) : (price || 0);
+  const discountAmount = coupon?.discount_amount || 0;
+  const finalPrice = Math.max(0, priceNum - discountAmount);
   
   const [status, setStatus] = useState<'loading' | 'ready' | 'scanned' | 'verifying' | 'success' | 'error'>('loading');
   const [qrDataUrl, setQrDataUrl] = useState<string>('');
@@ -103,12 +108,22 @@ export const PaymentDialog = ({
       const order = await createOrder.mutateAsync({
         appId,
         appName,
-        amount: price,
+        amount: finalPrice, // Use discounted price
       });
 
       setOrderId(order.id);
+      
+      // Apply coupon to order if selected
+      if (coupon) {
+        try {
+          await couponsApi.apply(coupon.id, order.id, priceNum);
+        } catch (err) {
+          console.error('Failed to apply coupon:', err);
+          // Continue anyway - the coupon might already be applied or have an issue
+        }
+      }
 
-      const qrData = await generateKHQR(order.id, price);
+      const qrData = await generateKHQR(order.id, finalPrice);
 
       setMd5(qrData.md5);
 
@@ -149,7 +164,7 @@ export const PaymentDialog = ({
     if (!qrDataUrl) return;
     
     const link = document.createElement('a');
-    link.download = `KHQR-${appName}-${priceNum.toFixed(2)}USD.png`;
+    link.download = `KHQR-${appName}-${finalPrice.toFixed(2)}USD.png`;
     link.href = qrDataUrl;
     link.click();
     toast.success(language === 'km' ? 'QR Code បorg org org org org org org org org!' : 'QR Code saved!');
@@ -191,11 +206,30 @@ export const PaymentDialog = ({
                 
                 {/* Amount in USD */}
                 <div className="flex items-baseline gap-1.5 mt-0.5">
-                  <span className="text-2xl font-bold text-gray-900">
-                    {formatAmount(priceNum)}
-                  </span>
+                  {coupon && discountAmount > 0 ? (
+                    <>
+                      <span className="text-lg text-gray-400 line-through">
+                        {formatAmount(priceNum)}
+                      </span>
+                      <span className="text-2xl font-bold text-gray-900">
+                        {formatAmount(finalPrice)}
+                      </span>
+                    </>
+                  ) : (
+                    <span className="text-2xl font-bold text-gray-900">
+                      {formatAmount(finalPrice)}
+                    </span>
+                  )}
                   <span className="text-gray-500 text-sm font-medium">USD</span>
                 </div>
+                
+                {/* Coupon Applied Badge */}
+                {coupon && (
+                  <div className="flex items-center gap-1 mt-1 text-xs text-green-600">
+                    <Tag className="w-3 h-3" />
+                    <span>{coupon.coupon.code} (-${discountAmount.toFixed(2)})</span>
+                  </div>
+                )}
               </div>
 
               {/* Dashed Divider */}

@@ -4,6 +4,9 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://api.realtechcomput
 // Get API key from localStorage (set after login)
 const getApiKey = () => localStorage.getItem('admin_api_key') || '';
 
+// Get user auth token from localStorage
+const getUserAuthToken = () => localStorage.getItem('auth_token') || '';
+
 // Get user ID from localStorage (for download access verification)
 const getUserId = (): string | null => {
   try {
@@ -43,6 +46,35 @@ async function apiRequest<T>(endpoint: string, options: ApiOptions = {}): Promis
     if (userId) {
       headers['X-User-Id'] = userId;
     }
+  }
+  
+  const response = await fetch(`${API_BASE_URL}/api/${endpoint}`, {
+    method,
+    headers,
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  
+  const data = await response.json();
+  
+  if (!response.ok) {
+    throw new Error(data.error || data.message || 'API request failed');
+  }
+  
+  return data;
+}
+
+// User API request (uses user auth token instead of admin API key)
+async function userApiRequest<T>(endpoint: string, options: Omit<ApiOptions, 'requiresAuth'> = {}): Promise<T> {
+  const { method = 'GET', body } = options;
+  
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+  };
+  
+  const token = getUserAuthToken();
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
   }
   
   const response = await fetch(`${API_BASE_URL}/api/${endpoint}`, {
@@ -544,5 +576,83 @@ export const submissionsApi = {
   
   update: async (id: number, data: { status: string; review_notes?: string; rejection_reason?: string }): Promise<{ success: boolean; submission: AppSubmission }> => {
     return apiRequest(`admin/submissions/${id}`, { method: 'PUT', body: data });
+  },
+};
+
+// Coupon Types
+export interface Coupon {
+  id: string;
+  code: string;
+  name: string;
+  description?: string;
+  discount_type: 'fixed' | 'percentage';
+  discount_value: number;
+  min_price: number;
+  max_discount?: number;
+  expires_at?: string;
+  is_active: boolean;
+  user_coupons_count?: number;
+  used_count?: number;
+  created_at: string;
+}
+
+export interface UserCoupon {
+  id: string;
+  user_id: number;
+  coupon_id: string;
+  is_used: boolean;
+  used_at?: string;
+  user?: { id: number; name: string; email: string };
+  coupon?: Coupon;
+}
+
+export interface ApplicableCoupon {
+  id: string;
+  coupon: Coupon;
+  discount_amount: number;
+}
+
+// Coupons API - Admin
+export const couponsApi = {
+  // Admin endpoints
+  getAll: async (): Promise<{ coupons: Coupon[] }> => {
+    return apiRequest('admin/coupons');
+  },
+  
+  create: async (data: Partial<Coupon>): Promise<{ coupon: Coupon; message: string }> => {
+    return apiRequest('admin/coupons', { method: 'POST', body: data });
+  },
+  
+  update: async (id: string, data: Partial<Coupon>): Promise<{ coupon: Coupon; message: string }> => {
+    return apiRequest(`admin/coupons/${id}`, { method: 'PUT', body: data });
+  },
+  
+  delete: async (id: string): Promise<{ message: string }> => {
+    return apiRequest(`admin/coupons/${id}`, { method: 'DELETE' });
+  },
+  
+  assignToUsers: async (couponId: string, userIds: number[]): Promise<{ message: string; assigned_count: number }> => {
+    return apiRequest(`admin/coupons/${couponId}/assign`, { method: 'POST', body: { user_ids: userIds } });
+  },
+  
+  getCouponUsers: async (couponId: string): Promise<{ user_coupons: UserCoupon[] }> => {
+    return apiRequest(`admin/coupons/${couponId}/users`);
+  },
+  
+  removeFromUser: async (couponId: string, userId: number): Promise<{ message: string }> => {
+    return apiRequest(`admin/coupons/${couponId}/users/${userId}`, { method: 'DELETE' });
+  },
+  
+  // User endpoints
+  getMyAvailable: async (): Promise<{ coupons: ApplicableCoupon[] }> => {
+    return userApiRequest('coupons/my');
+  },
+  
+  getApplicable: async (price: number): Promise<{ coupons: ApplicableCoupon[] }> => {
+    return userApiRequest(`coupons/applicable?price=${price}`);
+  },
+  
+  apply: async (userCouponId: string, orderId: string, price?: number): Promise<{ message: string; discount: number }> => {
+    return userApiRequest('coupons/apply', { method: 'POST', body: { user_coupon_id: userCouponId, order_id: orderId, price } });
   },
 };
