@@ -93,6 +93,14 @@ async function userApiRequest<T>(endpoint: string, options: Omit<ApiOptions, 're
 }
 
 // App Types
+export interface AppVideo {
+  id: number;
+  app_id: number;
+  title: string;
+  youtube_url: string;
+  sort_order: number;
+}
+
 export interface App {
   id: number;
   name: string;
@@ -110,6 +118,7 @@ export interface App {
   latest_version?: string;
   versions?: AppVersion[];
   screenshots?: AppScreenshot[];
+  videos?: AppVideo[];
   price?: number;
   created_at: string;
   updated_at: string;
@@ -210,10 +219,10 @@ export const appsApi = {
     return response.app;
   },
   
-  create: (data: Omit<Partial<App>, 'screenshots'> & { screenshots?: string[] }) => 
+  create: (data: Omit<Partial<App>, 'screenshots' | 'videos'> & { screenshots?: string[]; videos?: { title: string; youtube_url: string }[] }) => 
     apiRequest<{ success: boolean; id: number; message: string }>('apps', { method: 'POST', body: data }),
   
-  update: (id: number, data: Omit<Partial<App>, 'screenshots'> & { screenshots?: string[] }) => 
+  update: (id: number, data: Omit<Partial<App>, 'screenshots' | 'videos'> & { screenshots?: string[]; videos?: { title: string; youtube_url: string }[] }) => 
     apiRequest<{ success: boolean; message: string }>(`apps/${id}`, { method: 'PUT', body: data }),
   
   delete: (id: number) => 

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Edit, Trash2, LogOut, Package, Layers, Search, X, Save, ArrowLeft, ChevronLeft, ChevronRight, Users, BarChart3, Bell, Shield, Activity, UserX, GripVertical, Link, Tag } from "lucide-react";
+import { Plus, Edit, Trash2, LogOut, Package, Layers, Search, X, Save, ArrowLeft, ChevronLeft, ChevronRight, Users, BarChart3, Bell, Shield, Activity, UserX, GripVertical, Link, Tag, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -84,8 +84,9 @@ const AdminLogin = ({ onLogin }: { onLogin: () => void }) => {
   );
 };
 
-type AppFormData = Omit<Partial<App>, 'screenshots'> & {
+type AppFormData = Omit<Partial<App>, 'screenshots' | 'videos'> & {
   screenshots?: string[];
+  videos?: { title: string; youtube_url: string }[];
 };
 
 interface AppFormProps {
@@ -104,7 +105,6 @@ const AppForm = ({ app, onSave, onCancel }: AppFormProps) => {
     icon_url: app?.icon_url || "",
     developer: app?.developer || "",
     website: app?.website || "",
-    youtube_url: app?.youtube_url || "",
     is_featured: app?.is_featured || false,
     is_popular: app?.is_popular || false,
     price: app?.price || 0,
@@ -113,6 +113,10 @@ const AppForm = ({ app, onSave, onCancel }: AppFormProps) => {
   const [screenshots, setScreenshots] = useState<string[]>(
     app?.screenshots?.map(s => s.image_url) || []
   );
+  // Initialize videos from existing app data
+  const [videos, setVideos] = useState<{ title: string; youtube_url: string }[]>(
+    app?.videos?.map(v => ({ title: v.title, youtube_url: v.youtube_url })) || []
+  );
   const [saving, setSaving] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -120,7 +124,7 @@ const AppForm = ({ app, onSave, onCancel }: AppFormProps) => {
     setSaving(true);
     try {
       // Include screenshots in the save data
-      await onSave({ ...formData, screenshots });
+      await onSave({ ...formData, screenshots, videos });
     } finally {
       setSaving(false);
     }
@@ -211,17 +215,6 @@ const AppForm = ({ app, onSave, onCancel }: AppFormProps) => {
           />
         </div>
         <div>
-          <Label htmlFor="youtube_url">YouTube Tutorial URL</Label>
-          <Input
-            id="youtube_url"
-            type="url"
-            value={formData.youtube_url}
-            onChange={(e) => setFormData({ ...formData, youtube_url: e.target.value })}
-            placeholder="https://youtube.com/watch?v=..."
-            className="mt-1.5"
-          />
-        </div>
-        <div>
           <Label htmlFor="price">Price (USD)</Label>
           <div className="relative mt-1.5">
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
@@ -265,6 +258,54 @@ const AppForm = ({ app, onSave, onCancel }: AppFormProps) => {
         screenshots={screenshots}
         onUpdate={setScreenshots}
       />
+
+      {/* YouTube Videos Section */}
+      <div className="space-y-3 border border-border rounded-lg p-4 bg-accent/30">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Play className="w-4 h-4 text-destructive" />
+            <Label className="text-base font-medium">YouTube Videos</Label>
+          </div>
+          <Button type="button" variant="outline" size="sm" onClick={() => setVideos([...videos, { title: '', youtube_url: '' }])} className="gap-1">
+            <Plus className="w-3 h-3" />
+            Add Video
+          </Button>
+        </div>
+        
+        {videos.length === 0 && (
+          <p className="text-sm text-muted-foreground text-center py-3">No videos added. Videos are shown only to users who purchased the app.</p>
+        )}
+        
+        {videos.map((video, index) => (
+          <div key={index} className="flex items-start gap-2 p-3 bg-background rounded-lg border border-border/50">
+            <div className="flex-1 space-y-2">
+              <Input
+                value={video.title}
+                onChange={(e) => {
+                  const updated = [...videos];
+                  updated[index] = { ...updated[index], title: e.target.value };
+                  setVideos(updated);
+                }}
+                placeholder="Video title..."
+                className="text-sm"
+              />
+              <Input
+                value={video.youtube_url}
+                onChange={(e) => {
+                  const updated = [...videos];
+                  updated[index] = { ...updated[index], youtube_url: e.target.value };
+                  setVideos(updated);
+                }}
+                placeholder="https://youtube.com/watch?v=..."
+                className="text-sm"
+              />
+            </div>
+            <Button type="button" variant="ghost" size="icon" onClick={() => setVideos(videos.filter((_, i) => i !== index))} className="text-destructive hover:text-destructive shrink-0">
+              <X className="w-4 h-4" />
+            </Button>
+          </div>
+        ))}
+      </div>
 
       <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
         <div className="flex items-center gap-2">

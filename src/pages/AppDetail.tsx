@@ -1002,28 +1002,75 @@ const AppDetail = () => {
                   </div>
                 )}
 
-                {/* YouTube Tutorial Video */}
-                {appData.youtube_url && getYouTubeVideoId(appData.youtube_url) && (
-                  <div className="mt-10">
-                    <Separator className="mb-8" />
-                    <div>
-                      <h2 className="text-xl font-semibold mb-3 flex items-center gap-2">
-                        <Play className="w-5 h-5 text-red-500" />
-                        {language === 'km' ? 'វីដេអូណែនាំការដំឡើង' : 'Installation Guide'}
-                      </h2>
-                      <div className="w-16 h-1 bg-red-500 rounded-full mb-6" />
-                      <div className="aspect-video rounded-xl overflow-hidden bg-muted border border-border/50">
-                        <iframe
-                          src={`https://www.youtube.com/embed/${getYouTubeVideoId(appData.youtube_url)}`}
-                          title="Installation Guide"
-                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                          allowFullScreen
-                          className="w-full h-full"
-                        />
+                {/* YouTube Tutorial Videos - Only shown for free apps or after purchase */}
+                {(() => {
+                  const priceNum = typeof appData.price === 'string' ? parseFloat(appData.price) : (appData.price || 0);
+                  const isPaidApp = priceNum > 0;
+                  const canViewVideos = !isPaidApp || hasPurchased === true;
+                  const videos = appData.videos || [];
+                  
+                  if (videos.length === 0) return null;
+                  
+                  if (!canViewVideos) {
+                    return (
+                      <div className="mt-10">
+                        <Separator className="mb-8" />
+                        <div>
+                          <h2 className="text-xl font-semibold mb-3 flex items-center gap-2">
+                            <Play className="w-5 h-5 text-red-500" />
+                            {language === 'km' ? 'វីដេអូណែនាំការដំឡើង' : 'Installation Guide'}
+                          </h2>
+                          <div className="w-16 h-1 bg-red-500 rounded-full mb-6" />
+                          <div className="p-6 bg-muted/50 rounded-xl border border-border/50 text-center">
+                            <Lock className="w-8 h-8 text-muted-foreground mx-auto mb-3" />
+                            <p className="text-muted-foreground font-medium">
+                              {language === 'km' 
+                                ? 'ទិញកម្មវិធីដើម្បីមើលវីដេអូណែនាំ' 
+                                : 'Purchase this app to view installation guides'}
+                            </p>
+                            <p className="text-sm text-muted-foreground mt-1">
+                              {videos.length} {language === 'km' ? 'វីដេអូ' : videos.length === 1 ? 'video' : 'videos'} {language === 'km' ? 'មាន' : 'available'}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  }
+                  
+                  return (
+                    <div className="mt-10">
+                      <Separator className="mb-8" />
+                      <div>
+                        <h2 className="text-xl font-semibold mb-3 flex items-center gap-2">
+                          <Play className="w-5 h-5 text-red-500" />
+                          {language === 'km' ? 'វីដេអូណែនាំការដំឡើង' : 'Installation Guide'}
+                          <Badge variant="secondary" className="text-xs">{videos.length}</Badge>
+                        </h2>
+                        <div className="w-16 h-1 bg-red-500 rounded-full mb-6" />
+                        <div className="space-y-6">
+                          {videos.map((video) => {
+                            const videoId = getYouTubeVideoId(video.youtube_url);
+                            if (!videoId) return null;
+                            return (
+                              <div key={video.id}>
+                                <h3 className="text-base font-medium mb-3">{video.title}</h3>
+                                <div className="aspect-video rounded-xl overflow-hidden bg-muted border border-border/50">
+                                  <iframe
+                                    src={`https://www.youtube.com/embed/${videoId}`}
+                                    title={video.title}
+                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                    allowFullScreen
+                                    className="w-full h-full"
+                                  />
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                )}
+                  );
+                })()}
 
                 {/* All Versions Section */}
                 {versions && versions.length > 0 && (

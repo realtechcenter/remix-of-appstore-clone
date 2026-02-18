@@ -40,6 +40,11 @@ class App extends Model
         return $this->hasMany(AppScreenshot::class);
     }
 
+    public function videos(): HasMany
+    {
+        return $this->hasMany(AppVideo::class)->orderBy('sort_order');
+    }
+
     public function latestVersion()
     {
         return $this->versions()->where('is_latest', true)->first();

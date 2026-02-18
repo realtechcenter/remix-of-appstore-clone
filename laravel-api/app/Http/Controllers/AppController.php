@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\App;
 use App\Models\AppScreenshot;
+use App\Models\AppVideo;
 use App\Models\Order;
 use Illuminate\Http\Request;
 
@@ -88,7 +89,7 @@ class AppController extends Controller
 
     public function show(Request $request, $id)
     {
-        $app = App::with(['versions.download_links', 'screenshots'])->find($id);
+        $app = App::with(['versions.download_links', 'screenshots', 'videos'])->find($id);
 
         if (!$app) {
             return response()->json(['error' => 'App not found'], 404);
@@ -120,7 +121,7 @@ class AppController extends Controller
             }
         }
 
-        // If user cannot access downloads, hide the URLs
+        // If user cannot access downloads, hide the URLs and videos
         if (!$canAccessDownloads && $app->versions) {
             $app->versions = $app->versions->map(function ($version) {
                 $version->download_url = null;
@@ -132,6 +133,8 @@ class AppController extends Controller
                 }
                 return $version;
             });
+            // Hide videos for paid apps that user hasn't purchased
+            $app->setRelation('videos', collect([]));
         }
 
         return response()->json(['app' => $app]);
@@ -164,6 +167,18 @@ class AppController extends Controller
                 AppScreenshot::create([
                     'app_id' => $app->id,
                     'image_url' => $url,
+                    'sort_order' => $index,
+                ]);
+            }
+        }
+
+        // Handle videos
+        if ($request->has('videos') && is_array($request->videos)) {
+            foreach ($request->videos as $index => $video) {
+                AppVideo::create([
+                    'app_id' => $app->id,
+                    'title' => $video['title'] ?? '',
+                    'youtube_url' => $video['youtube_url'] ?? '',
                     'sort_order' => $index,
                 ]);
             }
@@ -205,6 +220,19 @@ class AppController extends Controller
                 AppScreenshot::create([
                     'app_id' => $app->id,
                     'image_url' => $url,
+                    'sort_order' => $index,
+                ]);
+            }
+        }
+
+        // Handle videos update
+        if ($request->has('videos') && is_array($request->videos)) {
+            $app->videos()->delete();
+            foreach ($request->videos as $index => $video) {
+                AppVideo::create([
+                    'app_id' => $app->id,
+                    'title' => $video['title'] ?? '',
+                    'youtube_url' => $video['youtube_url'] ?? '',
                     'sort_order' => $index,
                 ]);
             }
