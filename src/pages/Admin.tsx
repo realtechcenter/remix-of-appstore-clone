@@ -688,8 +688,8 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
 
   const handleEditApp = async (app: App) => {
     try {
-      // Fetch full app details including screenshots
-      const fullAppData = await appsApi.getById(app.id);
+      // Fetch full app details including screenshots and videos (as admin to bypass restrictions)
+      const fullAppData = await appsApi.getById(app.id, true);
       setEditingApp(fullAppData);
       setShowAppForm(true);
     } catch (error) {

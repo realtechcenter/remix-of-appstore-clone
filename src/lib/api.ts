@@ -213,7 +213,12 @@ export const appsApi = {
     };
   },
   
-  getById: async (id: number): Promise<App> => {
+  getById: async (id: number, asAdmin?: boolean): Promise<App> => {
+    if (asAdmin) {
+      // Admin fetch - includes admin auth to bypass access restrictions
+      const response = await apiRequest<{ app: App }>(`apps/${id}`);
+      return response.app;
+    }
     // Include user ID for download access verification on paid apps
     const response = await apiRequest<{ app: App }>(`apps/${id}`, { requiresAuth: false, includeUserId: true });
     return response.app;
