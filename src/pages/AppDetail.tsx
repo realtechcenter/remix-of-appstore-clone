@@ -984,26 +984,6 @@ const AppDetail = () => {
                         <ExternalLink className="w-4 h-4 text-muted-foreground" />
                       </a>
                       
-                      {/* Official Website Link */}
-                      {appData.website && (
-                        <a 
-                          href={appData.website} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-2 text-sm p-3 bg-primary/5 rounded-lg border border-primary/20 hover:bg-primary/10 transition-colors"
-                        >
-                          <ExternalLink className="w-5 h-5 text-primary" />
-                          <div className="flex-1">
-                            <span className="font-semibold text-primary">
-                              {language === 'km' ? 'គេហទំព័រផ្លូវការ' : 'Official Website'}
-                            </span>
-                            <p className="text-xs text-muted-foreground truncate">
-                              {appData.website.replace(/^https?:\/\//, '').split('/')[0]}
-                            </p>
-                          </div>
-                          <ExternalLink className="w-4 h-4 text-muted-foreground" />
-                        </a>
-                      )}
                     </div>
                   </div>
                 </div>
