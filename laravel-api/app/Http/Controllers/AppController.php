@@ -98,12 +98,24 @@ class AppController extends Controller
         // Check if user has access to download URLs
         $canAccessDownloads = false;
         
+        // Check if request is from admin (admin can always access all data)
+        $token = $request->bearerToken();
+        if ($token) {
+            $admin = \App\Models\Admin::where('auth_token', $token)
+                ->where('token_expiry', '>', now())
+                ->first();
+            if ($admin) {
+                $canAccessDownloads = true;
+            }
+        }
+
         // Free apps allow downloads
-        if (!$app->price || $app->price == 0) {
+        if (!$canAccessDownloads && (!$app->price || $app->price == 0)) {
             $canAccessDownloads = true;
-        } else {
+        }
+        
+        if (!$canAccessDownloads) {
             // For paid apps, verify user authentication via JWT token
-            $token = $request->bearerToken();
             if ($token) {
                 try {
                     $decoded = \Firebase\JWT\JWT::decode($token, new \Firebase\JWT\Key(config('app.jwt_secret'), 'HS256'));
@@ -115,7 +127,6 @@ class AppController extends Controller
                         ->exists();
                     $canAccessDownloads = $hasPurchased;
                 } catch (\Exception $e) {
-                    // Invalid or missing token - user cannot access paid downloads
                     $canAccessDownloads = false;
                 }
             }
