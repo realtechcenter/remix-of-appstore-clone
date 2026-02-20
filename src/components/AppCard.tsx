@@ -149,23 +149,23 @@ export const AppCard = (props: AppCardProps) => {
 
         {/* Price badge */}
         {props.purchased ? (
-          <div className="absolute top-2 right-2 bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 text-[10px] font-medium px-1.5 py-0.5 rounded-sm border border-green-200 dark:border-green-800">
+          <div className="absolute top-2 right-2 bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 text-[10px] font-semibold px-1.5 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-700">
             {language === "km" ? "បានទិញ" : "Owned"}
           </div>
         ) : isPaidApp ? (
-          <div className="absolute top-2 right-2 bg-muted text-foreground text-[10px] font-medium px-1.5 py-0.5 rounded-sm border border-border flex items-center gap-0.5">
+          <div className="absolute top-2 right-2 bg-primary/10 text-primary text-[10px] font-semibold px-1.5 py-0.5 rounded-full border border-primary/20 flex items-center gap-0.5">
             <DollarSign className="w-2.5 h-2.5" />
             <span>{priceNum.toFixed(2)}</span>
           </div>
         ) : (
-          <div className="absolute top-2 right-2 bg-muted text-muted-foreground text-[10px] font-medium px-1.5 py-0.5 rounded-sm border border-border">
+          <div className="absolute top-2 right-2 bg-muted text-muted-foreground text-[10px] font-medium px-1.5 py-0.5 rounded-full border border-border">
             {language === "km" ? "ឥតគិតថ្លៃ" : "Free"}
           </div>
         )}
 
         {/* Size on hover */}
         {fileSize && (
-          <div className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-150 bg-foreground text-background text-[10px] px-1.5 py-0.5 rounded-sm flex items-center gap-1">
+          <div className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-150 bg-primary text-primary-foreground text-[10px] px-1.5 py-0.5 rounded-full flex items-center gap-1">
             <HardDrive className="w-2.5 h-2.5" />
             <span>{fileSize}</span>
           </div>

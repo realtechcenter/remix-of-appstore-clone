@@ -171,7 +171,7 @@ export const Header = ({ searchQuery, onSearchChange, onMenuToggle, isSidebarOpe
           </DropdownMenu>
         ) : (
           <Link to="/auth">
-            <Button size="sm" variant="outline" className="h-8 text-sm gap-1.5">
+            <Button size="sm" className="h-8 text-sm gap-1.5">
               <User className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">{t.login}</span>
             </Button>
