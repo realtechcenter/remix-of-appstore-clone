@@ -870,6 +870,7 @@ const AppDetail = () => {
                     </div>
 
                     {/* Download/Purchase Button */}
+                    <div className="mt-3">
                     {(() => {
                       // Convert price to number (API may return string)
                       const priceNum = typeof appData.price === 'string' ? parseFloat(appData.price) : (appData.price || 0);
@@ -963,6 +964,7 @@ const AppDetail = () => {
                         </a>
                       );
                     })()}
+                    </div>
 
                     {/* Security Badge - 100% Safe with VirusTotal */}
                     <div className="space-y-2">
