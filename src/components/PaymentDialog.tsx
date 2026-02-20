@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Loader2, CheckCircle, XCircle, Download, PartyPopper, Save, Tag } from 'lucide-react';
+import { Loader2, CheckCircle, XCircle, Download, PartyPopper, Save, Tag, Smartphone } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -302,9 +302,9 @@ export const PaymentDialog = ({
 
               {/* Fallback: open ABA Mobile using custom scheme (works on mobile) */}
               <Button
-                variant="outline"
                 size="sm"
-                className="w-full gap-2"
+                className="w-full gap-2 text-white"
+                style={{ backgroundColor: '#CC0001' }}
                 onClick={() => {
                   if (!qrString) {
                     toast.error(language === 'km' ? 'QR Code មិនទាន់មាន' : 'QR not ready');
@@ -318,6 +318,7 @@ export const PaymentDialog = ({
                   }
                 }}
               >
+                <Smartphone className="w-4 h-4" />
                 {language === 'km' ? 'បើកក្នុង ABA Mobile' : 'Open in ABA Mobile'}
               </Button>
 
