@@ -6,106 +6,105 @@
 
 @layer base {
   :root {
-    /* Light Mode — warm off-white with vibrant accents */
-    --background: 220 20% 98%;
-    --foreground: 224 20% 10%;
+    /* Light Mode — crisp white with electric violet accent */
+    --background: 0 0% 99%;
+    --foreground: 240 15% 9%;
 
     --card: 0 0% 100%;
-    --card-foreground: 224 20% 10%;
+    --card-foreground: 240 15% 9%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 224 20% 10%;
+    --popover-foreground: 240 15% 9%;
 
-    /* Vivid indigo-blue primary */
-    --primary: 243 75% 59%;
+    /* ✦ Electric Violet — vibrant & modern */
+    --primary: 262 83% 58%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 220 14% 94%;
-    --secondary-foreground: 224 20% 20%;
+    --secondary: 250 20% 95%;
+    --secondary-foreground: 250 15% 25%;
 
-    --muted: 220 14% 94%;
-    --muted-foreground: 220 10% 46%;
+    --muted: 240 10% 95%;
+    --muted-foreground: 240 8% 48%;
 
-    --accent: 243 75% 96%;
-    --accent-foreground: 243 75% 40%;
+    --accent: 262 80% 95%;
+    --accent-foreground: 262 83% 45%;
 
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 13% 88%;
-    --input: 220 13% 88%;
-    --ring: 243 75% 59%;
+    --border: 240 10% 90%;
+    --input: 240 10% 90%;
+    --ring: 262 83% 58%;
 
     --radius: 0.5rem;
 
-    /* Sidebar — slightly tinted cool white */
-    --sidebar-background: 230 30% 97%;
-    --sidebar-foreground: 220 10% 46%;
-    --sidebar-primary: 243 75% 59%;
+    /* Sidebar — faint violet tint */
+    --sidebar-background: 250 30% 98%;
+    --sidebar-foreground: 240 8% 46%;
+    --sidebar-primary: 262 83% 58%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 243 75% 94%;
-    --sidebar-accent-foreground: 243 75% 35%;
-    --sidebar-border: 220 13% 88%;
-    --sidebar-ring: 243 75% 59%;
+    --sidebar-accent: 262 80% 94%;
+    --sidebar-accent-foreground: 262 83% 40%;
+    --sidebar-border: 240 10% 90%;
+    --sidebar-ring: 262 83% 58%;
 
-    /* Color tokens */
-    --brand-purple: 262 80% 60%;
+    /* Brand palette */
+    --brand-purple: 262 83% 58%;
     --brand-blue: 217 91% 60%;
     --brand-teal: 174 72% 45%;
     --brand-orange: 25 95% 58%;
     --brand-pink: 330 85% 60%;
 
-    /* Shadows */
-    --shadow-subtle: 0 1px 2px hsl(243 75% 59% / 0.06), 0 1px 3px hsl(0 0% 0% / 0.08);
-    --shadow-card: 0 1px 3px hsl(243 75% 59% / 0.08), 0 1px 2px hsl(0 0% 0% / 0.04);
-    --shadow-card-hover: 0 4px 16px hsl(243 75% 59% / 0.14), 0 2px 6px hsl(0 0% 0% / 0.06);
+    /* Shadows with violet tint */
+    --shadow-subtle: 0 1px 2px hsl(262 83% 58% / 0.06), 0 1px 3px hsl(0 0% 0% / 0.06);
+    --shadow-card: 0 1px 3px hsl(262 83% 58% / 0.08), 0 1px 2px hsl(0 0% 0% / 0.04);
+    --shadow-card-hover: 0 8px 24px hsl(262 83% 58% / 0.18), 0 2px 8px hsl(0 0% 0% / 0.06);
 
-    /* Font families */
     --font-sans: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol";
     --font-khmer: "Kantumruy Pro", sans-serif;
   }
 
   .dark {
-    /* Dark Mode — deep navy-dark */
-    --background: 224 25% 9%;
-    --foreground: 220 20% 93%;
+    /* Dark Mode — deep near-black with vibrant violet */
+    --background: 240 18% 8%;
+    --foreground: 240 10% 94%;
 
-    --card: 224 20% 12%;
-    --card-foreground: 220 20% 93%;
+    --card: 240 16% 11%;
+    --card-foreground: 240 10% 94%;
 
-    --popover: 224 20% 13%;
-    --popover-foreground: 220 20% 93%;
+    --popover: 240 16% 12%;
+    --popover-foreground: 240 10% 94%;
 
-    --primary: 243 75% 65%;
+    --primary: 262 83% 68%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 224 20% 17%;
-    --secondary-foreground: 220 15% 70%;
+    --secondary: 240 14% 17%;
+    --secondary-foreground: 240 10% 70%;
 
-    --muted: 224 20% 16%;
-    --muted-foreground: 220 10% 52%;
+    --muted: 240 14% 16%;
+    --muted-foreground: 240 8% 52%;
 
-    --accent: 243 50% 20%;
-    --accent-foreground: 243 75% 80%;
+    --accent: 262 60% 22%;
+    --accent-foreground: 262 83% 82%;
 
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 224 20% 18%;
-    --input: 224 20% 18%;
-    --ring: 243 75% 65%;
+    --border: 240 14% 18%;
+    --input: 240 14% 18%;
+    --ring: 262 83% 68%;
 
-    --sidebar-background: 224 28% 7%;
-    --sidebar-foreground: 220 10% 52%;
-    --sidebar-primary: 243 75% 65%;
+    --sidebar-background: 240 20% 6%;
+    --sidebar-foreground: 240 8% 52%;
+    --sidebar-primary: 262 83% 68%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 243 40% 18%;
-    --sidebar-accent-foreground: 243 75% 80%;
-    --sidebar-border: 224 20% 16%;
-    --sidebar-ring: 243 75% 65%;
+    --sidebar-accent: 262 55% 20%;
+    --sidebar-accent-foreground: 262 83% 82%;
+    --sidebar-border: 240 14% 16%;
+    --sidebar-ring: 262 83% 68%;
 
-    --shadow-card: 0 1px 3px hsl(0 0% 0% / 0.4), 0 1px 2px hsl(0 0% 0% / 0.2);
-    --shadow-card-hover: 0 4px 16px hsl(243 75% 59% / 0.2), 0 2px 6px hsl(0 0% 0% / 0.3);
+    --shadow-card: 0 1px 3px hsl(0 0% 0% / 0.5), 0 1px 2px hsl(0 0% 0% / 0.3);
+    --shadow-card-hover: 0 8px 24px hsl(262 83% 58% / 0.25), 0 2px 8px hsl(0 0% 0% / 0.4);
   }
 }
 
