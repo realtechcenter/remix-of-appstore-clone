@@ -163,7 +163,7 @@ const AppForm = ({ app, onSave, onCancel }: AppFormProps) => {
         </div>
       </div>
       <div className="space-y-3">
-        <Label>App Icon URL</Label>
+        <Label>App Icon</Label>
         <div className="flex items-start gap-4">
           <FileUpload type="icons" currentUrl={formData.icon_url} onUpload={(url) => setFormData({ ...formData, icon_url: url })} label="" />
           <div className="flex-1 space-y-1">
