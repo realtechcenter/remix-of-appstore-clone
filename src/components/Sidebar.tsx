@@ -24,9 +24,10 @@ export const Sidebar = ({ activeCategory, onCategoryChange, isOpen = false, onTo
 
   return (
     <aside
-      className={`fixed left-0 top-0 h-full w-60 flex flex-col z-50 transform transition-transform duration-200 lg:translate-x-0 border-r border-border bg-sidebar-background ${
+      className={`fixed left-0 top-0 h-full w-60 flex flex-col z-50 transform transition-transform duration-200 lg:translate-x-0 border-r border-border ${
         isOpen ? "translate-x-0" : "-translate-x-full"
       }`}
+      style={{ backgroundColor: 'hsl(var(--sidebar-background))' }}
     >
       {/* Workspace header */}
       <div className="flex items-center gap-2 px-3 py-3 border-b border-border">

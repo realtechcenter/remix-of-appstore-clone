@@ -176,9 +176,9 @@
     @apply text-muted-foreground hover:text-primary transition-colors duration-100 text-sm font-medium;
   }
 
-  /* Header glass — subtle gradient top bar */
+  /* Header — fully opaque solid background */
   .glass {
-    @apply bg-background/95 backdrop-blur-sm border-b border-border;
+    @apply bg-background border-b border-border;
   }
 
   /* Theme toggle */
