@@ -52,7 +52,7 @@ export const HeroSlider = () => {
   const prevSlide = () => setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
 
   return (
-    <div className="relative mb-6 group rounded-md overflow-hidden border border-border">
+    <div className="relative mt-4 mb-6 group rounded-md overflow-hidden border border-border">
       <div className="relative h-44 sm:h-52 md:h-64 flex items-end">
         {/* Background image */}
         <div
