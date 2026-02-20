@@ -265,7 +265,7 @@ export const PaymentDialog = ({
               </div>
 
               {/* QR Code Section */}
-              <div className="p-4 flex flex-col items-center">
+              <div className="p-4 flex flex-col items-center gap-3">
                 <div className="relative">
                   {qrDataUrl && (
                     <img 
@@ -276,6 +276,11 @@ export const PaymentDialog = ({
                   )}
                   <DollarSymbol />
                 </div>
+                <img
+                  src="https://macsofy.com/images/payment_icons.png"
+                  alt="Payment icons"
+                  className="w-full object-contain"
+                />
               </div>
             </div>
 
