@@ -1,4 +1,4 @@
-import { Gamepad2, Puzzle, HardDrive, FileText, ShoppingBag, LayoutGrid, Sparkles, Box } from "lucide-react";
+import { Gamepad2, Puzzle, HardDrive, FileText, ShoppingBag, LayoutGrid, Box, ChevronDown } from "lucide-react";
 import { useLanguage, useTranslations } from "@/contexts/LanguageContext";
 
 interface SidebarProps {
@@ -13,79 +13,59 @@ export const Sidebar = ({ activeCategory, onCategoryChange, isOpen = false, onTo
   const t = useTranslations();
 
   const navItems = [
-    { id: "all", label: language === "km" ? "ទាំងអស់" : "All", icon: LayoutGrid, badge: false },
-    { id: "programs", label: t.programs, icon: Box, badge: true },
-    { id: "games", label: t.games, icon: Gamepad2, badge: true },
-    { id: "extensions", label: t.extensions, icon: Puzzle, badge: true },
-    { id: "os", label: t.os, icon: HardDrive, badge: true },
-    { id: "articles", label: t.articles, icon: FileText, badge: false },
-    { id: "goods", label: t.goods, icon: ShoppingBag, badge: false },
+    { id: "all", label: language === "km" ? "ទាំងអស់" : "All Apps", icon: LayoutGrid },
+    { id: "programs", label: t.programs, icon: Box },
+    { id: "games", label: t.games, icon: Gamepad2 },
+    { id: "extensions", label: t.extensions, icon: Puzzle },
+    { id: "os", label: t.os, icon: HardDrive },
+    { id: "articles", label: t.articles, icon: FileText },
+    { id: "goods", label: t.goods, icon: ShoppingBag },
   ];
 
   return (
-    <aside className={`fixed left-0 top-0 h-full w-64 bg-background/95 backdrop-blur-xl py-6 px-4 flex flex-col z-50 transform transition-all duration-300 lg:translate-x-0 border-r border-border/50 ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-      {/* Logo */}
-      <div className="flex items-center gap-3 px-4 mb-8">
-        <div className="w-10 h-10 bg-gradient-to-br from-primary to-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-primary/25">
-          <Sparkles className="w-5 h-5 text-white" />
+    <aside
+      className={`fixed left-0 top-0 h-full w-60 flex flex-col z-50 transform transition-transform duration-200 lg:translate-x-0 border-r border-border bg-sidebar-background ${
+        isOpen ? "translate-x-0" : "-translate-x-full"
+      }`}
+    >
+      {/* Workspace header — Notion style */}
+      <div className="flex items-center gap-2 px-3 py-3 border-b border-border">
+        <div className="w-6 h-6 bg-foreground rounded-sm flex items-center justify-center flex-shrink-0">
+          <span className="text-background text-xs font-bold">M</span>
         </div>
-        <div>
-          <span className="text-xl font-bold">
-            <span className="gradient-text">Mac</span>
-            <span className="text-muted-foreground">sofy</span>
-          </span>
-        </div>
+        <span className="text-sm font-semibold text-foreground truncate">Macsofy</span>
+        <ChevronDown className="w-4 h-4 text-muted-foreground ml-auto" />
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 space-y-1">
-        {navItems.map((item, index) => (
+      <nav className="flex-1 overflow-y-auto py-2 px-1 space-y-0.5">
+        <p className="px-2 py-1 text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1 select-none">
+          {language === "km" ? "ប្រភេទ" : "Categories"}
+        </p>
+        {navItems.map((item) => (
           <button
             key={item.id}
             onClick={() => onCategoryChange(item.id)}
-            className={`sidebar-nav-item w-full group`}
-            style={{ animationDelay: `${index * 50}ms` }}
+            className={`sidebar-nav-item ${activeCategory === item.id ? "active" : ""}`}
           >
-            <div className={`p-2 rounded-lg transition-all duration-300 ${
-              activeCategory === item.id 
-                ? 'bg-primary/20 text-primary' 
-                : 'bg-accent/50 text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary'
-            }`}>
-              <item.icon className="w-4 h-4" />
-            </div>
-            <span className={`flex-1 text-left font-medium transition-colors duration-300 ${
-              activeCategory === item.id ? 'text-foreground' : ''
-            }`}>
-              {item.label}
-            </span>
-            {item.badge && (
-              <div className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                activeCategory === item.id 
-                  ? 'bg-primary shadow-lg shadow-primary/50' 
-                  : 'bg-muted-foreground/30'
-              }`} />
-            )}
+            <item.icon className="w-4 h-4 flex-shrink-0 opacity-70" />
+            <span className="truncate">{item.label}</span>
           </button>
         ))}
       </nav>
 
-      {/* Footer text */}
-      <div className="px-4 py-4 bg-accent/30 rounded-xl border border-border/50">
-        <p className="text-sm text-muted-foreground leading-relaxed">
-          {language === "km" ? (
-            <>ការបោះពុម្ភផ្សាយដែលបានជ្រើសរើស និងបិទនឹងមានបន្ទាប់ពី <span className="text-primary cursor-pointer hover:underline font-medium">ចុះឈ្មោះ</span></>
-          ) : (
-            <>Favorites available after <span className="text-primary cursor-pointer hover:underline font-medium">Registration</span></>
-          )}
-        </p>
-      </div>
-
-      {/* Bottom links */}
-      <div className="mt-4 px-4 text-xs text-muted-foreground flex flex-wrap gap-2">
-        {['DMCA', 'Privacy', 'FAQ', 'Contact'].map((link) => (
-          <span key={link} className="hover:text-primary cursor-pointer transition-colors duration-300">{link}</span>
-        ))}
-        <span className="hover:text-red-400 cursor-pointer transition-colors duration-300">Donate ❤️</span>
+      {/* Footer */}
+      <div className="px-3 py-3 border-t border-border">
+        <div className="flex flex-wrap gap-x-3 gap-y-1">
+          {["DMCA", "Privacy", "FAQ", "Contact"].map((link) => (
+            <span
+              key={link}
+              className="text-xs text-muted-foreground hover:text-foreground cursor-pointer transition-colors"
+            >
+              {link}
+            </span>
+          ))}
+        </div>
       </div>
     </aside>
   );

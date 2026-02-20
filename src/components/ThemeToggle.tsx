@@ -11,34 +11,20 @@ export const ThemeToggle = () => {
   }, []);
 
   if (!mounted) {
-    return (
-      <div className="w-10 h-10 rounded-xl bg-accent animate-pulse" />
-    );
+    return <div className="w-8 h-8 rounded-sm bg-muted animate-pulse" />;
   }
 
   return (
     <button
       onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-      className="relative w-10 h-10 rounded-xl bg-accent hover:bg-accent/80 transition-all duration-300 flex items-center justify-center group overflow-hidden"
+      className="w-8 h-8 rounded-sm bg-transparent hover:bg-accent flex items-center justify-center transition-colors text-muted-foreground hover:text-foreground"
       aria-label="Toggle theme"
     >
-      <Sun className={`w-5 h-5 absolute transition-all duration-500 ${
-        theme === "dark" 
-          ? "opacity-0 rotate-90 scale-0" 
-          : "opacity-100 rotate-0 scale-100 text-amber-500"
-      }`} />
-      <Moon className={`w-5 h-5 absolute transition-all duration-500 ${
-        theme === "dark" 
-          ? "opacity-100 rotate-0 scale-100 text-blue-400" 
-          : "opacity-0 -rotate-90 scale-0"
-      }`} />
-      
-      {/* Glow effect */}
-      <div className={`absolute inset-0 rounded-xl transition-opacity duration-300 ${
-        theme === "dark"
-          ? "bg-blue-500/10 opacity-100"
-          : "bg-amber-500/10 opacity-100"
-      }`} />
+      {theme === "dark" ? (
+        <Sun className="w-4 h-4" />
+      ) : (
+        <Moon className="w-4 h-4" />
+      )}
     </button>
   );
 };

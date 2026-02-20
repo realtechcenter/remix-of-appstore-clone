@@ -6,107 +6,100 @@
 
 @layer base {
   :root {
-    /* Light Mode */
-    --background: 220 20% 97%;
-    --foreground: 220 20% 10%;
+    /* Notion Light Mode — warm off-white, not pure white */
+    --background: 40 20% 98%;
+    --foreground: 0 0% 8%;
 
     --card: 0 0% 100%;
-    --card-foreground: 220 20% 10%;
+    --card-foreground: 0 0% 8%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 220 20% 10%;
+    --popover-foreground: 0 0% 8%;
 
-    --primary: 217 91% 60%;
+    --primary: 0 0% 8%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 220 14% 96%;
-    --secondary-foreground: 220 20% 25%;
+    --secondary: 0 0% 96%;
+    --secondary-foreground: 0 0% 20%;
 
-    --muted: 220 14% 96%;
-    --muted-foreground: 220 10% 45%;
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 46%;
 
-    --accent: 220 14% 93%;
-    --accent-foreground: 220 20% 10%;
+    --accent: 0 0% 93%;
+    --accent-foreground: 0 0% 8%;
 
-    --destructive: 0 84% 60%;
+    --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 217 91% 60%;
+    --border: 0 0% 90%;
+    --input: 0 0% 90%;
+    --ring: 0 0% 8%;
 
-    --radius: 1rem;
+    --radius: 0.375rem;
 
-    --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 220 10% 45%;
-    --sidebar-primary: 217 91% 60%;
+    --sidebar-background: 40 20% 97%;
+    --sidebar-foreground: 0 0% 46%;
+    --sidebar-primary: 0 0% 8%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 14% 96%;
-    --sidebar-accent-foreground: 220 20% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217 91% 60%;
+    --sidebar-accent: 0 0% 93%;
+    --sidebar-accent-foreground: 0 0% 8%;
+    --sidebar-border: 0 0% 90%;
+    --sidebar-ring: 0 0% 8%;
 
-    /* Custom tokens */
-    --card-hover: 220 14% 98%;
-    --text-secondary: 220 10% 45%;
-    --text-tertiary: 220 10% 60%;
-    --badge-update: 217 91% 60%;
-    --gradient-primary: linear-gradient(135deg, hsl(217 91% 60%) 0%, hsl(260 80% 60%) 100%);
-    --gradient-hero: linear-gradient(135deg, hsl(217 91% 60%) 0%, hsl(260 80% 60%) 100%);
-    --glow-primary: 0 0 30px hsl(217 91% 60% / 0.3);
-    --shadow-card: 0 4px 20px hsl(220 20% 10% / 0.08);
-    --shadow-card-hover: 0 8px 40px hsl(217 91% 60% / 0.15);
+    /* Notion-specific tokens */
+    --notion-hover: 0 0% 93%;
+    --notion-sidebar-width: 240px;
+    --shadow-subtle: 0 1px 2px hsl(0 0% 0% / 0.06), 0 1px 3px hsl(0 0% 0% / 0.1);
+    --shadow-card: 0 1px 3px hsl(0 0% 0% / 0.08), 0 1px 2px hsl(0 0% 0% / 0.04);
+    --shadow-card-hover: 0 4px 12px hsl(0 0% 0% / 0.08), 0 2px 4px hsl(0 0% 0% / 0.04);
 
     /* Font families */
-    --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif;
+    --font-sans: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol";
     --font-khmer: "Kantumruy Pro", sans-serif;
   }
 
   .dark {
-    /* Dark Mode */
-    --background: 225 15% 8%;
-    --foreground: 210 40% 98%;
+    /* Notion Dark Mode — very dark gray, not black */
+    --background: 0 0% 10%;
+    --foreground: 0 0% 93%;
 
-    --card: 225 15% 12%;
-    --card-foreground: 210 40% 98%;
+    --card: 0 0% 12%;
+    --card-foreground: 0 0% 93%;
 
-    --popover: 225 15% 12%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 0 0% 12%;
+    --popover-foreground: 0 0% 93%;
 
-    --primary: 217 91% 60%;
-    --primary-foreground: 0 0% 100%;
+    --primary: 0 0% 93%;
+    --primary-foreground: 0 0% 10%;
 
-    --secondary: 225 15% 16%;
-    --secondary-foreground: 210 20% 70%;
+    --secondary: 0 0% 15%;
+    --secondary-foreground: 0 0% 70%;
 
-    --muted: 225 15% 16%;
-    --muted-foreground: 215 20% 55%;
+    --muted: 0 0% 15%;
+    --muted-foreground: 0 0% 50%;
 
-    --accent: 225 15% 18%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 0 0% 18%;
+    --accent-foreground: 0 0% 93%;
 
-    --destructive: 0 84% 60%;
+    --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 225 15% 18%;
-    --input: 225 15% 18%;
-    --ring: 217 91% 60%;
+    --border: 0 0% 18%;
+    --input: 0 0% 18%;
+    --ring: 0 0% 93%;
 
-    --sidebar-background: 225 15% 8%;
-    --sidebar-foreground: 215 20% 55%;
-    --sidebar-primary: 217 91% 60%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 225 15% 16%;
-    --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 225 15% 18%;
-    --sidebar-ring: 217 91% 60%;
+    --sidebar-background: 0 0% 8%;
+    --sidebar-foreground: 0 0% 50%;
+    --sidebar-primary: 0 0% 93%;
+    --sidebar-primary-foreground: 0 0% 10%;
+    --sidebar-accent: 0 0% 15%;
+    --sidebar-accent-foreground: 0 0% 93%;
+    --sidebar-border: 0 0% 18%;
+    --sidebar-ring: 0 0% 93%;
 
-    /* Custom tokens - dark */
-    --card-hover: 225 15% 16%;
-    --text-secondary: 215 20% 55%;
-    --text-tertiary: 215 15% 40%;
-    --shadow-card: 0 4px 20px hsl(225 15% 3% / 0.4);
-    --shadow-card-hover: 0 8px 40px hsl(217 91% 60% / 0.2);
+    --notion-hover: 0 0% 15%;
+    --shadow-card: 0 1px 3px hsl(0 0% 0% / 0.3), 0 1px 2px hsl(0 0% 0% / 0.2);
+    --shadow-card-hover: 0 4px 12px hsl(0 0% 0% / 0.4), 0 2px 4px hsl(0 0% 0% / 0.2);
   }
 }
 
@@ -117,6 +110,7 @@
 
   html {
     font-family: var(--font-sans);
+    font-size: 15px;
     scroll-behavior: smooth;
   }
 
@@ -128,97 +122,84 @@
   }
 
   body {
-    @apply bg-background text-foreground antialiased transition-colors duration-300;
+    @apply bg-background text-foreground antialiased transition-colors duration-200;
+    -webkit-font-smoothing: antialiased;
+    letter-spacing: -0.011em;
   }
 }
 
 @layer components {
+  /* Notion sidebar nav item */
   .sidebar-nav-item {
-    @apply flex items-center gap-3 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl text-muted-foreground transition-all duration-300 hover:bg-accent hover:text-foreground cursor-pointer hover:translate-x-1;
+    @apply flex items-center gap-2 px-2 py-1.5 rounded-sm text-sm text-muted-foreground transition-colors duration-100 hover:bg-accent hover:text-foreground cursor-pointer w-full;
   }
 
   .sidebar-nav-item.active {
-    @apply bg-gradient-to-r from-primary/20 to-primary/5 text-primary border-l-2 border-primary;
+    @apply bg-accent text-foreground font-medium;
   }
 
+  /* Notion-style app card */
   .app-card {
-    @apply relative bg-card rounded-xl sm:rounded-2xl p-3 sm:p-5 transition-all duration-300 cursor-pointer border border-border/50;
+    @apply relative bg-card rounded-md p-4 transition-all duration-150 cursor-pointer border border-border;
     box-shadow: var(--shadow-card);
   }
 
   .app-card:hover {
-    @apply border-primary/50 -translate-y-1;
-    box-shadow: var(--shadow-card-hover), 0 0 30px hsl(var(--primary) / 0.15);
-  }
-
-  .app-card-update-badge {
-    @apply absolute top-2 sm:top-3 left-2 sm:left-3 w-5 h-5 sm:w-6 sm:h-6 bg-gradient-to-br from-primary to-blue-600 rounded-full flex items-center justify-center shadow-lg;
-    animation: pulse-glow 2s ease-in-out infinite;
-  }
-
-  .hero-slide {
-    @apply relative overflow-hidden rounded-2xl sm:rounded-3xl;
-    background: var(--gradient-hero);
-  }
-
-  .search-input {
-    @apply w-full bg-card border border-border/50 rounded-xl px-4 sm:px-5 py-2.5 sm:py-3 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all duration-300;
-    box-shadow: var(--shadow-card);
-  }
-
-  .search-input:focus {
+    @apply bg-accent/40;
     box-shadow: var(--shadow-card-hover);
   }
 
+  /* Notion badge */
+  .app-card-update-badge {
+    @apply absolute top-2 left-2 w-5 h-5 bg-foreground rounded-full flex items-center justify-center;
+  }
+
+  /* Search input — Notion style */
+  .search-input {
+    @apply w-full bg-background border border-border rounded-md px-4 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-foreground/30 focus:border-foreground/30 transition-colors duration-100;
+  }
+
+  /* Notion primary button */
   .btn-primary {
-    @apply bg-gradient-to-r from-primary to-blue-600 text-primary-foreground px-4 sm:px-6 py-2 sm:py-2.5 rounded-xl font-medium transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5;
-    box-shadow: 0 4px 15px hsl(var(--primary) / 0.3);
+    @apply bg-foreground text-background px-4 py-2 rounded-md text-sm font-medium transition-opacity duration-100 hover:opacity-80;
   }
 
-  .btn-primary:hover {
-    box-shadow: 0 6px 25px hsl(var(--primary) / 0.4);
-  }
-
+  /* Section links */
   .section-link {
-    @apply text-primary hover:text-primary/80 transition-all duration-300 text-xs sm:text-sm font-medium relative;
+    @apply text-muted-foreground hover:text-foreground transition-colors duration-100 text-sm font-medium;
   }
 
-  .section-link::after {
-    content: '';
-    @apply absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300;
-  }
-
-  .section-link:hover::after {
-    @apply w-full;
-  }
-
-  /* Glass effect */
+  /* Glass — simplified for Notion */
   .glass {
-    @apply bg-background/80 backdrop-blur-xl border border-border/50;
+    @apply bg-background/95 backdrop-blur-sm border-b border-border;
   }
 
-  /* Theme toggle button */
+  /* Theme toggle */
   .theme-toggle {
-    @apply relative w-14 h-8 rounded-full p-1 transition-all duration-500 cursor-pointer;
-    background: linear-gradient(135deg, hsl(var(--accent)) 0%, hsl(var(--muted)) 100%);
+    @apply relative w-12 h-6 rounded-full p-0.5 transition-all duration-300 cursor-pointer bg-muted;
   }
 
   .theme-toggle::before {
     content: '';
-    @apply absolute w-6 h-6 rounded-full transition-all duration-500 flex items-center justify-center;
-    background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
-    left: 4px;
-    top: 4px;
+    @apply absolute w-5 h-5 rounded-full transition-all duration-300;
+    background: hsl(var(--foreground));
+    left: 2px;
+    top: 2px;
   }
 
   .dark .theme-toggle::before {
-    background: linear-gradient(135deg, #818cf8 0%, #6366f1 100%);
     transform: translateX(24px);
+    background: hsl(var(--background));
   }
 
-  /* Gradient text */
+  /* Gradient text — more subtle for Notion */
   .gradient-text {
-    @apply bg-gradient-to-r from-primary via-blue-500 to-purple-500 bg-clip-text text-transparent;
+    @apply text-foreground;
+  }
+
+  /* Notion divider */
+  .notion-divider {
+    @apply border-t border-border my-1;
   }
 }
 
@@ -231,45 +212,23 @@
     display: none;
   }
 
-  /* Animations */
+  /* Subtle fade for Notion */
+  @keyframes fade-in {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .animate-fade-in {
+    animation: fade-in 0.15s ease-out forwards;
+  }
+
+  /* Pulse for update badges */
   @keyframes pulse-glow {
-    0%, 100% {
-      box-shadow: 0 0 5px hsl(var(--primary) / 0.5);
-    }
-    50% {
-      box-shadow: 0 0 20px hsl(var(--primary) / 0.8);
-    }
-  }
-
-  @keyframes float {
-    0%, 100% {
-      transform: translateY(0);
-    }
-    50% {
-      transform: translateY(-10px);
-    }
-  }
-
-  @keyframes shimmer {
-    0% {
-      background-position: -200% 0;
-    }
-    100% {
-      background-position: 200% 0;
-    }
-  }
-
-  .animate-float {
-    animation: float 3s ease-in-out infinite;
-  }
-
-  .animate-shimmer {
-    background: linear-gradient(90deg, transparent, hsl(var(--primary) / 0.1), transparent);
-    background-size: 200% 100%;
-    animation: shimmer 2s infinite;
+    0%, 100% { opacity: 0.8; }
+    50% { opacity: 1; }
   }
 
   .hover-lift {
-    @apply transition-all duration-300 hover:-translate-y-1 hover:shadow-xl;
+    @apply transition-all duration-150 hover:-translate-y-0.5;
   }
 }

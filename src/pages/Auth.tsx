@@ -419,21 +419,23 @@ const Auth = () => {
 
   return (
     <div className={`min-h-screen bg-background flex items-center justify-center p-4 ${language === 'km' ? 'font-khmer' : ''}`}>
-      <div className="w-full max-w-md">
-        {/* Logo */}
-        <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-gradient-to-br from-primary to-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-primary/25">
-            <Sparkles className="w-8 h-8 text-white" />
+      <div className="w-full max-w-sm">
+        {/* Logo — Notion style: simple, centered */}
+        <div className="text-center mb-6">
+          <div className="w-10 h-10 bg-foreground rounded-md flex items-center justify-center mx-auto mb-3">
+            <Sparkles className="w-5 h-5 text-background" />
           </div>
-          <h1 className="text-2xl font-bold">
-            <span className="gradient-text">apps</span>
-            <span className="text-muted-foreground">torrent</span>
+          <h1 className="text-xl font-semibold text-foreground">
+            Macsofy
           </h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            {language === 'km' ? 'ចូលគណនីរបស់អ្នក' : 'Sign in to your account'}
+          </p>
         </div>
 
-        {/* Form Card */}
-        <div className="bg-card rounded-2xl p-6 sm:p-8 border border-border shadow-xl">
-          {/* Back button for nested modes */}
+        {/* Form Card — Notion flat card */}
+        <div className="bg-card rounded-md border border-border p-6">
+          {/* Back button */}
           {(mode !== 'login' && mode !== 'register') && (
             <button
               type="button"
@@ -448,14 +450,14 @@ const Auth = () => {
                   setMode('verify-reset');
                 }
               }}
-              className="flex items-center gap-1 text-sm text-muted-foreground hover:text-primary mb-4 transition-colors"
+              className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-4 transition-colors"
             >
-              <ArrowLeft className="w-4 h-4" />
+              <ArrowLeft className="w-3.5 h-3.5" />
               {language === 'km' ? 'ត្រឡប់ក្រោយ' : 'Go back'}
             </button>
           )}
 
-          <h2 className="text-xl font-semibold text-center mb-6">{renderTitle()}</h2>
+          <h2 className="text-base font-semibold mb-5">{renderTitle()}</h2>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Registration: Full Name */}
@@ -665,19 +667,15 @@ const Auth = () => {
       <AlertDialog open={banDialogOpen} onOpenChange={setBanDialogOpen}>
         <AlertDialogContent className="max-w-md">
           <AlertDialogHeader>
-            <div className="flex flex-col items-center gap-4 mb-2">
-              <div className={`w-16 h-16 rounded-full flex items-center justify-center ${
-                banInfo?.status === 'banned' 
-                  ? 'bg-red-100 dark:bg-red-900/30' 
-                  : 'bg-orange-100 dark:bg-orange-900/30'
-              }`}>
+            <div className="flex flex-col items-center gap-3 mb-2">
+              <div className="w-12 h-12 rounded-md bg-destructive/10 flex items-center justify-center">
                 {banInfo?.status === 'banned' ? (
-                  <Ban className="w-8 h-8 text-red-600 dark:text-red-400" />
+                  <Ban className="w-6 h-6 text-destructive" />
                 ) : (
-                  <ShieldX className="w-8 h-8 text-orange-600 dark:text-orange-400" />
+                  <ShieldX className="w-6 h-6 text-destructive" />
                 )}
               </div>
-              <AlertDialogTitle className="text-center text-xl">
+              <AlertDialogTitle className="text-center">
                 {banInfo?.status === 'banned'
                   ? (language === 'km' ? 'គណនីត្រូវបានហាមឃាត់' : 'Account Banned')
                   : (language === 'km' ? 'គណនីត្រូវបានផ្អាក' : 'Account Suspended')
@@ -696,7 +694,7 @@ const Auth = () => {
                 }
               </p>
               {banInfo?.reason && (
-                <div className="bg-muted rounded-lg p-3 text-left">
+                <div className="bg-muted rounded-sm p-3 text-left">
                   <p className="text-xs text-muted-foreground mb-1">
                     {language === 'km' ? 'មូលហេតុ:' : 'Reason:'}
                   </p>
@@ -704,11 +702,11 @@ const Auth = () => {
                 </div>
               )}
               {banInfo?.status === 'suspended' && banInfo?.suspendedUntil && (
-                <div className="bg-orange-50 dark:bg-orange-900/20 rounded-lg p-3 text-left">
+                <div className="bg-muted rounded-sm p-3 text-left">
                   <p className="text-xs text-muted-foreground mb-1">
                     {language === 'km' ? 'ផ្អាករហូតដល់:' : 'Suspended until:'}
                   </p>
-                  <p className="text-sm font-medium text-orange-700 dark:text-orange-400">
+                  <p className="text-sm font-medium text-foreground">
                     {new Date(banInfo.suspendedUntil).toLocaleString()}
                   </p>
                 </div>
@@ -726,7 +724,7 @@ const Auth = () => {
                 setBanDialogOpen(false);
                 setBanInfo(null);
               }}
-              className={banInfo?.status === 'banned' ? 'bg-red-600 hover:bg-red-700' : 'bg-orange-600 hover:bg-orange-700'}
+              className="bg-destructive hover:bg-destructive/90"
             >
               {language === 'km' ? 'យល់ព្រម' : 'I Understand'}
             </AlertDialogAction>
