@@ -140,7 +140,7 @@
 
   /* App card — with colored hover accent */
   .app-card {
-    @apply relative bg-card rounded-xl p-4 transition-all duration-200 cursor-pointer border border-border;
+    @apply relative bg-card rounded-md p-4 transition-all duration-200 cursor-pointer border border-border;
     box-shadow: var(--shadow-card);
   }
 
