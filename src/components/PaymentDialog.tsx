@@ -223,9 +223,19 @@ export const PaymentDialog = ({
   return (
     <>
       <Dialog open={open} onOpenChange={handleOpenChange}>
-        <DialogContent className="max-w-xs p-0 overflow-hidden gap-0">
-          <DialogHeader className="sr-only">
-            <DialogTitle>{language === 'km' ? 'ការ​បង់​ប្រាក់' : 'Payment'}</DialogTitle>
+        <DialogContent className="max-w-xs p-0 overflow-hidden gap-0 [&>button]:hidden">
+          {/* Visible Header with title + close button */}
+          <DialogHeader className="flex flex-row items-center justify-between px-4 py-3 border-b border-border">
+            <DialogTitle className="text-sm font-semibold">
+              {language === 'km' ? 'ការ​បង់​ប្រាក់' : 'Payment'}
+            </DialogTitle>
+            <button
+              onClick={() => handleOpenChange(false)}
+              className="rounded-sm opacity-70 hover:opacity-100 transition-opacity"
+            >
+              <XCircle className="w-5 h-5" />
+              <span className="sr-only">Close</span>
+            </button>
           </DialogHeader>
           
           {status === 'loading' && (
