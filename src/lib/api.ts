@@ -428,14 +428,21 @@ export interface OrdersByStatus {
 
 // Analytics API
 export const analyticsApi = {
-  getDashboard: async (days: number = 30): Promise<{
+  getDashboard: async (days: number = 30, from?: string, to?: string): Promise<{
     stats: AnalyticsStats;
     revenue_by_date: RevenueByDate[];
     orders_by_status: OrdersByStatus[];
     recent_orders: AdminOrder[];
     top_apps: { app_id: number; app_name: string; revenue: number; sales: number }[];
   }> => {
-    return apiRequest(`admin/analytics?days=${days}`);
+    const params = new URLSearchParams();
+    if (from && to) {
+      params.set('from', from);
+      params.set('to', to);
+    } else {
+      params.set('days', String(days));
+    }
+    return apiRequest(`admin/analytics?${params.toString()}`);
   },
 };
 
