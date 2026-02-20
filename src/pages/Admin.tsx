@@ -168,12 +168,11 @@ const AppForm = ({ app, onSave, onCancel }: AppFormProps) => {
           <FileUpload type="icons" currentUrl={formData.icon_url} onUpload={(url) => setFormData({ ...formData, icon_url: url })} label="" />
           <div className="flex-1 space-y-1">
             <Input
-              type="url"
+              type="text"
               value={formData.icon_url}
               onChange={(e) => setFormData({ ...formData, icon_url: e.target.value })}
               placeholder="https://example.com/icon.png"
               className="text-sm"
-              pattern="https?://.*"
             />
             {formData.icon_url && !/^https?:\/\/.+/.test(formData.icon_url) && (
               <p className="text-xs text-destructive">Please enter a valid URL starting with http:// or https://</p>
