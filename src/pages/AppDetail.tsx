@@ -1,8 +1,9 @@
 import { useState } from "react";
+import macsofyLogo from "@/assets/macsofy-logo.png";
 import { useParams, useNavigate, Link, useLocation } from "react-router-dom";
 import {
   Download, Calendar, HardDrive, ExternalLink, Package, ChevronLeft, 
-  ChevronRight, X, Shield, History, ArrowLeft, Home, Search, Sparkles,
+  ChevronRight, X, Shield, History, ArrowLeft, Home, Search,
   Box, Gamepad2, Puzzle, LayoutGrid, ChevronDown, ShoppingCart, Lock,
   ShoppingBag, Monitor, Cpu, FileDown, Play
 } from "lucide-react";
@@ -609,15 +610,10 @@ const AppDetail = () => {
       <aside className="fixed left-0 top-0 h-full w-64 bg-background/95 backdrop-blur-xl py-6 px-4 flex-col z-50 border-r border-border/50 hidden lg:flex">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-3 px-4 mb-8">
-          <div className="w-10 h-10 bg-gradient-to-br from-primary to-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-primary/25">
-            <Sparkles className="w-5 h-5 text-white" />
+          <div className="w-9 h-9 flex items-center justify-center flex-shrink-0">
+            <img src={macsofyLogo} alt="Macsofy" className="w-full h-full object-contain" />
           </div>
-          <div>
-            <span className="text-xl font-bold">
-              <span className="gradient-text">apps</span>
-              <span className="text-muted-foreground">torrent</span>
-            </span>
-          </div>
+          <span className="text-lg font-bold text-foreground">Macsofy</span>
         </Link>
 
         <nav className="flex-1 space-y-1">
