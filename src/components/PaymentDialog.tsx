@@ -317,7 +317,7 @@ export const PaymentDialog = ({
                   <span className="text-xs text-muted-foreground">
                     {language === 'km' ? 'កំពុងផ្ទៀងផ្ទាត់' : 'Verifying'}
                   </span>
-                  <span className={`text-sm font-mono font-bold ${countdownUrgent ? 'text-red-500 animate-pulse' : 'text-foreground'}`}>
+                  <span className={`text-sm font-mono font-bold ${countdownUrgent ? 'text-red-500 animate-pulse' : 'text-primary'}`}>
                     {formatCountdown(countdown)}
                   </span>
                 </div>
