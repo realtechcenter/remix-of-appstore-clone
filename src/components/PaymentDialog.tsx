@@ -220,7 +220,7 @@ export const PaymentDialog = ({
         {status === 'ready' && (
           <div className="flex flex-col">
             {/* KHQR Card */}
-            <div ref={qrRef} className="bg-white rounded-xl overflow-hidden shadow-sm mx-4 mt-4 border-2 border-gray-300">
+            <div ref={qrRef} className="bg-white rounded-xl overflow-hidden shadow-sm mx-4 mt-4 border border-gray-200">
               {/* Red Header with KHQR */}
               <div className="bg-[#E21A1A] px-4 py-2 flex justify-center items-center">
                 <KHQRLogo />
