@@ -312,9 +312,15 @@ export const PaymentDialog = ({
 
               {/* Countdown + Instructions */}
               <div className="flex flex-col items-center gap-1 mt-3 px-4">
-                <span className={`text-lg font-mono font-bold ${countdownUrgent ? 'text-red-500 animate-pulse' : 'text-foreground'}`}>
-                  {formatCountdown(countdown)}
-                </span>
+                <div className="flex items-center gap-2">
+                  <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+                  <span className="text-xs text-muted-foreground">
+                    {language === 'km' ? 'កំពុងផ្ទៀងផ្ទាត់' : 'Verifying'}
+                  </span>
+                  <span className={`text-sm font-mono font-bold ${countdownUrgent ? 'text-red-500 animate-pulse' : 'text-foreground'}`}>
+                    {formatCountdown(countdown)}
+                  </span>
+                </div>
                 <p className="text-muted-foreground text-xs text-center">
                   {language === 'km' 
                     ? 'ស្កេនជាមួយកម្មវិធីធនាគារដែលគាំទ្របាគង'
