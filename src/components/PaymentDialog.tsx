@@ -242,12 +242,8 @@ export const PaymentDialog = ({
               {/* KHQR Card */}
               <div ref={qrRef} className="bg-white rounded-xl overflow-hidden shadow-sm mx-4 mt-4 border border-gray-200">
                 {/* Red Header with KHQR */}
-                <div className="bg-[#E21A1A] px-4 py-2 flex justify-between items-center">
+                <div className="bg-[#E21A1A] px-4 py-2 flex justify-center items-center">
                   <KHQRLogo />
-                  {/* Countdown */}
-                  <span className={`text-xs font-mono font-bold ${countdownUrgent ? 'text-yellow-300 animate-pulse' : 'text-white/80'}`}>
-                    {formatCountdown(countdown)}
-                  </span>
                 </div>
                 
                 {/* White Content Area */}
@@ -304,13 +300,18 @@ export const PaymentDialog = ({
                 </div>
               </div>
 
-              {/* Instructions */}
-              <p className="text-muted-foreground text-xs text-center mt-3 px-4">
-                {language === 'km' 
-                  ? 'ស្កេនជាមួយកម្មវិធីធនាគារដែលគាំទ្របាគង'
-                  : 'Scan with any Bakong-supported banking app'
-                }
-              </p>
+              {/* Countdown + Instructions */}
+              <div className="flex flex-col items-center gap-1 mt-3 px-4">
+                <span className={`text-lg font-mono font-bold ${countdownUrgent ? 'text-red-500 animate-pulse' : 'text-foreground'}`}>
+                  {formatCountdown(countdown)}
+                </span>
+                <p className="text-muted-foreground text-xs text-center">
+                  {language === 'km' 
+                    ? 'ស្កេនជាមួយកម្មវិធីធនាគារដែលគាំទ្របាគង'
+                    : 'Scan with any Bakong-supported banking app'
+                  }
+                </p>
+              </div>
 
               {/* Action Buttons */}
               <div className="p-4 space-y-2">
