@@ -1,20 +1,24 @@
 import { useState } from "react";
 import { 
   TrendingUp, Users, ShoppingCart, DollarSign, 
-  Calendar, ArrowUpRight, ArrowDownRight, Download, Activity
+  CalendarIcon, ArrowUpRight, ArrowDownRight, Activity, X
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useQuery } from "@tanstack/react-query";
 import { analyticsApi } from "@/lib/api";
+import { format, subDays, startOfDay, endOfDay } from "date-fns";
+import { cn } from "@/lib/utils";
 import { 
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   BarChart, Bar, PieChart, Pie, Cell, Legend
 } from "recharts";
+import { type DateRange } from "react-day-picker";
 
-type TimeRange = "7" | "30" | "90" | "365";
-
+// ─── Stat Card ────────────────────────────────────────────────────────────────
 interface StatCardProps {
   title: string;
   value: string | number;
@@ -22,10 +26,9 @@ interface StatCardProps {
   icon: React.ElementType;
   trend?: "up" | "down" | "neutral";
   subtitle?: string;
-  color?: string;
 }
 
-const StatCard = ({ title, value, change, icon: Icon, trend, subtitle, color = "primary" }: StatCardProps) => (
+const StatCard = ({ title, value, change, icon: Icon, trend, subtitle }: StatCardProps) => (
   <Card className="overflow-hidden">
     <CardContent className="p-5">
       <div className="flex items-start justify-between">
@@ -51,21 +54,24 @@ const StatCard = ({ title, value, change, icon: Icon, trend, subtitle, color = "
   </Card>
 );
 
+// ─── Constants ────────────────────────────────────────────────────────────────
 const CHART_COLORS = [
-  'hsl(var(--primary))',
-  '#10b981',
-  '#f59e0b',
-  '#ef4444',
-  '#8b5cf6',
+  'hsl(var(--primary))', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6',
 ];
 
 const STATUS_COLORS: Record<string, string> = {
-  paid: '#10b981',
-  pending: '#f59e0b',
-  failed: '#ef4444',
-  expired: '#94a3b8',
+  paid: '#10b981', pending: '#f59e0b', failed: '#ef4444', expired: '#94a3b8',
 };
 
+const QUICK_RANGES = [
+  { label: "Today", days: 1 },
+  { label: "7 days", days: 7 },
+  { label: "30 days", days: 30 },
+  { label: "90 days", days: 90 },
+  { label: "1 year", days: 365 },
+];
+
+// ─── Custom Tooltip ───────────────────────────────────────────────────────────
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (!active || !payload?.length) return null;
   return (
@@ -75,19 +81,39 @@ const CustomTooltip = ({ active, payload, label }: any) => {
         <div key={i} className="flex items-center gap-2 text-xs">
           <span className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color }} />
           <span className="text-muted-foreground">{entry.name}:</span>
-          <span className="font-medium">{typeof entry.value === 'number' && entry.name?.toLowerCase().includes('revenue') ? `$${entry.value.toFixed(2)}` : entry.value}</span>
+          <span className="font-medium">
+            {typeof entry.value === 'number' && entry.name?.toLowerCase().includes('revenue')
+              ? `$${entry.value.toFixed(2)}`
+              : entry.value}
+          </span>
         </div>
       ))}
     </div>
   );
 };
 
+// ─── Main Component ───────────────────────────────────────────────────────────
 export const AnalyticsDashboard = () => {
-  const [timeRange, setTimeRange] = useState<TimeRange>("30");
-  
+  const today = new Date();
+  const [dateRange, setDateRange] = useState<DateRange>({
+    from: today,
+    to: today,
+  });
+  const [calendarOpen, setCalendarOpen] = useState(false);
+
+  // Format for display
+  const fromStr = dateRange.from ? format(dateRange.from, "yyyy-MM-dd") : undefined;
+  const toStr = dateRange.to ? format(dateRange.to, "yyyy-MM-dd") : fromStr;
+
+  const isToday =
+    dateRange.from && dateRange.to &&
+    format(dateRange.from, "yyyy-MM-dd") === format(today, "yyyy-MM-dd") &&
+    format(dateRange.to, "yyyy-MM-dd") === format(today, "yyyy-MM-dd");
+
   const { data, isLoading } = useQuery({
-    queryKey: ["admin-analytics", timeRange],
-    queryFn: () => analyticsApi.getDashboard(parseInt(timeRange)),
+    queryKey: ["admin-analytics", fromStr, toStr],
+    queryFn: () => analyticsApi.getDashboard(30, fromStr, toStr),
+    enabled: !!fromStr && !!toStr,
   });
 
   const stats = data?.stats;
@@ -104,6 +130,23 @@ export const AnalyticsDashboard = () => {
     revenue: typeof d.revenue === 'string' ? parseFloat(d.revenue) : (d.revenue || 0),
   }));
 
+  const applyQuickRange = (days: number) => {
+    const to = new Date();
+    const from = days === 1 ? to : subDays(to, days - 1);
+    setDateRange({ from, to });
+    setCalendarOpen(false);
+  };
+
+  // Display label for the trigger button
+  const displayLabel = () => {
+    if (!dateRange.from) return "Pick a date range";
+    if (isToday) return "Today";
+    if (!dateRange.to || format(dateRange.from, "yyyy-MM-dd") === format(dateRange.to, "yyyy-MM-dd")) {
+      return format(dateRange.from, "MMM d, yyyy");
+    }
+    return `${format(dateRange.from, "MMM d")} – ${format(dateRange.to, "MMM d, yyyy")}`;
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -112,18 +155,73 @@ export const AnalyticsDashboard = () => {
           <h2 className="text-xl font-bold">Overview</h2>
           <p className="text-sm text-muted-foreground">App store performance at a glance</p>
         </div>
-        <Select value={timeRange} onValueChange={(v) => setTimeRange(v as TimeRange)}>
-          <SelectTrigger className="w-[150px]">
-            <Calendar className="w-3.5 h-3.5 mr-2" />
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="7">Last 7 days</SelectItem>
-            <SelectItem value="30">Last 30 days</SelectItem>
-            <SelectItem value="90">Last 90 days</SelectItem>
-            <SelectItem value="365">Last year</SelectItem>
-          </SelectContent>
-        </Select>
+
+        {/* Date Range Picker */}
+        <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              className={cn(
+                "gap-2 justify-start text-left font-normal min-w-[200px]",
+                isToday && "border-primary/50 text-primary"
+              )}
+            >
+              <CalendarIcon className="w-4 h-4 shrink-0" />
+              <span className="flex-1 truncate">{displayLabel()}</span>
+              {!isToday && dateRange.from && (
+                <span
+                  role="button"
+                  tabIndex={0}
+                  onClick={(e) => { e.stopPropagation(); setDateRange({ from: today, to: today }); }}
+                  onKeyDown={(e) => { if (e.key === 'Enter') { e.stopPropagation(); setDateRange({ from: today, to: today }); } }}
+                  className="ml-1 rounded p-0.5 hover:bg-muted"
+                >
+                  <X className="w-3 h-3 text-muted-foreground" />
+                </span>
+              )}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="end">
+            <div className="flex flex-col sm:flex-row">
+              {/* Quick ranges */}
+              <div className="p-3 border-b sm:border-b-0 sm:border-r border-border flex flex-row sm:flex-col gap-1 flex-wrap">
+                <p className="text-xs font-medium text-muted-foreground mb-1 w-full hidden sm:block">Quick select</p>
+                {QUICK_RANGES.map(({ label, days }) => (
+                  <Button
+                    key={label}
+                    variant="ghost"
+                    size="sm"
+                    className="justify-start text-xs h-8 px-3"
+                    onClick={() => applyQuickRange(days)}
+                  >
+                    {label}
+                  </Button>
+                ))}
+              </div>
+              {/* Calendar */}
+              <Calendar
+                mode="range"
+                selected={dateRange}
+                onSelect={(range) => {
+                  if (range) setDateRange(range);
+                }}
+                disabled={(date) => date > today}
+                numberOfMonths={1}
+                initialFocus
+                className={cn("p-3 pointer-events-auto")}
+              />
+            </div>
+            {/* Footer */}
+            <div className="border-t border-border p-3 flex items-center justify-between gap-2">
+              <p className="text-xs text-muted-foreground">
+                {dateRange.from && dateRange.to && format(dateRange.from, "yyyy-MM-dd") !== format(dateRange.to, "yyyy-MM-dd")
+                  ? `${Math.round((dateRange.to.getTime() - dateRange.from.getTime()) / (1000 * 60 * 60 * 24) + 1)} days selected`
+                  : "Single day selected"}
+              </p>
+              <Button size="sm" onClick={() => setCalendarOpen(false)}>Apply</Button>
+            </div>
+          </PopoverContent>
+        </Popover>
       </div>
 
       {/* Stats Grid */}
@@ -144,7 +242,6 @@ export const AnalyticsDashboard = () => {
 
       {/* Charts Row 1 */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {/* Revenue Chart - wider */}
         <Card className="lg:col-span-2">
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
@@ -156,7 +253,7 @@ export const AnalyticsDashboard = () => {
             <div className="h-[240px]">
               {isLoading ? (
                 <div className="h-full bg-muted animate-pulse rounded-lg" />
-              ) : revenueChartData.length === 0 ? (
+              ) : downloadsData.length === 0 ? (
                 <div className="flex items-center justify-center h-full text-muted-foreground text-sm">No data for this period</div>
               ) : (
                 <ResponsiveContainer width="100%" height="100%">
@@ -173,7 +270,6 @@ export const AnalyticsDashboard = () => {
           </CardContent>
         </Card>
 
-        {/* Orders by Status Pie */}
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-base font-semibold">Orders by Status</CardTitle>
@@ -204,7 +300,6 @@ export const AnalyticsDashboard = () => {
 
       {/* Charts Row 2 */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* Orders Bar Chart */}
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-base font-semibold">Orders Volume</CardTitle>
@@ -230,7 +325,6 @@ export const AnalyticsDashboard = () => {
           </CardContent>
         </Card>
 
-        {/* Recent Orders */}
         <Card>
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
@@ -252,8 +346,8 @@ export const AnalyticsDashboard = () => {
                     <div className="flex items-center gap-2 shrink-0 ml-2">
                       <span className="text-sm font-semibold">${parseFloat(String(order.amount)).toFixed(2)}</span>
                       <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
-                        order.status === "paid" ? "bg-green-500/15 text-green-600" : 
-                        order.status === "pending" ? "bg-amber-500/15 text-amber-600" : 
+                        order.status === "paid" ? "bg-green-500/15 text-green-600" :
+                        order.status === "pending" ? "bg-amber-500/15 text-amber-600" :
                         "bg-muted text-muted-foreground"
                       }`}>
                         {order.status}
