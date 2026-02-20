@@ -174,9 +174,6 @@ const AppForm = ({ app, onSave, onCancel }: AppFormProps) => {
               placeholder="https://example.com/icon.png"
               className="text-sm"
             />
-            {formData.icon_url && !/^https?:\/\/.+/.test(formData.icon_url) && (
-              <p className="text-xs text-destructive">Please enter a valid URL starting with http:// or https://</p>
-            )}
           </div>
         </div>
       </div>
