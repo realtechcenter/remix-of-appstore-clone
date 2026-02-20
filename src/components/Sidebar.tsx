@@ -1,5 +1,6 @@
 import { Gamepad2, Puzzle, HardDrive, FileText, ShoppingBag, LayoutGrid, Box, ChevronDown } from "lucide-react";
 import { useLanguage, useTranslations } from "@/contexts/LanguageContext";
+import macsofyLogo from "@/assets/macsofy-logo.png";
 
 interface SidebarProps {
   activeCategory: string;
@@ -31,8 +32,8 @@ export const Sidebar = ({ activeCategory, onCategoryChange, isOpen = false, onTo
     >
       {/* Workspace header */}
       <div className="flex items-center gap-2 px-3 py-3 border-b border-border">
-        <div className="w-7 h-7 bg-primary rounded-lg flex items-center justify-center flex-shrink-0 shadow-sm">
-          <span className="text-primary-foreground text-xs font-bold">M</span>
+        <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
+          <img src={macsofyLogo} alt="Macsofy" className="w-full h-full object-contain" />
         </div>
         <span className="text-sm font-bold text-foreground truncate">Macsofy</span>
         <ChevronDown className="w-4 h-4 text-muted-foreground ml-auto" />
