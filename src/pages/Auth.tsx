@@ -22,6 +22,8 @@ import ReCAPTCHA from 'react-google-recaptcha';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://api.realtechcomputer.com';
 const RECAPTCHA_SITE_KEY = import.meta.env.VITE_RECAPTCHA_SITE_KEY || '';
+const IS_DEVELOPMENT = String(import.meta.env.VITE_DEVELOPMENT || '').toLowerCase() === 'true' || import.meta.env.MODE === 'development';
+const RECAPTCHA_ENABLED = Boolean(RECAPTCHA_SITE_KEY) && !IS_DEVELOPMENT;
 
 const loginSchema = z.object({
   email: z.string().trim().email({ message: "Invalid email address" }),
@@ -54,7 +56,7 @@ const Auth = () => {
   const { language } = useLanguage();
   const t = useTranslations();
   const recaptchaRef = useRef<ReCAPTCHA>(null);
-  
+
   const [mode, setMode] = useState<AuthMode>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -74,14 +76,14 @@ const Auth = () => {
     if (user) {
       navigate('/');
     }
-    
+
     // Check for stored auth error (from banned user trying to access)
     const authError = sessionStorage.getItem('auth_error');
     if (authError) {
       sessionStorage.removeItem('auth_error');
       toast.error(authError);
     }
-    
+
     // Check for stored ban info (from mid-session ban)
     const storedBanInfo = sessionStorage.getItem('ban_info');
     if (storedBanInfo) {
@@ -115,7 +117,7 @@ const Auth = () => {
     }
 
     // Validate reCAPTCHA if enabled
-    if (RECAPTCHA_SITE_KEY && !recaptchaToken) {
+    if (RECAPTCHA_ENABLED && !recaptchaToken) {
       setErrors({ recaptcha: language === 'km' ? 'សូមបញ្ជាក់ CAPTCHA' : 'Please complete the CAPTCHA' });
       return;
     }
@@ -124,15 +126,15 @@ const Auth = () => {
       const response = await fetch(`${API_BASE_URL}/api/users/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-        body: JSON.stringify({ email, password, recaptcha_token: recaptchaToken }),
+        body: JSON.stringify({ email, password, ...(RECAPTCHA_ENABLED ? { recaptcha_token: recaptchaToken } : {}) }),
       });
-      
+
       const data = await response.json();
-      
+
       // Reset reCAPTCHA after submission
       recaptchaRef.current?.reset();
       setRecaptchaToken(null);
-      
+
       // Handle banned/suspended users
       if (response.status === 403 && (data.status === 'banned' || data.status === 'suspended')) {
         setBanInfo({
@@ -143,12 +145,12 @@ const Auth = () => {
         setBanDialogOpen(true);
         return;
       }
-      
+
       if (!response.ok || data.error) {
         toast.error(language === 'km' ? 'អ៊ីមែល ឬពាក្យសម្ងាត់មិនត្រឹមត្រូវ' : data.error || 'Invalid credentials');
         return;
       }
-      
+
       localStorage.setItem('auth_token', data.token);
       localStorage.setItem('auth_user', JSON.stringify(data.user));
       toast.success(language === 'km' ? 'ចូលបានជោគជ័យ!' : 'Logged in successfully!');
@@ -172,7 +174,7 @@ const Auth = () => {
     }
 
     // Validate reCAPTCHA if enabled
-    if (RECAPTCHA_SITE_KEY && !recaptchaToken) {
+    if (RECAPTCHA_ENABLED && !recaptchaToken) {
       setErrors({ recaptcha: language === 'km' ? 'សូមបញ្ជាក់ CAPTCHA' : 'Please complete the CAPTCHA' });
       return;
     }
@@ -181,20 +183,20 @@ const Auth = () => {
       const response = await fetch(`${API_BASE_URL}/api/otp/send-registration`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-        body: JSON.stringify({ email, recaptcha_token: recaptchaToken }),
+        body: JSON.stringify({ email, ...(RECAPTCHA_ENABLED ? { recaptcha_token: recaptchaToken } : {}) }),
       });
-      
+
       const data = await response.json();
-      
+
       // Reset reCAPTCHA after submission
       recaptchaRef.current?.reset();
       setRecaptchaToken(null);
-      
+
       if (!response.ok || data.error) {
         toast.error(data.error || 'Failed to send OTP');
         return;
       }
-      
+
       toast.success(language === 'km' ? 'កូដ OTP បានផ្ញើទៅអ៊ីមែលរបស់អ្នក' : 'OTP sent to your email');
       setMode('verify-registration');
       setResendCooldown(60);
@@ -217,14 +219,14 @@ const Auth = () => {
         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
         body: JSON.stringify({ email, code: otp, password, full_name: fullName }),
       });
-      
+
       const data = await response.json();
-      
+
       if (!response.ok || data.error) {
         toast.error(data.error || 'Invalid OTP');
         return;
       }
-      
+
       localStorage.setItem('auth_token', data.token);
       localStorage.setItem('auth_user', JSON.stringify(data.user));
       toast.success(language === 'km' ? 'គណនីបានបង្កើតជោគជ័យ!' : 'Account created successfully!');
@@ -246,14 +248,14 @@ const Auth = () => {
         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
         body: JSON.stringify({ email }),
       });
-      
+
       const data = await response.json();
-      
+
       if (!response.ok || data.error) {
         toast.error(data.error || 'Failed to send OTP');
         return;
       }
-      
+
       toast.success(language === 'km' ? 'កូដ OTP បានផ្ញើទៅអ៊ីមែលរបស់អ្នក' : 'OTP sent to your email');
       setMode('verify-reset');
       setResendCooldown(60);
@@ -267,7 +269,7 @@ const Auth = () => {
       setErrors({ otp: 'Please enter the 6-digit code' });
       return;
     }
-    
+
     // Verify OTP with backend before proceeding
     try {
       const response = await fetch(`${API_BASE_URL}/api/otp/verify-reset-code`, {
@@ -275,14 +277,14 @@ const Auth = () => {
         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
         body: JSON.stringify({ email, code: otp, type: 'password_reset' }),
       });
-      
+
       const data = await response.json();
-      
+
       if (!response.ok || data.error) {
         toast.error(data.error || (language === 'km' ? 'កូដ OTP មិនត្រឹមត្រូវ' : 'Invalid or expired OTP'));
         return;
       }
-      
+
       setMode('reset-password');
     } catch (error) {
       toast.error(language === 'km' ? 'មានបញ្ហាកើតឡើង' : 'Something went wrong');
@@ -306,14 +308,14 @@ const Auth = () => {
         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
         body: JSON.stringify({ email, code: otp, password }),
       });
-      
+
       const data = await response.json();
-      
+
       if (!response.ok || data.error) {
         toast.error(data.error || 'Failed to reset password');
         return;
       }
-      
+
       toast.success(language === 'km' ? 'ពាក្យសម្ងាត់បានប្ដូរជោគជ័យ!' : 'Password reset successfully!');
       setMode('login');
       setPassword('');
@@ -328,21 +330,21 @@ const Auth = () => {
     if (resendCooldown > 0) return;
 
     const type = mode === 'verify-registration' ? 'registration' : 'password_reset';
-    
+
     try {
       const response = await fetch(`${API_BASE_URL}/api/otp/resend`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
         body: JSON.stringify({ email, type }),
       });
-      
+
       const data = await response.json();
-      
+
       if (!response.ok || data.error) {
         toast.error(data.error || 'Failed to resend OTP');
         return;
       }
-      
+
       toast.success(language === 'km' ? 'កូដ OTP បានផ្ញើម្ដងទៀត' : 'OTP resent to your email');
       setResendCooldown(60);
     } catch (error) {
@@ -420,22 +422,22 @@ const Auth = () => {
   return (
     <div className={`min-h-screen bg-background flex items-center justify-center p-4 ${language === 'km' ? 'font-khmer' : ''}`}>
       <div className="w-full max-w-sm">
-        {/* Logo — Notion style: simple, centered */}
+        {/* Logo */}
         <div className="text-center mb-6">
           <div className="w-10 h-10 bg-foreground rounded-md flex items-center justify-center mx-auto mb-3">
             <Sparkles className="w-5 h-5 text-background" />
           </div>
           <h1 className="text-xl font-semibold text-foreground">
-            Macsofy
+            Mac<span className="text-primary">sofy</span>
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
             {language === 'km' ? 'ចូលគណនីរបស់អ្នក' : 'Sign in to your account'}
           </p>
         </div>
 
-        {/* Form Card — Notion flat card */}
+        {/* Form Card */}
         <div className="bg-card rounded-md border border-border p-6">
-          {/* Back button */}
+          {/* Back button for nested modes */}
           {(mode !== 'login' && mode !== 'register') && (
             <button
               type="button"
@@ -450,7 +452,7 @@ const Auth = () => {
                   setMode('verify-reset');
                 }
               }}
-              className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-4 transition-colors"
+              className="flex items-center gap-1 text-sm text-muted-foreground hover:text-primary mb-4 transition-colors"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
               {language === 'km' ? 'ត្រឡប់ក្រោយ' : 'Go back'}
@@ -557,12 +559,12 @@ const Auth = () => {
             {(mode === 'verify-registration' || mode === 'verify-reset') && (
               <div className="space-y-4">
                 <p className="text-center text-sm text-muted-foreground">
-                  {language === 'km' 
+                  {language === 'km'
                     ? `យើងបានផ្ញើកូដ ៦ ខ្ទង់ទៅ ${email}`
                     : `We've sent a 6-digit code to ${email}`
                   }
                 </p>
-                
+
                 <div className="flex justify-center">
                   <InputOTP value={otp} onChange={setOtp} maxLength={6}>
                     <InputOTPGroup>
@@ -576,7 +578,7 @@ const Auth = () => {
                   </InputOTP>
                 </div>
                 {errors.otp && <p className="text-sm text-destructive text-center">{errors.otp}</p>}
-                
+
                 <div className="text-center">
                   <button
                     type="button"
@@ -584,7 +586,7 @@ const Auth = () => {
                     disabled={resendCooldown > 0}
                     className="text-sm text-primary hover:underline disabled:text-muted-foreground disabled:no-underline"
                   >
-                    {resendCooldown > 0 
+                    {resendCooldown > 0
                       ? (language === 'km' ? `ផ្ញើម្ដងទៀតក្នុង ${resendCooldown}s` : `Resend in ${resendCooldown}s`)
                       : (language === 'km' ? 'ផ្ញើកូដម្ដងទៀត' : 'Resend code')
                     }
@@ -593,10 +595,36 @@ const Auth = () => {
               </div>
             )}
 
+            {/* reCAPTCHA (render only when a site key is configured and not in dev mode) */}
+            {RECAPTCHA_ENABLED && (mode === 'login' || mode === 'register' || mode === 'forgot-password') && (
+              <div>
+                <div className="flex justify-center">
+                  <ReCAPTCHA
+                    ref={recaptchaRef}
+                    sitekey={RECAPTCHA_SITE_KEY}
+                    onChange={(token) => {
+                      setRecaptchaToken(token);
+                      setErrors((prev) => {
+                        const next = { ...prev } as Record<string, string>;
+                        delete next.recaptcha;
+                        return next;
+                      });
+                    }}
+                    onExpired={() => setRecaptchaToken(null)}
+                  />
+                  {errors.recaptcha && <p className="text-sm text-destructive mt-1">{errors.recaptcha}</p>}
+                </div>
+              </div>
+            )}
+
+            {IS_DEVELOPMENT && (mode === 'login' || mode === 'register' || mode === 'forgot-password') && (
+              <p className="text-xs text-muted-foreground text-center">reCAPTCHA is disabled in development mode</p>
+            )}
+
             <Button type="submit" className="w-full h-11" disabled={isSubmitting}>
-              {isSubmitting 
+              {isSubmitting
                 ? (language === 'km' ? 'កំពុងដំណើរការ...' : 'Processing...')
-                : mode === 'login' 
+                : mode === 'login'
                   ? (language === 'km' ? 'ចូល' : 'Sign In')
                   : mode === 'register'
                     ? (language === 'km' ? 'បន្ត' : 'Continue')
@@ -685,11 +713,11 @@ const Auth = () => {
             <AlertDialogDescription className="text-center space-y-3">
               <p>
                 {banInfo?.status === 'banned'
-                  ? (language === 'km' 
-                      ? 'គណនីរបស់អ្នកត្រូវបានហាមឃាត់ជាអចិន្ត្រៃយ៍។' 
+                  ? (language === 'km'
+                      ? 'គណនីរបស់អ្នកត្រូវបានហាមឃាត់ជាអចិន្ត្រៃយ៍។'
                       : 'Your account has been permanently banned.')
-                  : (language === 'km' 
-                      ? 'គណនីរបស់អ្នកត្រូវបានផ្អាកជាបណ្តោះអាសន្ន។' 
+                  : (language === 'km'
+                      ? 'គណនីរបស់អ្នកត្រូវបានផ្អាកជាបណ្តោះអាសន្ន។'
                       : 'Your account has been temporarily suspended.')
                 }
               </p>
@@ -712,14 +740,14 @@ const Auth = () => {
                 </div>
               )}
               <p className="text-xs text-muted-foreground pt-2">
-                {language === 'km' 
-                  ? 'សូមទាក់ទងផ្នែកជំនួយប្រសិនបើអ្នកជឿថានេះជាកំហុស។' 
+                {language === 'km'
+                  ? 'សូមទាក់ទងផ្នែកជំនួយប្រសិនបើអ្នកជឿថានេះជាកំហុស។'
                   : 'Please contact support if you believe this is a mistake.'}
               </p>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="sm:justify-center">
-            <AlertDialogAction 
+            <AlertDialogAction
               onClick={() => {
                 setBanDialogOpen(false);
                 setBanInfo(null);
