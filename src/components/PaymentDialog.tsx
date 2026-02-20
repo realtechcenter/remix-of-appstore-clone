@@ -23,7 +23,7 @@ interface PaymentDialogProps {
 
 // KHQR Logo Component
 const KHQRLogo = () => (
-  <img src="https://macsofy.com/images/khqr-icon.svg" alt="KHQR" className="h-5" />
+  <img src="https://macsofy.com/images/khqr-icon.svg" alt="KHQR" className="h-4" />
 );
 
 // Dollar Symbol Component for QR center
