@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ChevronLeft, ChevronRight, Sparkles, Zap, Gift, Shield } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 const slides = [
@@ -12,8 +12,6 @@ const slides = [
     subtitle: "Best productivity suite for your work",
     subtitle_km: "ឧបករណ៍ផលិតភាពល្អបំផុតសម្រាប់ការងាររបស់អ្នក",
     image: "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=1200&h=400&fit=crop",
-    overlay: "from-blue-900/80 via-blue-800/60 to-transparent",
-    icon: Sparkles,
   },
   {
     id: 2,
@@ -24,8 +22,6 @@ const slides = [
     subtitle: "Top rated games available now",
     subtitle_km: "ហ្គេមដែលមានការវាយតម្លៃខ្ពស់បំផុត",
     image: "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=1200&h=400&fit=crop",
-    overlay: "from-purple-900/80 via-purple-800/60 to-transparent",
-    icon: Zap,
   },
   {
     id: 3,
@@ -36,8 +32,6 @@ const slides = [
     subtitle: "Keep your system safe and secure",
     subtitle_km: "រក្សាប្រព័ន្ធរបស់អ្នកឱ្យមានសុវត្ថិភាព",
     image: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=1200&h=400&fit=crop",
-    overlay: "from-emerald-900/80 via-emerald-800/60 to-transparent",
-    icon: Shield,
   },
 ];
 
@@ -53,79 +47,60 @@ export const HeroSlider = () => {
   }, []);
 
   const slide = slides[currentSlide];
-  const SlideIcon = slide.icon;
 
   const nextSlide = () => setCurrentSlide((prev) => (prev + 1) % slides.length);
   const prevSlide = () => setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
 
   return (
-    <div className="relative mb-6 sm:mb-8 group">
-      <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl h-48 sm:h-56 md:h-72 flex items-center justify-between px-6 sm:px-8 md:px-12 transition-all duration-700">
+    <div className="relative mb-6 group rounded-md overflow-hidden border border-border">
+      <div className="relative h-44 sm:h-52 md:h-64 flex items-end">
         {/* Background image */}
-        <div 
+        <div
           className="absolute inset-0 bg-cover bg-center transition-all duration-700"
           style={{ backgroundImage: `url(${slide.image})` }}
         />
-        
-        {/* Gradient overlay for text readability */}
-        <div className={`absolute inset-0 bg-gradient-to-r ${slide.overlay}`} />
-        
-        {/* Animated background elements */}
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute -top-20 -right-20 w-60 h-60 bg-white/10 rounded-full blur-3xl animate-float" />
-          <div className="absolute -bottom-20 -left-20 w-80 h-80 bg-white/5 rounded-full blur-3xl animate-float" style={{ animationDelay: '1s' }} />
-        </div>
+        {/* Subtle dark overlay for text */}
+        <div className="absolute inset-0 bg-foreground/50" />
 
         {/* Content */}
-        <div className="z-10 flex-1">
-          <span className="inline-flex items-center gap-1.5 text-xs font-bold text-white/90 mb-2 sm:mb-3 bg-white/20 backdrop-blur-sm px-3 py-1 rounded-full">
-            <Gift className="w-3 h-3" />
-            {language === 'km' ? slide.badge_km : slide.badge}
+        <div className="relative z-10 p-5 sm:p-6 w-full">
+          <span className="inline-block text-[10px] font-semibold text-background/80 bg-background/20 border border-background/20 px-2 py-0.5 rounded-sm mb-2 uppercase tracking-wider">
+            {language === "km" ? slide.badge_km : slide.badge}
           </span>
-          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-white mb-1 sm:mb-2 drop-shadow-lg">
-            {language === 'km' ? slide.title_km : slide.title}
+          <h2 className="text-lg sm:text-xl font-semibold text-background mb-1">
+            {language === "km" ? slide.title_km : slide.title}
           </h2>
-          <p className="text-sm sm:text-base md:text-lg text-white/90 mb-4 sm:mb-6 max-w-md">
-            {language === 'km' ? slide.subtitle_km : slide.subtitle}
+          <p className="text-sm text-background/70 mb-3">
+            {language === "km" ? slide.subtitle_km : slide.subtitle}
           </p>
-          <button className="bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white px-5 sm:px-7 py-2.5 sm:py-3 rounded-xl font-semibold transition-all duration-300 hover:scale-105 hover:shadow-xl border border-white/20">
-            {language === 'km' ? 'មើលបន្ថែម' : 'Learn More'}
+          <button className="text-sm font-medium text-background border border-background/30 bg-background/10 hover:bg-background/20 px-3 py-1.5 rounded-sm transition-colors">
+            {language === "km" ? "មើលបន្ថែម" : "Learn More"}
           </button>
         </div>
 
-        {/* Decorative icon */}
-        <div className="relative hidden sm:flex items-center justify-center">
-          <div className="relative">
-            <div className="absolute inset-0 bg-white/20 rounded-3xl blur-2xl scale-150" />
-            <div className="relative w-28 md:w-36 h-28 md:h-36 bg-white/10 backdrop-blur-sm rounded-3xl flex items-center justify-center border border-white/20 shadow-2xl animate-float">
-              <SlideIcon className="w-12 md:w-16 h-12 md:h-16 text-white drop-shadow-lg" />
-            </div>
-          </div>
-        </div>
-
-        {/* Navigation arrows */}
-        <button 
+        {/* Arrows */}
+        <button
           onClick={prevSlide}
-          className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-white/20 hover:scale-110"
+          className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-sm bg-background/10 hover:bg-background/25 flex items-center justify-center text-background opacity-0 group-hover:opacity-100 transition-opacity border border-background/20"
         >
-          <ChevronLeft className="w-5 h-5" />
+          <ChevronLeft className="w-4 h-4" />
         </button>
-        <button 
+        <button
           onClick={nextSlide}
-          className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-white/20 hover:scale-110"
+          className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-sm bg-background/10 hover:bg-background/25 flex items-center justify-center text-background opacity-0 group-hover:opacity-100 transition-opacity border border-background/20"
         >
-          <ChevronRight className="w-5 h-5" />
+          <ChevronRight className="w-4 h-4" />
         </button>
       </div>
 
-      {/* Slide indicators */}
-      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
+      {/* Indicators */}
+      <div className="absolute bottom-3 right-4 flex gap-1">
         {slides.map((_, index) => (
           <button
             key={index}
             onClick={() => setCurrentSlide(index)}
-            className={`h-1.5 rounded-full transition-all duration-500 ${
-              index === currentSlide ? 'bg-white w-8' : 'bg-white/30 w-4 hover:bg-white/50'
+            className={`h-1 rounded-full transition-all duration-300 ${
+              index === currentSlide ? "bg-background w-6" : "bg-background/40 w-3 hover:bg-background/60"
             }`}
           />
         ))}

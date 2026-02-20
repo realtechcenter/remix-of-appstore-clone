@@ -43,42 +43,44 @@ const AdminLogin = ({ onLogin }: { onLogin: () => void }) => {
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <div className="w-full max-w-md bg-card rounded-2xl p-6 sm:p-8 border border-border">
-        <div className="text-center mb-6 sm:mb-8">
-          <div className="w-14 h-14 sm:w-16 sm:h-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <Package className="w-7 h-7 sm:w-8 sm:h-8 text-primary" />
+      <div className="w-full max-w-sm">
+        <div className="text-center mb-6">
+          <div className="w-10 h-10 bg-foreground rounded-md flex items-center justify-center mx-auto mb-3">
+            <Package className="w-5 h-5 text-background" />
           </div>
-          <h1 className="text-xl sm:text-2xl font-bold">Admin Panel</h1>
-          <p className="text-muted-foreground mt-2 text-sm sm:text-base">ចូលដើម្បីគ្រប់គ្រងកម្មវិធី / Sign in to manage apps</p>
+          <h1 className="text-xl font-semibold">Admin Panel</h1>
+          <p className="text-sm text-muted-foreground mt-1">ចូលដើម្បីគ្រប់គ្រងកម្មវិធី</p>
         </div>
         
-        <form onSubmit={handleLogin} className="space-y-4">
-          <div>
-            <Label htmlFor="username">ឈ្មោះអ្នកប្រើប្រាស់ / Username</Label>
-            <Input
-              id="username"
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              placeholder="admin"
-              className="mt-1.5"
-            />
-          </div>
-          <div>
-            <Label htmlFor="password">ពាក្យសម្ងាត់ / Password</Label>
-            <Input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-              className="mt-1.5"
-            />
-          </div>
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "កំពុងចូល..." : "ចូល / Login"}
-          </Button>
-        </form>
+        <div className="bg-card rounded-md border border-border p-6">
+          <form onSubmit={handleLogin} className="space-y-4">
+            <div>
+              <Label htmlFor="username" className="text-sm">ឈ្មោះអ្នកប្រើប្រាស់ / Username</Label>
+              <Input
+                id="username"
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="admin"
+                className="mt-1.5"
+              />
+            </div>
+            <div>
+              <Label htmlFor="password" className="text-sm">ពាក្យសម្ងាត់ / Password</Label>
+              <Input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                className="mt-1.5"
+              />
+            </div>
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? "កំពុងចូល..." : "ចូល / Login"}
+            </Button>
+          </form>
+        </div>
       </div>
     </div>
   );
@@ -895,14 +897,14 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
                         <div className="flex items-center gap-2 mt-1 flex-wrap">
                           <span className="text-[10px] sm:text-xs bg-accent px-2 py-0.5 rounded">{app.category}</span>
                           {app.is_featured && (
-                            <span className="text-[10px] sm:text-xs bg-primary/20 text-primary px-2 py-0.5 rounded">Featured</span>
+                            <span className="text-[10px] sm:text-xs bg-accent text-foreground px-2 py-0.5 rounded-sm border border-border">Featured</span>
                           )}
                           {app.price && (typeof app.price === 'string' ? parseFloat(app.price) : app.price) > 0 ? (
-                            <span className="text-[10px] sm:text-xs bg-green-500/20 text-green-600 dark:text-green-400 px-2 py-0.5 rounded font-medium">
+                            <span className="text-[10px] sm:text-xs bg-muted text-foreground px-2 py-0.5 rounded-sm border border-border font-medium">
                               ${(typeof app.price === 'string' ? parseFloat(app.price) : app.price).toFixed(2)}
                             </span>
                           ) : (
-                            <span className="text-[10px] sm:text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded">Free</span>
+                            <span className="text-[10px] sm:text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded-sm">Free</span>
                           )}
                         </div>
                       </div>
@@ -1026,7 +1028,7 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
                               <div className="flex items-center gap-2">
                                 <span className="font-mono font-medium">{version.version}</span>
                                 {version.is_latest && (
-                                  <span className="text-xs bg-green-500/20 text-green-400 px-2 py-0.5 rounded">Latest</span>
+                                  <span className="text-xs bg-muted text-foreground px-2 py-0.5 rounded-sm border border-border">Latest</span>
                                 )}
                               </div>
                               <p className="text-sm text-muted-foreground mt-1">
