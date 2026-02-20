@@ -94,14 +94,14 @@ export const GamesGrid = ({ searchQuery = "", itemsPerPage = 10 }: GamesGridProp
   return (
     <section className="mb-10">
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-semibold text-foreground">
-          {t.games}
+        <div className="flex items-center gap-2.5">
+          <h2 className="text-lg font-bold text-foreground">{t.games}</h2>
           {total > 0 && (
-            <span className="text-muted-foreground text-sm font-normal ml-2">
-              ({total})
+            <span className="text-xs font-medium bg-primary/10 text-primary px-2 py-0.5 rounded-full">
+              {total}
             </span>
           )}
-        </h2>
+        </div>
         {!searchQuery && (
           <a href="#" className="section-link">{t.viewAll}</a>
         )}

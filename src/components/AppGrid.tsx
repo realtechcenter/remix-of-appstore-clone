@@ -110,14 +110,14 @@ export const AppGrid = ({
   return (
     <section className="mb-10">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
-        <h2 className="text-xl font-semibold text-foreground">
-          {displayTitle}
+        <div className="flex items-center gap-2.5">
+          <h2 className="text-lg font-bold text-foreground">{displayTitle}</h2>
           {total > 0 && (
-            <span className="text-muted-foreground text-sm font-normal ml-2">
-              ({total})
+            <span className="text-xs font-medium bg-primary/10 text-primary px-2 py-0.5 rounded-full">
+              {total}
             </span>
           )}
-        </h2>
+        </div>
         <div className="flex items-center gap-3">
           {showFilters && (
             <AppFilters filters={filters} onFiltersChange={setFilters} />

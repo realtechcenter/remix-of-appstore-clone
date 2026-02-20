@@ -52,14 +52,16 @@ export const PopularApps = () => {
 
   return (
     <section className="mb-10">
-      <div className="flex items-center gap-2 mb-6">
-        <TrendingUp className="w-5 h-5 text-orange-500" />
-        <h2 className="text-xl font-semibold text-foreground">
+      <div className="flex items-center gap-2.5 mb-6">
+        <div className="w-7 h-7 rounded-lg flex items-center justify-center bg-orange-100 dark:bg-orange-900/30">
+          <TrendingUp className="w-4 h-4 text-orange-500" />
+        </div>
+        <h2 className="text-lg font-bold text-foreground">
           {language === 'km' ? 'កម្មវិធីពេញនិយម' : 'Popular Apps'}
         </h2>
         {apps.length > 0 && (
-          <span className="text-muted-foreground text-sm font-normal">
-            ({apps.length})
+          <span className="text-xs font-medium bg-primary/10 text-primary px-2 py-0.5 rounded-full">
+            {apps.length}
           </span>
         )}
       </div>

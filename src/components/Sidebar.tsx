@@ -28,18 +28,18 @@ export const Sidebar = ({ activeCategory, onCategoryChange, isOpen = false, onTo
         isOpen ? "translate-x-0" : "-translate-x-full"
       }`}
     >
-      {/* Workspace header — Notion style */}
+      {/* Workspace header */}
       <div className="flex items-center gap-2 px-3 py-3 border-b border-border">
-        <div className="w-6 h-6 bg-foreground rounded-sm flex items-center justify-center flex-shrink-0">
-          <span className="text-background text-xs font-bold">M</span>
+        <div className="w-7 h-7 bg-primary rounded-lg flex items-center justify-center flex-shrink-0 shadow-sm">
+          <span className="text-primary-foreground text-xs font-bold">M</span>
         </div>
-        <span className="text-sm font-semibold text-foreground truncate">Macsofy</span>
+        <span className="text-sm font-bold text-foreground truncate">Macsofy</span>
         <ChevronDown className="w-4 h-4 text-muted-foreground ml-auto" />
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto py-2 px-1 space-y-0.5">
-        <p className="px-2 py-1 text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1 select-none">
+      <nav className="flex-1 overflow-y-auto py-2 px-2 space-y-0.5">
+        <p className="px-2 py-1 text-[11px] font-semibold text-muted-foreground uppercase tracking-widest mb-1 select-none">
           {language === "km" ? "ប្រភេទ" : "Categories"}
         </p>
         {navItems.map((item) => (
@@ -48,7 +48,7 @@ export const Sidebar = ({ activeCategory, onCategoryChange, isOpen = false, onTo
             onClick={() => onCategoryChange(item.id)}
             className={`sidebar-nav-item ${activeCategory === item.id ? "active" : ""}`}
           >
-            <item.icon className="w-4 h-4 flex-shrink-0 opacity-70" />
+            <item.icon className={`w-4 h-4 flex-shrink-0 ${activeCategory === item.id ? "opacity-100" : "opacity-60"}`} />
             <span className="truncate">{item.label}</span>
           </button>
         ))}
