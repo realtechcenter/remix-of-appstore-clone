@@ -30,11 +30,11 @@ const KHQRLogo = () => (
   </svg>
 );
 
-// Riel Symbol Component for QR center
-const RielSymbol = () => (
+// Dollar Symbol Component for QR center
+const DollarSymbol = () => (
   <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
     <div className="w-8 h-8 bg-gray-800 rounded-full flex items-center justify-center shadow-lg border-2 border-white">
-      <span className="text-white text-sm font-bold">៛</span>
+      <span className="text-white text-sm font-bold">$</span>
     </div>
   </div>
 );
@@ -274,7 +274,7 @@ export const PaymentDialog = ({
                       className="w-44 h-44"
                     />
                   )}
-                  <RielSymbol />
+                  <DollarSymbol />
                 </div>
               </div>
             </div>
