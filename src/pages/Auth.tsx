@@ -21,7 +21,7 @@ import {
 import ReCAPTCHA from 'react-google-recaptcha';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://api.realtechcomputer.com';
-const RECAPTCHA_SITE_KEY = import.meta.env.VITE_RECAPTCHA_SITE_KEY || '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI';
+const RECAPTCHA_SITE_KEY = '6Lfyb14sAAAAAHdR8wOO6NubpsKRq2ScBBYhHCNU';
 const RECAPTCHA_ENABLED = Boolean(RECAPTCHA_SITE_KEY);
 
 const loginSchema = z.object({
