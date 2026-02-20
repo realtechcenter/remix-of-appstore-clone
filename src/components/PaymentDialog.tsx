@@ -63,6 +63,8 @@ export const PaymentDialog = ({
   const [qrDataUrl, setQrDataUrl] = useState<string>('');
   const [orderId, setOrderId] = useState<string>('');
   const [md5, setMd5] = useState<string>('');
+  // Raw KHQR string returned by the backend (used for deep-linking to mobile apps)
+  const [qrString, setQrString] = useState<string>('');
 
   useEffect(() => {
     if (open && user) {
@@ -87,7 +89,7 @@ export const PaymentDialog = ({
             setStatus('success');
             clearInterval(interval);
             queryClient.invalidateQueries({ queryKey: ['purchased', appId] });
-            toast.success(language === 'km' ? 'ការទូorg org org org org!' : 'Payment successful!');
+            toast.success(language === 'km' ? 'ការបង់ប្រាក់បានជោគជ័យ!' : 'Payment successful!');
             onPaymentSuccess();
           } else if (result.status === 'scanned' && status !== 'scanned') {
             setStatus('scanned');
@@ -112,7 +114,7 @@ export const PaymentDialog = ({
       });
 
       setOrderId(order.id);
-      
+          
       // Apply coupon to order if selected
       if (coupon) {
         try {
@@ -126,6 +128,8 @@ export const PaymentDialog = ({
       const qrData = await generateKHQR(order.id, finalPrice);
 
       setMd5(qrData.md5);
+      // keep the raw string for deep-linking to mobile banking apps
+      setQrString(qrData.qr_string);
 
       const qrUrl = await QRCode.toDataURL(qrData.qr_string, {
         width: 180,
@@ -141,9 +145,32 @@ export const PaymentDialog = ({
     } catch (err) {
       console.error('Payment init error:', err);
       setStatus('error');
-      toast.error(language === 'km' ? 'មានបorg org org org org QR' : 'Failed to generate QR code');
+      toast.error(language === 'km' ? 'មានបញ្ហាក្នុងការបង្កើត QR Code' : 'Failed to generate QR code');
     }
   };
+
+  // If QR string is present and we're on a mobile device, attempt to open ABA Mobile via custom scheme.
+  useEffect(() => {
+    if (!qrString || status !== 'ready') return;
+
+    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent || '');
+    const abaUrl = `abamobilebank://ababank.com?type=payway&qrcode=${encodeURIComponent(qrString)}`;
+
+    // Only auto-redirect on mobile to avoid desktop errors; still render a manual fallback button below.
+    if (isMobile) {
+      // small delay so the QR is visible briefly and UI settles
+      const t = setTimeout(() => {
+        try {
+          toast.message(language === 'km' ? 'កំពុងផ្ដល់ទៅ ABA Mobile...' : 'Opening ABA Mobile...');
+          window.location.href = abaUrl;
+        } catch (err) {
+          // ignore in test environments
+        }
+      }, 400);
+
+      return () => clearTimeout(t);
+    }
+  }, [qrString, status, language]);
 
   const handleManualConfirm = async () => {
     try {
@@ -152,13 +179,13 @@ export const PaymentDialog = ({
 
       setStatus('success');
       queryClient.invalidateQueries({ queryKey: ['purchased', appId] });
-      toast.success(language === 'km' ? 'ការorg org org org org org org org org org!' : 'Payment successful!');
+      toast.success(language === 'km' ? 'ការបង់ប្រាក់បានជោគជ័យ!' : 'Payment successful!');
       onPaymentSuccess();
     } catch (err) {
       console.error('Manual confirm error:', err);
       setStatus('error');
     }
-  };
+  }; 
 
   const handleSaveQR = () => {
     if (!qrDataUrl) return;
@@ -167,7 +194,7 @@ export const PaymentDialog = ({
     link.download = `KHQR-${appName}-${finalPrice.toFixed(2)}USD.png`;
     link.href = qrDataUrl;
     link.click();
-    toast.success(language === 'km' ? 'QR Code បorg org org org org org org org org!' : 'QR Code saved!');
+    toast.success(language === 'km' ? 'QR Code បានរក្សាទុក!' : 'QR Code saved!');
   };
 
   const formatAmount = (amount: number) => {
@@ -178,14 +205,14 @@ export const PaymentDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-xs p-0 overflow-hidden gap-0">
         <DialogHeader className="sr-only">
-          <DialogTitle>{language === 'km' ? 'org org org org org' : 'Payment'}</DialogTitle>
+          <DialogTitle>{language === 'km' ? 'ការ​បង់​ប្រាក់' : 'Payment'}</DialogTitle>
         </DialogHeader>
         
         {status === 'loading' && (
           <div className="p-6 flex flex-col items-center gap-3">
             <Loader2 className="w-8 h-8 animate-spin text-red-500" />
             <p className="text-sm text-muted-foreground">
-              {language === 'km' ? 'org org org org org QR Code...' : 'Generating QR Code...'}
+              {language === 'km' ? 'កំពុង​បង្កើត QR Code...' : 'Generating QR Code...'}
             </p>
           </div>
         )}
@@ -255,7 +282,7 @@ export const PaymentDialog = ({
             {/* Instructions */}
             <p className="text-muted-foreground text-xs text-center mt-3 px-4">
               {language === 'km' 
-                ? 'org org org QR Code org org org org org org org org Bakong'
+                ? 'ស្កេនជាមួយកម្មវិធីធនាគារដែលគាំទ្របាគង'
                 : 'Scan with any Bakong-supported banking app'
               }
             </p>
@@ -269,7 +296,28 @@ export const PaymentDialog = ({
                 className="w-full gap-2"
               >
                 <Save className="w-4 h-4" />
-                {language === 'km' ? 'org org org org org QR Code' : 'Save QR Code'}
+                {language === 'km' ? 'រក្សាទុក QR Code' : 'Save QR Code'}
+              </Button>
+
+              {/* Fallback: open ABA Mobile using custom scheme (works on mobile) */}
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full gap-2"
+                onClick={() => {
+                  if (!qrString) {
+                    toast.error(language === 'km' ? 'QR Code មិនទាន់មាន' : 'QR not ready');
+                    return;
+                  }
+                  const abaUrl = `abamobilebank://ababank.com?type=payway&qrcode=${encodeURIComponent(qrString)}`;
+                  try {
+                    window.location.href = abaUrl;
+                  } catch (err) {
+                    // ignore in test envs
+                  }
+                }}
+              >
+                {language === 'km' ? 'បើកក្នុង ABA Mobile' : 'Open in ABA Mobile'}
               </Button>
 
               {/* Test button - for development */}
@@ -279,7 +327,7 @@ export const PaymentDialog = ({
                 onClick={handleManualConfirm}
                 className="w-full text-muted-foreground hover:text-foreground text-xs"
               >
-                {language === 'km' ? 'org org org: org org org org org' : 'Test: Confirm Payment'}
+                {language === 'km' ? 'ធ្វើតេស្ត: បញ្ជាក់ការទូទាត់' : 'Test: Confirm Payment'}
               </Button>
             </div>
           </div>
@@ -291,11 +339,11 @@ export const PaymentDialog = ({
               <Loader2 className="w-6 h-6 animate-spin text-blue-500" />
             </div>
             <p className="text-sm font-semibold text-blue-600">
-              {language === 'km' ? 'QR org org org org org!' : 'QR Scanned!'}
+              {language === 'km' ? 'QR បានស្កេន!' : 'ABA Bank QR Scanned!'}
             </p>
             <p className="text-xs text-muted-foreground text-center">
               {language === 'km' 
-                ? 'org org org org org org org org org org org org org org org org'
+                ? 'សូមបញ្ជាក់ការទូទាត់នៅក្នុងកម្មវិធីធនាគាររបស់អ្នក'
                 : 'Please confirm the payment in your banking app'
               }
             </p>
@@ -306,7 +354,7 @@ export const PaymentDialog = ({
           <div className="p-6 flex flex-col items-center gap-3">
             <Loader2 className="w-8 h-8 animate-spin text-red-500" />
             <p className="text-sm text-muted-foreground">
-              {language === 'km' ? 'org org org org org org org org org org org...' : 'Verifying payment...'}
+              {language === 'km' ? 'ការ​ផ្ទៀងផ្ទាត់​ការ​បង់ប្រាក់...' : 'Verifying payment...'}
             </p>
           </div>
         )}
@@ -322,11 +370,11 @@ export const PaymentDialog = ({
             
             <div className="text-center space-y-1">
               <p className="text-base font-bold text-green-500">
-                {language === 'km' ? 'ការorg org org org org org org org org!' : 'Payment Successful!'}
+                {language === 'km' ? 'ការបង់ប្រាក់បានជោគជ័យ!' : 'Payment Successful!'}
               </p>
               <p className="text-xs text-muted-foreground">
                 {language === 'km' 
-                  ? `org org org org org org org org ${appName}!`
+                  ? `អរគុណសម្រាប់ការទិញ ${appName}!`
                   : `Thank you for purchasing ${appName}!`
                 }
               </p>
@@ -340,7 +388,7 @@ export const PaymentDialog = ({
                   onClick={() => window.open(downloadUrl, '_blank')}
                 >
                   <Download className="w-4 h-4" />
-                  {language === 'km' ? 'org org org org org org org' : 'Download Now'}
+                  {language === 'km' ? 'ទាញយកឥឡូវ' : 'Download Now'}
                 </Button>
               )}
               <Button 
@@ -349,7 +397,7 @@ export const PaymentDialog = ({
                 className="w-full"
                 onClick={() => onOpenChange(false)}
               >
-                {language === 'km' ? 'org org' : 'Close'}
+                {language === 'km' ? 'បិទ' : 'Close'}
               </Button>
             </div>
           </div>
@@ -359,10 +407,10 @@ export const PaymentDialog = ({
           <div className="p-6 flex flex-col items-center gap-3">
             <XCircle className="w-12 h-12 text-red-500" />
             <p className="text-sm font-semibold text-red-500">
-              {language === 'km' ? 'org org org org org org org org org org' : 'Payment Failed'}
+              {language === 'km' ? 'ការ​បង់​ប្រាក់​បាន​បរាជ័យ!' : 'Payment Failed'}
             </p>
             <Button onClick={initializePayment} size="sm" className="bg-[#E21A1A] hover:bg-[#C41515]">
-              {language === 'km' ? 'org org org org org org org' : 'Try Again'}
+              {language === 'km' ? 'ព្យាយាម​ម្តង​ទៀត' : 'Try Again'}
             </Button>
           </div>
         )}
