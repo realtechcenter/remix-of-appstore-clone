@@ -22,8 +22,7 @@ import ReCAPTCHA from 'react-google-recaptcha';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://api.realtechcomputer.com';
 const RECAPTCHA_SITE_KEY = import.meta.env.VITE_RECAPTCHA_SITE_KEY || '';
-const IS_DEVELOPMENT = String(import.meta.env.VITE_DEVELOPMENT || '').toLowerCase() === 'true' || import.meta.env.MODE === 'development';
-const RECAPTCHA_ENABLED = Boolean(RECAPTCHA_SITE_KEY) && !IS_DEVELOPMENT;
+const RECAPTCHA_ENABLED = Boolean(RECAPTCHA_SITE_KEY);
 
 const loginSchema = z.object({
   email: z.string().trim().email({ message: "Invalid email address" }),
@@ -617,9 +616,8 @@ const Auth = () => {
               </div>
             )}
 
-            {IS_DEVELOPMENT && (mode === 'login' || mode === 'register' || mode === 'forgot-password') && (
-              <p className="text-xs text-muted-foreground text-center">reCAPTCHA is disabled in development mode</p>
-            )}
+
+
 
             <Button type="submit" className="w-full h-11" disabled={isSubmitting}>
               {isSubmitting
