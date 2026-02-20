@@ -853,20 +853,6 @@ const AppDetail = () => {
                         />
                       )}
                       
-                      {appData.website && (
-                        <div className="space-y-1">
-                          <div className="text-xs text-muted-foreground uppercase tracking-wide">{translations.website}</div>
-                          <a
-                            href={appData.website}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-sm text-primary hover:underline flex items-center gap-1"
-                          >
-                            <ExternalLink className="w-3 h-3" />
-                            {translations.visit}
-                          </a>
-                        </div>
-                      )}
                     </div>
 
                     {/* Download/Purchase Button */}
