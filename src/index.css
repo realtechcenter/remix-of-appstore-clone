@@ -171,7 +171,7 @@
 
   /* Glass — simplified for Notion */
   .glass {
-    @apply bg-background/95 backdrop-blur-sm border-b border-border;
+    @apply bg-background border-b border-border;
   }
 
   /* Theme toggle */
