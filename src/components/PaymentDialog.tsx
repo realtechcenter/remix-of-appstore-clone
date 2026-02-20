@@ -320,15 +320,6 @@ export const PaymentDialog = ({
                 {language === 'km' ? 'បើកក្នុង ABA Mobile' : 'Open in ABA Mobile'}
               </Button>
 
-              {/* Test button - for development */}
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={handleManualConfirm}
-                className="w-full text-muted-foreground hover:text-foreground text-xs"
-              >
-                {language === 'km' ? 'ធ្វើតេស្ត: បញ្ជាក់ការទូទាត់' : 'Test: Confirm Payment'}
-              </Button>
             </div>
           </div>
         )}
