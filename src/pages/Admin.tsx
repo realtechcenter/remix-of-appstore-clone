@@ -163,11 +163,21 @@ const AppForm = ({ app, onSave, onCancel }: AppFormProps) => {
         </div>
       </div>
       <div className="space-y-3">
-        <Label>App Icon</Label>
+        <Label>App Icon URL</Label>
         <div className="flex items-start gap-4">
           <FileUpload type="icons" currentUrl={formData.icon_url} onUpload={(url) => setFormData({ ...formData, icon_url: url })} label="" />
-          <div className="flex-1">
-            <Input type="url" value={formData.icon_url} onChange={(e) => setFormData({ ...formData, icon_url: e.target.value })} placeholder="Or paste icon URL..." className="text-sm" />
+          <div className="flex-1 space-y-1">
+            <Input
+              type="url"
+              value={formData.icon_url}
+              onChange={(e) => setFormData({ ...formData, icon_url: e.target.value })}
+              placeholder="https://example.com/icon.png"
+              className="text-sm"
+              pattern="https?://.*"
+            />
+            {formData.icon_url && !/^https?:\/\/.+/.test(formData.icon_url) && (
+              <p className="text-xs text-destructive">Please enter a valid URL starting with http:// or https://</p>
+            )}
           </div>
         </div>
       </div>
@@ -187,7 +197,7 @@ const AppForm = ({ app, onSave, onCancel }: AppFormProps) => {
           <div key={index} className="flex items-start gap-2 p-3 bg-background rounded-lg border border-border/50">
             <div className="flex-1 space-y-2">
               <Input value={video.title} onChange={(e) => { const u=[...videos]; u[index]={...u[index],title:e.target.value}; setVideos(u); }} placeholder="Video title..." className="text-sm" />
-              <Input value={video.youtube_url} onChange={(e) => { const u=[...videos]; u[index]={...u[index],youtube_url:e.target.value}; setVideos(u); }} placeholder="https://youtube.com/watch?v=..." className="text-sm" />
+              <Input type="url" value={video.youtube_url} onChange={(e) => { const u=[...videos]; u[index]={...u[index],youtube_url:e.target.value}; setVideos(u); }} placeholder="https://youtube.com/watch?v=..." className="text-sm" />
             </div>
             <Button type="button" variant="ghost" size="icon" onClick={() => setVideos(videos.filter((_, i) => i !== index))} className="text-destructive hover:text-destructive shrink-0">
               <X className="w-4 h-4" />
