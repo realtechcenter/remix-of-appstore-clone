@@ -110,8 +110,8 @@ export const Header = ({ searchQuery, onSearchChange, onMenuToggle, isSidebarOpe
                       setLanguage(lang.code);
                       setShowLangMenu(false);
                     }}
-                    className={`w-full flex items-center gap-2 px-3 py-1.5 text-sm hover:bg-accent transition-colors ${
-                      language === lang.code ? "text-foreground font-medium" : "text-muted-foreground"
+                    className={`w-full flex items-center gap-2 px-3 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground transition-colors ${
+                      language === lang.code ? "text-foreground font-medium bg-accent/50" : "text-popover-foreground"
                     }`}
                   >
                     <span>{lang.flag}</span>
