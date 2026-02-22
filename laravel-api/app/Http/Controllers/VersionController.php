@@ -6,8 +6,11 @@ use App\Models\App;
 use App\Models\AppVersion;
 use App\Models\AppDownloadLink;
 use App\Models\Order;
+use App\Models\Admin;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Firebase\JWT\JWT;
+use Firebase\JWT\Key;
 
 class VersionController extends Controller
 {
@@ -22,21 +25,40 @@ class VersionController extends Controller
         // Check if app is paid and if user has purchased it
         $app = App::find($appId);
         $canAccessDownloads = false;
+        $isAdmin = false;
         
-        if ($app) {
-            // Free apps (no price or price = 0) allow downloads
-            if (!$app->price || $app->price == 0) {
+        // Try to identify user from Bearer token
+        $token = $request->bearerToken();
+        $userId = null;
+        
+        if ($token) {
+            // Check if admin
+            $admin = Admin::where('auth_token', $token)->first();
+            if ($admin) {
+                $isAdmin = true;
                 $canAccessDownloads = true;
             } else {
-                // For paid apps, check if user has purchased
-                $userId = $request->header('X-User-Id');
-                if ($userId) {
-                    $hasPurchased = Order::where('user_id', $userId)
-                        ->where('app_id', $appId)
-                        ->whereIn('status', ['paid', 'approved'])
-                        ->exists();
-                    $canAccessDownloads = $hasPurchased;
+                // Try to decode as user JWT
+                try {
+                    $decoded = JWT::decode($token, new Key(config('app.jwt_secret'), 'HS256'));
+                    $userId = $decoded->user_id ?? null;
+                } catch (\Exception $e) {
+                    // Invalid token, continue as guest
                 }
+            }
+        }
+        
+        if ($app && !$isAdmin) {
+            // Free apps allow downloads
+            if (!$app->price || $app->price == 0) {
+                $canAccessDownloads = true;
+            } elseif ($userId) {
+                // For paid apps, check if user has purchased
+                $hasPurchased = Order::where('user_id', $userId)
+                    ->where('app_id', $appId)
+                    ->whereIn('status', ['paid', 'approved'])
+                    ->exists();
+                $canAccessDownloads = $hasPurchased;
             }
         }
 
