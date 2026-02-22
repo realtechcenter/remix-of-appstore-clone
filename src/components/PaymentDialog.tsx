@@ -341,26 +341,6 @@ export const PaymentDialog = ({
                   {language === 'km' ? 'រក្សាទុក QR Code' : 'Save QR Code'}
                 </Button>
 
-                <Button
-                  size="sm"
-                  className="w-full gap-2 text-white"
-                  style={{ backgroundColor: '#CC0001' }}
-                  onClick={() => {
-                    if (!qrString) {
-                      toast.error(language === 'km' ? 'QR Code មិនទាន់មាន' : 'QR not ready');
-                      return;
-                    }
-                    const abaUrl = `abamobilebank://ababank.com?type=payway&qrcode=${encodeURIComponent(qrString)}`;
-                    try {
-                      window.location.href = abaUrl;
-                    } catch (err) {
-                      // ignore in test envs
-                    }
-                  }}
-                >
-                  <Smartphone className="w-4 h-4" />
-                  {language === 'km' ? 'បើកក្នុង ABA Mobile' : 'Open in ABA Mobile'}
-                </Button>
               </div>
             </div>
           )}
