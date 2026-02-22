@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { 
   Plus, Edit, Trash2, LogOut, Package, Layers, Search, X, Save, ArrowLeft, 
   ChevronLeft, ChevronRight, Users, BarChart3, Bell, Shield, Activity, 
-  UserX, Link, Tag, Play, Home, Menu, Download, Star, TrendingUp, Settings2
+  UserX, Link, Tag, Play, Home, Menu, Download, Star, TrendingUp, Settings2, Loader2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -216,8 +216,9 @@ const AppForm = ({ app, onSave, onCancel }: AppFormProps) => {
       </div>
       <div className="flex justify-end gap-3 pt-4 border-t border-border">
         <Button type="button" variant="outline" onClick={onCancel}>Cancel</Button>
+        <Button type="button" variant="outline" onClick={onCancel} disabled={saving}>Cancel</Button>
         <Button type="submit" disabled={saving}>
-          <Save className="w-4 h-4 mr-2" />
+          {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
           {saving ? "Saving..." : "Save App"}
         </Button>
       </div>
