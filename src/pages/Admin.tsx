@@ -17,6 +17,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { appsApi, versionsApi, authApi, type App, type AppVersion, type AppDownloadLinkInput, type VersionInput } from "@/lib/api";
 import { FileUpload, ScreenshotUpload } from "@/components/FileUpload";
+import { RichTextEditor } from "@/components/RichTextEditor";
 import { UserManagement } from "@/components/admin/UserManagement";
 import { AnalyticsDashboard } from "@/components/admin/AnalyticsDashboard";
 import { AppReviewSystem } from "@/components/admin/AppReviewSystem";
@@ -128,11 +129,11 @@ const AppForm = ({ app, onSave, onCancel }: AppFormProps) => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <Label htmlFor="description">Description (English)</Label>
-          <Textarea id="description" value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} rows={3} className="mt-1.5" />
+          <RichTextEditor value={formData.description || ''} onChange={(html) => setFormData({ ...formData, description: html })} minHeight="120px" className="mt-1.5" />
         </div>
         <div>
           <Label htmlFor="description_km">ការពិពណ៌នា (ខ្មែរ)</Label>
-          <Textarea id="description_km" value={formData.description_km} onChange={(e) => setFormData({ ...formData, description_km: e.target.value })} rows={3} className="mt-1.5" />
+          <RichTextEditor value={formData.description_km || ''} onChange={(html) => setFormData({ ...formData, description_km: html })} minHeight="120px" className="mt-1.5" />
         </div>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -351,11 +352,11 @@ const VersionForm = ({ appId, version, onSave, onCancel }: VersionFormProps) => 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <Label htmlFor="changelog">Changelog (English)</Label>
-          <Textarea id="changelog" value={formData.changelog} onChange={(e) => setFormData({ ...formData, changelog: e.target.value })} rows={3} className="mt-1.5" />
+          <RichTextEditor value={formData.changelog || ''} onChange={(html) => setFormData({ ...formData, changelog: html })} minHeight="100px" className="mt-1.5" />
         </div>
         <div>
           <Label htmlFor="changelog_km">កំណត់ហេតុ (ខ្មែរ)</Label>
-          <Textarea id="changelog_km" value={formData.changelog_km} onChange={(e) => setFormData({ ...formData, changelog_km: e.target.value })} rows={3} className="mt-1.5" />
+          <RichTextEditor value={formData.changelog_km || ''} onChange={(html) => setFormData({ ...formData, changelog_km: html })} minHeight="100px" className="mt-1.5" />
         </div>
       </div>
       <div className="flex items-center gap-2">
