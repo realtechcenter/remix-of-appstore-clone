@@ -1,17 +1,21 @@
 import { useState, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, Camera, User, Lock, Loader2, ChevronRight, Mail, Phone, Shield, Palette, Bell, Info } from 'lucide-react';
-import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage, useTranslations } from '@/contexts/LanguageContext';
 import { ImageCropper } from '@/components/ImageCropper';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { GroupCard, EditableRow } from '@/components/settings/SettingsShared';
+import { NotificationsPanel } from '@/components/settings/NotificationsPanel';
+import { AppearancePanel } from '@/components/settings/AppearancePanel';
+import { PrivacyPanel } from '@/components/settings/PrivacyPanel';
+import { AboutPanel } from '@/components/settings/AboutPanel';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://api.realtechcomputer.com';
 
-type SettingsSection = 'profile' | 'password';
+type SettingsSection = 'profile' | 'password' | 'notifications' | 'appearance' | 'privacy' | 'about';
 
 // macOS sidebar nav item
 function SidebarItem({ icon: Icon, label, active, onClick, color }: {
@@ -53,40 +57,6 @@ function SettingsRow({ icon: Icon, label, value, onClick, color }: {
   );
 }
 
-// Grouped card container
-function GroupCard({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="bg-card rounded-[10px] overflow-hidden divide-y divide-border/50 shadow-sm">
-      {children}
-    </div>
-  );
-}
-
-function GroupLabel({ children }: { children: React.ReactNode }) {
-  return <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider px-1 mb-2">{children}</p>;
-}
-
-// Inline editable field row
-function EditableRow({ label, value, onChange, placeholder, type = 'text', disabled = false }: {
-  label: string; value: string; onChange?: (v: string) => void; placeholder?: string; type?: string; disabled?: boolean;
-}) {
-  return (
-    <div className="flex items-center gap-3 px-4 py-3 min-h-[44px]">
-      <span className="text-sm text-foreground w-[120px] flex-shrink-0">{label}</span>
-      {disabled ? (
-        <span className="text-sm text-muted-foreground flex-1 text-right truncate">{value}</span>
-      ) : (
-        <Input
-          type={type}
-          value={value}
-          onChange={(e) => onChange?.(e.target.value)}
-          placeholder={placeholder}
-          className="bg-transparent border-none shadow-none focus-visible:ring-0 h-auto p-0 text-sm text-foreground placeholder:text-muted-foreground/40 text-right flex-1"
-        />
-      )}
-    </div>
-  );
-}
 
 export default function Profile() {
   const navigate = useNavigate();
@@ -327,17 +297,20 @@ export default function Profile() {
 
             <div className="border-t border-border/50 my-2" />
 
-            {/* Decorative items — non-functional, for macOS look */}
-            <SidebarItem icon={Bell} label={language === 'km' ? 'ការជូនដំណឹង' : 'Notifications'} onClick={() => {}} color="bg-red-500" />
-            <SidebarItem icon={Palette} label={language === 'km' ? 'រូបរាង' : 'Appearance'} onClick={() => {}} color="bg-purple-500" />
-            <SidebarItem icon={Shield} label={language === 'km' ? 'ឯកជនភាព' : 'Privacy & Security'} onClick={() => {}} color="bg-blue-600" />
-            <SidebarItem icon={Info} label={language === 'km' ? 'អំពី' : 'About'} onClick={() => {}} color="bg-gray-400" />
+            <SidebarItem icon={Bell} label={language === 'km' ? 'ការជូនដំណឹង' : 'Notifications'} active={activeSection === 'notifications'} onClick={() => setActiveSection('notifications')} color="bg-red-500" />
+            <SidebarItem icon={Palette} label={language === 'km' ? 'រូបរាង' : 'Appearance'} active={activeSection === 'appearance'} onClick={() => setActiveSection('appearance')} color="bg-purple-500" />
+            <SidebarItem icon={Shield} label={language === 'km' ? 'ឯកជនភាព' : 'Privacy & Security'} active={activeSection === 'privacy'} onClick={() => setActiveSection('privacy')} color="bg-blue-600" />
+            <SidebarItem icon={Info} label={language === 'km' ? 'អំពី' : 'About'} active={activeSection === 'about'} onClick={() => setActiveSection('about')} color="bg-gray-400" />
           </aside>
 
           {/* Content */}
           <main className="flex-1 p-8 overflow-y-auto bg-secondary/30">
             {activeSection === 'profile' && renderProfileContent()}
             {activeSection === 'password' && renderPasswordContent()}
+            {activeSection === 'notifications' && <NotificationsPanel />}
+            {activeSection === 'appearance' && <AppearancePanel />}
+            {activeSection === 'privacy' && <PrivacyPanel />}
+            {activeSection === 'about' && <AboutPanel />}
           </main>
         </div>
       </div>
