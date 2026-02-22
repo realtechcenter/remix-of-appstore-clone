@@ -224,9 +224,15 @@ const AppForm = ({ app, onSave, onCancel }: AppFormProps) => {
           };
           const videoId = getYouTubeId(video.youtube_url);
           return (
-            <div key={index} className="flex items-start gap-3 p-3 bg-background rounded-lg border border-border/50">
+            <div key={index} className="p-4 bg-background rounded-lg border border-border/50 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-medium text-muted-foreground">Video {index + 1}</span>
+                <Button type="button" variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => setVideos(videos.filter((_, i) => i !== index))}>
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
               {videoId && (
-                <div className="shrink-0 w-40 aspect-video rounded-md overflow-hidden border border-border">
+                <div className="w-full aspect-video rounded-md overflow-hidden border border-border">
                   <iframe
                     src={`https://www.youtube.com/embed/${videoId}`}
                     title={video.title || "YouTube video"}
@@ -236,7 +242,7 @@ const AppForm = ({ app, onSave, onCancel }: AppFormProps) => {
                   />
                 </div>
               )}
-              <div className="flex-1 space-y-2">
+              <div className="space-y-2">
                 <div className="flex items-center gap-2">
                   <Input value={video.title} onChange={(e) => { const u=[...videos]; u[index]={...u[index],title:e.target.value}; setVideos(u); }} placeholder="Video title (auto-filled on paste)" className="text-sm" />
                   {fetchingTitle === index && <Loader2 className="w-4 h-4 animate-spin text-muted-foreground shrink-0" />}
@@ -255,9 +261,6 @@ const AppForm = ({ app, onSave, onCancel }: AppFormProps) => {
                   </Button>
                 </div>
               </div>
-              <Button type="button" variant="ghost" size="icon" onClick={() => setVideos(videos.filter((_, i) => i !== index))} className="text-destructive hover:text-destructive shrink-0">
-                <X className="w-4 h-4" />
-              </Button>
             </div>
           );
         })}
