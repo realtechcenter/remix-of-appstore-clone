@@ -11,7 +11,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import {
   CreditCard, ArrowLeft,
   Calendar, DollarSign, CheckCircle, Clock, XCircle,
-  Hash, FileText, Receipt
+  Hash, FileText, Receipt, RefreshCw, Loader2
 } from "lucide-react";
 
 const statusConfig: Record<string, { dotClass: string; label: string; labelKm: string }> = {
@@ -24,9 +24,11 @@ const statusConfig: Record<string, { dotClass: string; label: string; labelKm: s
 interface PaymentCardProps {
   order: Order;
   language: string;
+  onVerify?: (order: Order) => void;
+  isVerifying?: boolean;
 }
 
-const PaymentCard = ({ order, language }: PaymentCardProps) => {
+const PaymentCard = ({ order, language, onVerify, isVerifying }: PaymentCardProps) => {
   const status = statusConfig[order.status] || statusConfig.pending;
   const amount = typeof order.amount === 'string' ? parseFloat(order.amount) : order.amount;
 
@@ -112,6 +114,18 @@ const PaymentCard = ({ order, language }: PaymentCardProps) => {
           </Link>
         </div>
       )}
+      {order.status === 'pending' && order.payment_md5 && onVerify && (
+        <div className="px-4 py-2.5 border-t border-border">
+          <button
+            onClick={() => onVerify(order)}
+            disabled={isVerifying}
+            className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
+          >
+            {isVerifying ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
+            {language === 'km' ? 'ផ្ទៀងផ្ទាត់ការបង់ប្រាក់' : 'Verify Payment'}
+          </button>
+        </div>
+      )}
     </div>
   );
 };
@@ -166,6 +180,27 @@ const PaymentHistory = () => {
     
     verifyPending();
   }, [orders, language, queryClient]);
+
+  const [verifyingId, setVerifyingId] = useState<string | null>(null);
+
+  const handleManualVerify = async (order: Order) => {
+    if (!order.payment_md5) return;
+    setVerifyingId(order.id);
+    try {
+      const result = await verifyPayment(order.id, order.payment_md5);
+      if (result.status === 'paid' || result.status === 'approved') {
+        queryClient.invalidateQueries({ queryKey: ['orders'] });
+        queryClient.invalidateQueries({ queryKey: ['purchased', order.app_id] });
+        toast.success(language === 'km' ? 'ការបង់ប្រាក់បានផ្ទៀងផ្ទាត់ជោគជ័យ!' : 'Payment verified successfully!');
+      } else {
+        toast.info(language === 'km' ? `ស្ថានភាព: ${result.status}` : `Status: ${result.status}`);
+      }
+    } catch (err) {
+      toast.error(language === 'km' ? 'មានបញ្ហាក្នុងការផ្ទៀងផ្ទាត់' : 'Verification failed');
+    } finally {
+      setVerifyingId(null);
+    }
+  };
 
   if (!user) {
     return (
@@ -320,7 +355,7 @@ const PaymentHistory = () => {
         ) : (
           <div className="space-y-2">
             {filteredOrders.map((order) => (
-              <PaymentCard key={order.id} order={order} language={language} />
+              <PaymentCard key={order.id} order={order} language={language} onVerify={handleManualVerify} isVerifying={verifyingId === order.id} />
             ))}
           </div>
         )}
