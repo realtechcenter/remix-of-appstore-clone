@@ -71,11 +71,11 @@ const Index = () => {
   };
 
   return (
-    <div className={`min-h-screen bg-background ${language === 'km' ? 'font-khmer' : ''}`}>
+    <div className={`min-h-screen bg-background flex ${language === 'km' ? 'font-khmer' : ''}`}>
       {/* Mobile Overlay */}
       {sidebarOpen && (
         <div
-          className="lg:hidden fixed inset-0 bg-black/50 z-40"
+          className="lg:hidden fixed inset-0 bg-black/30 z-40"
           onClick={() => setSidebarOpen(false)}
         />
       )}
@@ -92,7 +92,7 @@ const Index = () => {
       />
 
       {/* Main Content */}
-      <main className="lg:ml-64 px-4 sm:px-6 lg:px-8 pb-12">
+      <main className="flex-1 min-w-0 px-4 sm:px-6 lg:px-8 pb-12">
         <Header 
           searchQuery={searchQuery} 
           onSearchChange={setSearchQuery}
