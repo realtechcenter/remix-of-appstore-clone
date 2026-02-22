@@ -242,6 +242,48 @@
     background: hsl(var(--primary) / 0.1);
     color: hsl(var(--primary));
   }
+
+
+  /* ── macOS Menu Bar ── */
+  .mac-menubar {
+    @apply bg-background/70 backdrop-blur-2xl text-foreground border-b border-border/30;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", system-ui, sans-serif;
+  }
+
+  .dark .mac-menubar {
+    @apply bg-background/60;
+  }
+
+  /* ── macOS Dock ── */
+  .mac-dock-wrapper {
+    @apply fixed bottom-2 left-1/2 -translate-x-1/2 z-[90];
+  }
+
+  .mac-dock {
+    @apply flex items-end gap-1.5 px-2.5 py-1.5 rounded-2xl border border-border/40;
+    background: hsl(var(--card) / 0.7);
+    backdrop-filter: blur(30px) saturate(1.5);
+    box-shadow: 0 8px 32px hsl(0 0% 0% / 0.12), 0 0 0 0.5px hsl(0 0% 100% / 0.08) inset;
+  }
+
+  .dark .mac-dock {
+    background: hsl(var(--card) / 0.5);
+    box-shadow: 0 8px 32px hsl(0 0% 0% / 0.4), 0 0 0 0.5px hsl(0 0% 100% / 0.06) inset;
+  }
+
+  .mac-dock-item {
+    @apply w-10 h-10 rounded-[10px] overflow-hidden cursor-pointer;
+    box-shadow: 0 1px 3px hsl(0 0% 0% / 0.12);
+    transition: transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+
+  .mac-dock-item:hover {
+    filter: brightness(1.05);
+  }
+
+  .mac-dock-item:active {
+    filter: brightness(0.95);
+  }
 }
 
 @layer utilities {
