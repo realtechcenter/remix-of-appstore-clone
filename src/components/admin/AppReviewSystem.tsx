@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { 
-  CheckCircle, XCircle, Clock, Eye, Filter, Search 
+  CheckCircle, XCircle, Clock, Eye, Filter, Search, Loader2
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -270,6 +270,7 @@ export const AppReviewSystem = () => {
               onClick={handleSuspend}
               disabled={updateSubmission.isPending}
             >
+              {updateSubmission.isPending ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : null}
               Suspend
             </Button>
             <Button
@@ -277,14 +278,14 @@ export const AppReviewSystem = () => {
               onClick={handleReject}
               disabled={updateSubmission.isPending}
             >
-              <XCircle className="w-4 h-4 mr-1" />
+              {updateSubmission.isPending ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <XCircle className="w-4 h-4 mr-1" />}
               Reject
             </Button>
             <Button
               onClick={handleApprove}
               disabled={updateSubmission.isPending}
             >
-              <CheckCircle className="w-4 h-4 mr-1" />
+              {updateSubmission.isPending ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <CheckCircle className="w-4 h-4 mr-1" />}
               Approve
             </Button>
           </DialogFooter>

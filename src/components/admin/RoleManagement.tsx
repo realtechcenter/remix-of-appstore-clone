@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Shield, Crown, User, Plus, Search, X, Check } from "lucide-react";
+import { Shield, Crown, User, Plus, Search, X, Check, Loader2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -101,8 +101,8 @@ export const RoleManagement = () => {
                   {user.roles.map((role) => (
                     <div key={role} className="flex items-center gap-1">
                       <Badge className={roleConfig[role].color}>{roleConfig[role].label}</Badge>
-                      <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => removeRole.mutate({ userId: user.user_id, role })}>
-                        <X className="w-3 h-3 text-destructive" />
+                      <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => removeRole.mutate({ userId: user.user_id, role })} disabled={removeRole.isPending}>
+                        {removeRole.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : <X className="w-3 h-3 text-destructive" />}
                       </Button>
                     </div>
                   ))}
@@ -134,8 +134,9 @@ export const RoleManagement = () => {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowAddDialog(false)}>Cancel</Button>
-            <Button onClick={() => addRole.mutate({ userId: parseInt(newRoleUserId), role: newRole })} disabled={!newRoleUserId}>
-              <Check className="w-4 h-4 mr-2" />Assign
+            <Button onClick={() => addRole.mutate({ userId: parseInt(newRoleUserId), role: newRole })} disabled={!newRoleUserId || addRole.isPending}>
+              {addRole.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Check className="w-4 h-4 mr-2" />}
+              {addRole.isPending ? "Assigning..." : "Assign"}
             </Button>
           </DialogFooter>
         </DialogContent>

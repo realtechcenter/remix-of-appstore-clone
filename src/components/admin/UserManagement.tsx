@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { 
   Users, Search, Package, Plus, Trash2, ChevronLeft, ChevronRight,
-  Mail, DollarSign, CheckCircle, Clock, XCircle, ShoppingBag, Check, ChevronsUpDown
+  Mail, DollarSign, CheckCircle, Clock, XCircle, ShoppingBag, Check, ChevronsUpDown, Loader2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,12 +30,10 @@ export const UserManagement = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [totalUsers, setTotalUsers] = useState(0);
   
-  // Selected user details
   const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
   const [userOrders, setUserOrders] = useState<AdminOrder[]>([]);
   const [loadingOrders, setLoadingOrders] = useState(false);
   
-  // Grant app dialog
   const [showGrantDialog, setShowGrantDialog] = useState(false);
   const [apps, setApps] = useState<App[]>([]);
   const [selectedAppId, setSelectedAppId] = useState<string>("");
@@ -43,6 +41,11 @@ export const UserManagement = () => {
   const [appSearchOpen, setAppSearchOpen] = useState(false);
   const [appSearchQuery, setAppSearchQuery] = useState("");
   const [granting, setGranting] = useState(false);
+
+  // Loading states for action buttons
+  const [revokingOrderId, setRevokingOrderId] = useState<string | null>(null);
+  const [approvingOrderId, setApprovingOrderId] = useState<string | null>(null);
+  const [deletingOrderId, setDeletingOrderId] = useState<string | null>(null);
 
   useEffect(() => {
     loadUsers();
@@ -98,10 +101,8 @@ export const UserManagement = () => {
 
   const handleGrantApp = async () => {
     if (!selectedUser || !selectedAppId) return;
-    
     const app = apps.find(a => a.id.toString() === selectedAppId);
     if (!app) return;
-
     setGranting(true);
     try {
       await adminUsersApi.grantApp(selectedUser.id, {
@@ -113,7 +114,6 @@ export const UserManagement = () => {
       setShowGrantDialog(false);
       setSelectedAppId("");
       setGrantAmount("0");
-      // Reload orders
       handleSelectUser(selectedUser);
     } catch (error: any) {
       toast.error(error.message || "Failed to grant app");
@@ -125,46 +125,46 @@ export const UserManagement = () => {
   const handleRevokeApp = async (order: AdminOrder) => {
     if (!selectedUser) return;
     if (!confirm(`Revoke "${order.app_name}" access from ${selectedUser.email}?`)) return;
-
+    setRevokingOrderId(order.id);
     try {
       await adminUsersApi.revokeApp(selectedUser.id, order.app_id);
       toast.success(`Revoked "${order.app_name}" from ${selectedUser.email}`);
-      // Reload orders
       handleSelectUser(selectedUser);
     } catch (error: any) {
       toast.error(error.message || "Failed to revoke app");
+    } finally {
+      setRevokingOrderId(null);
     }
   };
 
   const handleApproveOrder = async (order: AdminOrder) => {
     if (!confirm(`Approve payment for "${order.app_name}"? This will grant access to the user.`)) return;
-
+    setApprovingOrderId(order.id);
     try {
       await adminUsersApi.approveOrder(order.id);
       toast.success(`Order approved - "${order.app_name}" access granted`);
-      if (selectedUser) {
-        handleSelectUser(selectedUser);
-      }
+      if (selectedUser) handleSelectUser(selectedUser);
     } catch (error: any) {
       toast.error(error.message || "Failed to approve order");
+    } finally {
+      setApprovingOrderId(null);
     }
   };
 
   const handleDeleteOrder = async (order: AdminOrder) => {
     if (!confirm(`Delete this order for "${order.app_name}"? This action cannot be undone.`)) return;
-
+    setDeletingOrderId(order.id);
     try {
       await adminUsersApi.deleteOrder(order.id);
       toast.success(`Order deleted`);
-      if (selectedUser) {
-        handleSelectUser(selectedUser);
-      }
+      if (selectedUser) handleSelectUser(selectedUser);
     } catch (error: any) {
       toast.error(error.message || "Failed to delete order");
+    } finally {
+      setDeletingOrderId(null);
     }
   };
 
-  // Reset to page 1 when search changes
   useEffect(() => {
     setCurrentPage(1);
   }, [searchQuery]);
@@ -241,26 +241,13 @@ export const UserManagement = () => {
           )}
         </div>
 
-        {/* Pagination */}
         {totalPages > 1 && (
           <div className="flex items-center justify-between pt-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-              disabled={currentPage === 1}
-            >
+            <Button variant="outline" size="sm" onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1}>
               <ChevronLeft className="w-4 h-4" />
             </Button>
-            <span className="text-sm text-muted-foreground">
-              Page {currentPage} of {totalPages}
-            </span>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-              disabled={currentPage === totalPages}
-            >
+            <span className="text-sm text-muted-foreground">Page {currentPage} of {totalPages}</span>
+            <Button variant="outline" size="sm" onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages}>
               <ChevronRight className="w-4 h-4" />
             </Button>
           </div>
@@ -271,7 +258,6 @@ export const UserManagement = () => {
       <div className="lg:col-span-2">
         {selectedUser ? (
           <div className="bg-card rounded-xl border border-border p-4 sm:p-6 space-y-6">
-            {/* User Header */}
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-4">
                 <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center">
@@ -279,37 +265,24 @@ export const UserManagement = () => {
                 </div>
                 <div>
                   <h2 className="text-xl font-semibold">{selectedUser.email}</h2>
-                  {selectedUser.full_name && (
-                    <p className="text-muted-foreground">{selectedUser.full_name}</p>
-                  )}
-                  {selectedUser.phone && (
-                    <p className="text-sm text-muted-foreground">{selectedUser.phone}</p>
-                  )}
+                  {selectedUser.full_name && <p className="text-muted-foreground">{selectedUser.full_name}</p>}
+                  {selectedUser.phone && <p className="text-sm text-muted-foreground">{selectedUser.phone}</p>}
                 </div>
               </div>
               <Button onClick={() => setShowGrantDialog(true)} size="sm" className="gap-1">
-                <Plus className="w-4 h-4" />
-                Grant App
+                <Plus className="w-4 h-4" /> Grant App
               </Button>
             </div>
 
             {/* Purchased Apps */}
             <div>
               <h3 className="font-semibold mb-3 flex items-center gap-2">
-                <Package className="w-4 h-4" />
-                Purchased Apps ({paidOrders.length})
+                <Package className="w-4 h-4" /> Purchased Apps ({paidOrders.length})
               </h3>
-              
               {loadingOrders ? (
-                <div className="space-y-2">
-                  {[1, 2].map(i => (
-                    <Skeleton key={i} className="h-16 w-full rounded-lg" />
-                  ))}
-                </div>
+                <div className="space-y-2">{[1, 2].map(i => <Skeleton key={i} className="h-16 w-full rounded-lg" />)}</div>
               ) : paidOrders.length === 0 ? (
-                <p className="text-muted-foreground text-sm py-4 text-center bg-muted/50 rounded-lg">
-                  No purchased apps
-                </p>
+                <p className="text-muted-foreground text-sm py-4 text-center bg-muted/50 rounded-lg">No purchased apps</p>
               ) : (
                 <div className="space-y-2">
                   {paidOrders.map((order) => (
@@ -325,10 +298,7 @@ export const UserManagement = () => {
                             <span>•</span>
                             <span>{new Date(order.paid_at || order.created_at).toLocaleDateString()}</span>
                             {order.bakong_transaction_id?.startsWith('ADMIN_GRANTED') && (
-                              <>
-                                <span>•</span>
-                                <Badge variant="outline" className="text-[10px] px-1">Admin Granted</Badge>
-                              </>
+                              <><span>•</span><Badge variant="outline" className="text-[10px] px-1">Admin Granted</Badge></>
                             )}
                           </div>
                         </div>
@@ -338,8 +308,9 @@ export const UserManagement = () => {
                         size="icon"
                         className="text-destructive hover:text-destructive hover:bg-destructive/10"
                         onClick={() => handleRevokeApp(order)}
+                        disabled={revokingOrderId === order.id}
                       >
-                        <Trash2 className="w-4 h-4" />
+                        {revokingOrderId === order.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
                       </Button>
                     </div>
                   ))}
@@ -351,8 +322,7 @@ export const UserManagement = () => {
             {otherOrders.length > 0 && (
               <div>
                 <h3 className="font-semibold mb-3 flex items-center gap-2">
-                  <DollarSign className="w-4 h-4" />
-                  Payment History ({otherOrders.length})
+                  <DollarSign className="w-4 h-4" /> Payment History ({otherOrders.length})
                 </h3>
                 <div className="space-y-2">
                   {otherOrders.map((order) => {
@@ -376,8 +346,7 @@ export const UserManagement = () => {
                         </div>
                         <div className="flex items-center gap-2">
                           <Badge variant="secondary" className={`flex items-center gap-1 ${status.className}`}>
-                            <StatusIcon className="w-3 h-3" />
-                            {status.label}
+                            <StatusIcon className="w-3 h-3" /> {status.label}
                           </Badge>
                           {canApprove && (
                             <Button
@@ -385,9 +354,10 @@ export const UserManagement = () => {
                               size="icon"
                               className="text-green-500 hover:text-green-600 hover:bg-green-500/10"
                               onClick={() => handleApproveOrder(order)}
+                              disabled={approvingOrderId === order.id}
                               title="Approve payment"
                             >
-                              <Check className="w-4 h-4" />
+                              {approvingOrderId === order.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
                             </Button>
                           )}
                           <Button
@@ -395,9 +365,10 @@ export const UserManagement = () => {
                             size="icon"
                             className="text-destructive hover:text-destructive hover:bg-destructive/10"
                             onClick={() => handleDeleteOrder(order)}
+                            disabled={deletingOrderId === order.id}
                             title="Delete order"
                           >
-                            <Trash2 className="w-4 h-4" />
+                            {deletingOrderId === order.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
                           </Button>
                         </div>
                       </div>
@@ -411,9 +382,7 @@ export const UserManagement = () => {
           <div className="bg-card rounded-xl border border-border p-8 flex flex-col items-center justify-center text-center h-full min-h-[300px]">
             <Users className="w-12 h-12 text-muted-foreground mb-4" />
             <h3 className="font-medium text-lg mb-2">Select a User</h3>
-            <p className="text-muted-foreground text-sm">
-              Choose a user from the list to view their purchases and manage app access
-            </p>
+            <p className="text-muted-foreground text-sm">Choose a user from the list to view their purchases and manage app access</p>
           </div>
         )}
       </div>
@@ -423,103 +392,48 @@ export const UserManagement = () => {
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Plus className="w-5 h-5" />
-              Grant App Access
+              <Plus className="w-5 h-5" /> Grant App Access
             </DialogTitle>
           </DialogHeader>
-          
-          <div className="space-y-4 py-4">
-            <div>
-              <Label>User</Label>
-              <p className="text-sm text-muted-foreground mt-1">{selectedUser?.email}</p>
-            </div>
-            
+          <div className="space-y-4">
             <div>
               <Label>Select App</Label>
               <Popover open={appSearchOpen} onOpenChange={setAppSearchOpen}>
                 <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    role="combobox"
-                    aria-expanded={appSearchOpen}
-                    className="w-full justify-between mt-1.5"
-                  >
-                    {selectedAppId
-                      ? (() => {
-                          const app = apps.find(a => a.id.toString() === selectedAppId);
-                          return app ? `${app.name} - $${(typeof app.price === 'string' ? parseFloat(app.price) : app.price)?.toFixed(2) || '0.00'}` : "Choose a paid app...";
-                        })()
-                      : "Choose a paid app..."}
+                  <Button variant="outline" role="combobox" aria-expanded={appSearchOpen} className="w-full justify-between mt-1.5">
+                    {selectedAppId ? apps.find(a => a.id.toString() === selectedAppId)?.name || "Select app..." : "Select app..."}
                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-full p-0" align="start">
                   <Command>
-                    <CommandInput 
-                      placeholder="Search apps..." 
-                      value={appSearchQuery}
-                      onValueChange={setAppSearchQuery}
-                    />
+                    <CommandInput placeholder="Search apps..." value={appSearchQuery} onValueChange={setAppSearchQuery} />
                     <CommandList>
-                      <CommandEmpty>No app found.</CommandEmpty>
+                      <CommandEmpty>No apps found.</CommandEmpty>
                       <CommandGroup>
-                        {apps
-                          .filter(app => 
-                            app.name.toLowerCase().includes(appSearchQuery.toLowerCase()) ||
-                            app.developer?.toLowerCase().includes(appSearchQuery.toLowerCase())
-                          )
-                          .map(app => (
-                            <CommandItem
-                              key={app.id}
-                              value={app.name}
-                              onSelect={() => {
-                                setSelectedAppId(app.id.toString());
-                                setAppSearchOpen(false);
-                                setAppSearchQuery("");
-                              }}
-                            >
-                              <Check
-                                className={cn(
-                                  "mr-2 h-4 w-4",
-                                  selectedAppId === app.id.toString() ? "opacity-100" : "opacity-0"
-                                )}
-                              />
-                              <span className="flex-1">{app.name}</span>
-                              <span className="text-muted-foreground ml-2">
-                                ${(typeof app.price === 'string' ? parseFloat(app.price) : app.price)?.toFixed(2) || '0.00'}
-                              </span>
-                            </CommandItem>
-                          ))}
+                        {apps.map((app) => (
+                          <CommandItem key={app.id} value={app.name} onSelect={() => { setSelectedAppId(app.id.toString()); setAppSearchOpen(false); }}>
+                            <Check className={cn("mr-2 h-4 w-4", selectedAppId === app.id.toString() ? "opacity-100" : "opacity-0")} />
+                            <span>{app.name}</span>
+                            <span className="ml-auto text-xs text-muted-foreground">${typeof app.price === 'string' ? parseFloat(app.price).toFixed(2) : (app.price || 0).toFixed(2)}</span>
+                          </CommandItem>
+                        ))}
                       </CommandGroup>
                     </CommandList>
                   </Command>
                 </PopoverContent>
               </Popover>
             </div>
-            
             <div>
-              <Label htmlFor="amount">Amount (USD)</Label>
-              <Input
-                id="amount"
-                type="number"
-                step="0.01"
-                min="0"
-                value={grantAmount}
-                onChange={(e) => setGrantAmount(e.target.value)}
-                className="mt-1.5"
-                placeholder="0.00"
-              />
-              <p className="text-xs text-muted-foreground mt-1">
-                Set to 0 for free grant, or enter the paid amount
-              </p>
+              <Label>Amount Paid ($)</Label>
+              <Input type="number" min="0" step="0.01" value={grantAmount} onChange={(e) => setGrantAmount(e.target.value)} className="mt-1.5" />
+              <p className="text-xs text-muted-foreground mt-1">Set to 0 if granted for free</p>
             </div>
           </div>
-
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowGrantDialog(false)}>
-              Cancel
-            </Button>
+            <Button variant="outline" onClick={() => setShowGrantDialog(false)} disabled={granting}>Cancel</Button>
             <Button onClick={handleGrantApp} disabled={!selectedAppId || granting}>
+              {granting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Plus className="w-4 h-4 mr-2" />}
               {granting ? "Granting..." : "Grant Access"}
             </Button>
           </DialogFooter>

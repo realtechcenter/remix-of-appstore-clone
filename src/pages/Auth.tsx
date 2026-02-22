@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import macsofyLogo from '@/assets/macsofy-logo.png';
 import { useNavigate } from 'react-router-dom';
-import { Mail, Lock, User, Eye, EyeOff, ArrowLeft, KeyRound, ShieldX, Ban } from 'lucide-react';
+import { Mail, Lock, User, Eye, EyeOff, ArrowLeft, KeyRound, ShieldX, Ban, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -619,8 +619,8 @@ const Auth = () => {
 
 
 
-
             <Button type="submit" className="w-full h-11" disabled={isSubmitting}>
+              {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
               {isSubmitting
                 ? (language === 'km' ? 'កំពុងដំណើរការ...' : 'Processing...')
                 : mode === 'login'

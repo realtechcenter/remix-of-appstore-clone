@@ -365,9 +365,9 @@ const VersionForm = ({ appId, version, onSave, onCancel }: VersionFormProps) => 
         <Label htmlFor="is_latest">Mark as Latest Version</Label>
       </div>
       <div className="flex justify-end gap-3 pt-4 border-t border-border sticky bottom-0 bg-background">
-        <Button type="button" variant="outline" onClick={onCancel}>Cancel</Button>
+        <Button type="button" variant="outline" onClick={onCancel} disabled={saving}>Cancel</Button>
         <Button type="submit" disabled={saving}>
-          <Save className="w-4 h-4 mr-2" />
+          {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
           {saving ? "Saving..." : "Save Version"}
         </Button>
       </div>
@@ -450,10 +450,13 @@ const AppsTab = () => {
     } catch { toast.error("Failed to save app"); }
   };
 
+  const [deletingAppId, setDeletingAppId] = useState<number | null>(null);
   const handleDeleteApp = async (app: App) => {
     if (!confirm(`Delete "${app.name}"?`)) return;
+    setDeletingAppId(app.id);
     try { await appsApi.delete(app.id); toast.success("App deleted!"); if (selectedApp?.id === app.id) setSelectedApp(null); loadApps(); }
     catch { toast.error("Failed to delete app"); }
+    finally { setDeletingAppId(null); }
   };
 
   const handleSaveVersion = async (data: VersionInput) => {
@@ -465,10 +468,13 @@ const AppsTab = () => {
     } catch { toast.error("Failed to save version"); }
   };
 
+  const [deletingVersionId, setDeletingVersionId] = useState<number | null>(null);
   const handleDeleteVersion = async (version: AppVersion) => {
     if (!confirm(`Delete version "${version.version}"?`)) return;
+    setDeletingVersionId(version.id);
     try { await versionsApi.delete(version.id); toast.success("Version deleted!"); if (selectedApp) loadAppVersions(selectedApp.id); }
     catch { toast.error("Failed to delete version"); }
+    finally { setDeletingVersionId(null); }
   };
 
   return (
@@ -570,8 +576,9 @@ const AppsTab = () => {
                       {editLoading ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> : <Edit className="w-3.5 h-3.5 mr-1.5" />}
                       {editLoading ? "Loading..." : "Edit"}
                     </Button>
-                    <Button variant="destructive" size="sm" onClick={() => handleDeleteApp(selectedApp)}>
-                      <Trash2 className="w-3.5 h-3.5 mr-1.5" /> Delete
+                    <Button variant="destructive" size="sm" onClick={() => handleDeleteApp(selectedApp)} disabled={deletingAppId === selectedApp.id}>
+                      {deletingAppId === selectedApp.id ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5 mr-1.5" />}
+                      {deletingAppId === selectedApp.id ? "Deleting..." : "Delete"}
                     </Button>
                   </div>
                 </div>
@@ -629,8 +636,8 @@ const AppsTab = () => {
                               <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => { setEditingVersion(version); setShowVersionForm(true); }}>
                                 <Edit className="w-3.5 h-3.5" />
                               </Button>
-                              <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-destructive hover:text-destructive" onClick={() => handleDeleteVersion(version)}>
-                                <Trash2 className="w-3.5 h-3.5" />
+                              <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-destructive hover:text-destructive" onClick={() => handleDeleteVersion(version)} disabled={deletingVersionId === version.id}>
+                                {deletingVersionId === version.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
                               </Button>
                             </div>
                           </div>
