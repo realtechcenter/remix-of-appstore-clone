@@ -256,7 +256,7 @@ export default function Profile() {
         <div className="max-w-5xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2">
             <button
-              onClick={() => navigate(-1)}
+              onClick={() => { if (window.history.length > 1) { navigate(-1); } else { navigate('/'); } }}
               className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors px-2 py-1 rounded-md hover:bg-accent"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
