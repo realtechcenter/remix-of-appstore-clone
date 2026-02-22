@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { 
   Plus, Edit, Trash2, LogOut, Package, Layers, Search, X, Save, ArrowLeft, 
   ChevronLeft, ChevronRight, Users, BarChart3, Bell, Shield, Activity, 
-  UserX, Link, Tag, Play, Home, Menu, Download, Star, TrendingUp, Settings2, Loader2
+  UserX, Link, Tag, Play, Home, Menu, Download, Star, TrendingUp, Settings2, Loader2, ClipboardPaste
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -107,6 +107,33 @@ const AppForm = ({ app, onSave, onCancel }: AppFormProps) => {
     app?.videos?.map(v => ({ title: v.title, youtube_url: v.youtube_url })) || []
   );
   const [saving, setSaving] = useState(false);
+  const [fetchingTitle, setFetchingTitle] = useState<number | null>(null);
+
+  const fetchYouTubeTitle = async (url: string, index: number) => {
+    try {
+      setFetchingTitle(index);
+      const res = await fetch(`https://www.youtube.com/oembed?url=${encodeURIComponent(url)}&format=json`);
+      if (res.ok) {
+        const data = await res.json();
+        setVideos(prev => { const u = [...prev]; u[index] = { ...u[index], title: data.title }; return u; });
+      } else {
+        toast.error("Could not fetch video title");
+      }
+    } catch { toast.error("Could not fetch video title"); }
+    finally { setFetchingTitle(null); }
+  };
+
+  const handlePasteYouTubeUrl = async (index: number) => {
+    try {
+      const text = await navigator.clipboard.readText();
+      if (text && (text.includes("youtube.com") || text.includes("youtu.be"))) {
+        setVideos(prev => { const u = [...prev]; u[index] = { ...u[index], youtube_url: text }; return u; });
+        await fetchYouTubeTitle(text, index);
+      } else {
+        toast.error("Clipboard doesn't contain a YouTube URL");
+      }
+    } catch { toast.error("Cannot access clipboard"); }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -193,8 +220,23 @@ const AppForm = ({ app, onSave, onCancel }: AppFormProps) => {
         {videos.map((video, index) => (
           <div key={index} className="flex items-start gap-2 p-3 bg-background rounded-lg border border-border/50">
             <div className="flex-1 space-y-2">
-              <Input value={video.title} onChange={(e) => { const u=[...videos]; u[index]={...u[index],title:e.target.value}; setVideos(u); }} placeholder="Video title..." className="text-sm" />
-              <Input type="url" value={video.youtube_url} onChange={(e) => { const u=[...videos]; u[index]={...u[index],youtube_url:e.target.value}; setVideos(u); }} placeholder="https://youtube.com/watch?v=..." className="text-sm" />
+              <div className="flex items-center gap-2">
+                <Input value={video.title} onChange={(e) => { const u=[...videos]; u[index]={...u[index],title:e.target.value}; setVideos(u); }} placeholder="Video title (auto-filled on paste)" className="text-sm" />
+                {fetchingTitle === index && <Loader2 className="w-4 h-4 animate-spin text-muted-foreground shrink-0" />}
+              </div>
+              <div className="flex items-center gap-2">
+                <Input type="url" value={video.youtube_url} onChange={(e) => {
+                  const u=[...videos]; u[index]={...u[index],youtube_url:e.target.value}; setVideos(u);
+                }} onPaste={(e) => {
+                  const text = e.clipboardData.getData('text');
+                  if (text && (text.includes("youtube.com") || text.includes("youtu.be"))) {
+                    setTimeout(() => fetchYouTubeTitle(text, index), 100);
+                  }
+                }} placeholder="https://youtube.com/watch?v=..." className="text-sm" />
+                <Button type="button" variant="outline" size="icon" className="shrink-0 h-9 w-9" onClick={() => handlePasteYouTubeUrl(index)} title="Paste from clipboard">
+                  <ClipboardPaste className="w-4 h-4" />
+                </Button>
+              </div>
             </div>
             <Button type="button" variant="ghost" size="icon" onClick={() => setVideos(videos.filter((_, i) => i !== index))} className="text-destructive hover:text-destructive shrink-0">
               <X className="w-4 h-4" />
