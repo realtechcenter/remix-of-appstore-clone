@@ -1,8 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
-import { useOrders, Order } from "@/hooks/useOrders";
+import { useOrders, Order, verifyPayment } from "@/hooks/useOrders";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -130,6 +132,40 @@ const PaymentHistory = () => {
   const { user, signOut } = useAuth();
   const { data: orders, isLoading, error } = useOrders();
   const [filter, setFilter] = useState<StatusFilter>('pending');
+  const queryClient = useQueryClient();
+  const verifiedRef = useRef(false);
+
+  // Auto-verify pending orders on page load
+  useEffect(() => {
+    if (!orders || verifiedRef.current) return;
+    
+    const pendingWithMd5 = orders.filter(o => o.status === 'pending' && o.payment_md5);
+    if (pendingWithMd5.length === 0) return;
+    
+    verifiedRef.current = true;
+    
+    const verifyPending = async () => {
+      let anyUpdated = false;
+      
+      for (const order of pendingWithMd5) {
+        try {
+          const result = await verifyPayment(order.id, order.payment_md5!);
+          if (result.status === 'paid' || result.status === 'approved') {
+            anyUpdated = true;
+          }
+        } catch (err) {
+          console.error(`Auto-verify failed for order ${order.id}:`, err);
+        }
+      }
+      
+      if (anyUpdated) {
+        queryClient.invalidateQueries({ queryKey: ['orders'] });
+        toast.success(language === 'km' ? 'ការបង់ប្រាក់ខ្លះត្រូវបានផ្ទៀងផ្ទាត់ជោគជ័យ!' : 'Some payments were verified successfully!');
+      }
+    };
+    
+    verifyPending();
+  }, [orders, language, queryClient]);
 
   if (!user) {
     return (
