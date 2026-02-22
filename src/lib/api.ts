@@ -40,11 +40,11 @@ async function apiRequest<T>(endpoint: string, options: ApiOptions = {}): Promis
     headers['Authorization'] = `Bearer ${getApiKey()}`;
   }
   
-  // Include user ID header for download access verification
+  // Include user auth token for download access verification on paid apps
   if (includeUserId) {
-    const userId = getUserId();
-    if (userId) {
-      headers['X-User-Id'] = userId;
+    const userToken = getUserAuthToken();
+    if (userToken) {
+      headers['Authorization'] = `Bearer ${userToken}`;
     }
   }
   
