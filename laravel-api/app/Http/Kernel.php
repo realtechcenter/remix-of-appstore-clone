@@ -37,8 +37,8 @@ class Kernel extends HttpKernel
      * The application's route middleware.
      */
     protected $routeMiddleware = [
-        'auth:admin' => \App\Http\Middleware\AuthenticateAdmin::class,
-        'auth:user' => \App\Http\Middleware\AuthenticateUser::class,
+        'auth.admin' => \App\Http\Middleware\AuthenticateAdmin::class,
+        'auth.user' => \App\Http\Middleware\AuthenticateUser::class,
         'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
     ];
 
@@ -46,7 +46,7 @@ class Kernel extends HttpKernel
      * The application's middleware aliases.
      */
     protected $middlewareAliases = [
-        'auth:admin' => \App\Http\Middleware\AuthenticateAdmin::class,
-        'auth:user' => \App\Http\Middleware\AuthenticateUser::class,
+        'auth.admin' => \App\Http\Middleware\AuthenticateAdmin::class,
+        'auth.user' => \App\Http\Middleware\AuthenticateUser::class,
     ];
 }
