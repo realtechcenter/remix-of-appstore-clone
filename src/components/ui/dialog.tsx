@@ -1,6 +1,5 @@
 import * as React from "react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
-import { X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
@@ -19,13 +18,32 @@ const DialogOverlay = React.forwardRef<
   <DialogPrimitive.Overlay
     ref={ref}
     className={cn(
-      "fixed inset-0 z-50 bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+      "fixed inset-0 z-50 bg-black/50 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
       className,
     )}
     {...props}
   />
 ));
 DialogOverlay.displayName = DialogPrimitive.Overlay.displayName;
+
+// macOS traffic light dots
+const TrafficLights = ({ onClose }: { onClose?: () => void }) => (
+  <div className="flex items-center gap-2">
+    <DialogPrimitive.Close asChild>
+      <button
+        onClick={onClose}
+        className="w-3 h-3 rounded-full bg-[#FF5F57] hover:brightness-90 transition-all group relative focus:outline-none"
+        aria-label="Close"
+      >
+        <svg className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity text-[#4a0002]" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5">
+          <path d="M3.5 3.5l5 5M8.5 3.5l-5 5" />
+        </svg>
+      </button>
+    </DialogPrimitive.Close>
+    <span className="w-3 h-3 rounded-full bg-[#FEBC2E]" />
+    <span className="w-3 h-3 rounded-full bg-[#28C840]" />
+  </div>
+);
 
 const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
@@ -36,16 +54,20 @@ const DialogContent = React.forwardRef<
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
-        "fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 max-h-[85vh] overflow-y-auto data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg",
+        "fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] border-0 bg-card overflow-hidden max-h-[85vh] duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] rounded-xl",
         className,
       )}
+      style={{ boxShadow: 'var(--shadow-window)' }}
       {...props}
     >
-      {children}
-      <DialogPrimitive.Close className="absolute right-4 top-4 z-20 rounded-sm opacity-70 ring-offset-background transition-opacity data-[state=open]:bg-accent data-[state=open]:text-muted-foreground hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none">
-        <X className="h-4 w-4" />
-        <span className="sr-only">Close</span>
-      </DialogPrimitive.Close>
+      {/* macOS title bar */}
+      <div className="flex items-center px-4 py-2.5 bg-muted/60 border-b border-border/50 shrink-0">
+        <TrafficLights />
+      </div>
+      {/* Content area */}
+      <div className="overflow-y-auto flex-1 p-6">
+        {children}
+      </div>
     </DialogPrimitive.Content>
   </DialogPortal>
 ));
