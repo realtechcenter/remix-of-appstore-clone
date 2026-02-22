@@ -49,9 +49,7 @@ Route::get('/versions', [VersionController::class, 'index']);
 Route::post('/ai/chat', [AIChatController::class, 'chat']);
 Route::post('/ai/chat/stream', [AIChatController::class, 'streamChat']);
 
-// Mail test routes (public for testing)
-Route::post('/test/send-receipt-email', [MailTestController::class, 'testReceiptEmail']);
-Route::get('/test/mail-config', [MailTestController::class, 'testMailConfig']);
+// Mail test routes are inside the admin group below
 
 // Protected admin routes
 Route::middleware('auth.admin')->group(function () {
@@ -112,6 +110,10 @@ Route::middleware('auth.admin')->group(function () {
     Route::post('/admin/coupons/{id}/assign', [CouponController::class, 'assignToUsers']);
     Route::get('/admin/coupons/{id}/users', [CouponController::class, 'getCouponUsers']);
     Route::delete('/admin/coupons/{couponId}/users/{userId}', [CouponController::class, 'removeFromUser']);
+
+    // Mail test routes (admin-protected)
+    Route::post('/test/send-receipt-email', [MailTestController::class, 'testReceiptEmail']);
+    Route::get('/test/mail-config', [MailTestController::class, 'testMailConfig']);
 });
 
 // Protected user routes

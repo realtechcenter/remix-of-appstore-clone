@@ -68,6 +68,7 @@ Deno.serve(async (req) => {
     }
 
     // Create a structured apps context for the AI - use icon_url as-is from database
+    // Only expose minimal data needed for AI recommendations - exclude pricing and download stats
     const appsContext = apps.map(app => ({
       id: app.id,
       name: app.name,
@@ -75,10 +76,8 @@ Deno.serve(async (req) => {
       description: app.description || "",
       description_km: app.description_km || app.description || "",
       icon_url: app.icon_url || "",
-      price: app.price || 0,
       category: app.category || "programs",
       is_popular: app.is_popular || false,
-      download_count: app.download_count || 0
     }));
 
     const systemPrompt = `You are an intelligent assistant for "Style Ghost" app store. Your mission is to UNDERSTAND what users need and recommend the BEST matching apps from our catalog.
