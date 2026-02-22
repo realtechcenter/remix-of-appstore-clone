@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { 
   Plus, Edit, Trash2, LogOut, Package, Layers, Search, X, Save, ArrowLeft, 
   ChevronLeft, ChevronRight, Users, BarChart3, Bell, Shield, Activity, 
-  UserX, Link, Tag, Play, Home, Menu, Download, Star, TrendingUp
+  UserX, Link, Tag, Play, Home, Menu, Download, Star, TrendingUp, Settings2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,6 +27,7 @@ import { UserStatusManagement } from "@/components/admin/UserStatusManagement";
 import { CouponManagement } from "@/components/admin/CouponManagement";
 import { PaymentHistoryAdmin } from "@/components/admin/PaymentHistoryAdmin";
 import { cn } from "@/lib/utils";
+import { SystemSettingsPanel } from "@/components/admin/SystemSettings";
 
 // ─── Login ───────────────────────────────────────────────────────────────────
 const AdminLogin = ({ onLogin }: { onLogin: () => void }) => {
@@ -373,7 +374,7 @@ const VersionForm = ({ appId, version, onSave, onCancel }: VersionFormProps) => 
 };
 
 // ─── Sidebar Nav ──────────────────────────────────────────────────────────────
-type AdminTab = "analytics" | "apps" | "users" | "payments" | "roles" | "notifications" | "activity" | "status" | "coupons" | "reviews";
+type AdminTab = "analytics" | "apps" | "users" | "payments" | "roles" | "notifications" | "activity" | "status" | "coupons" | "reviews" | "settings";
 
 interface NavItem {
   id: AdminTab;
@@ -393,6 +394,7 @@ const navItems: NavItem[] = [
   { id: "activity", label: "Activity", icon: Activity },
   { id: "status", label: "Ban / Suspend", icon: UserX },
   { id: "coupons", label: "Coupons", icon: Tag },
+  { id: "settings", label: "Settings", icon: Settings2 },
 ];
 
 // ─── Apps Tab ─────────────────────────────────────────────────────────────────
@@ -808,6 +810,7 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
           {activeTab === "activity" && <ActivityLogs />}
           {activeTab === "status" && <UserStatusManagement />}
           {activeTab === "coupons" && <CouponManagement />}
+          {activeTab === "settings" && <SystemSettingsPanel />}
         </main>
       </div>
     </div>
