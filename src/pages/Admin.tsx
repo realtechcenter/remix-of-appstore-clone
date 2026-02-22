@@ -25,6 +25,7 @@ import { RoleManagement } from "@/components/admin/RoleManagement";
 import { ActivityLogs } from "@/components/admin/ActivityLogs";
 import { UserStatusManagement } from "@/components/admin/UserStatusManagement";
 import { CouponManagement } from "@/components/admin/CouponManagement";
+import { PaymentHistoryAdmin } from "@/components/admin/PaymentHistoryAdmin";
 import { cn } from "@/lib/utils";
 
 // ─── Login ───────────────────────────────────────────────────────────────────
@@ -372,7 +373,7 @@ const VersionForm = ({ appId, version, onSave, onCancel }: VersionFormProps) => 
 };
 
 // ─── Sidebar Nav ──────────────────────────────────────────────────────────────
-type AdminTab = "analytics" | "apps" | "users" | "roles" | "notifications" | "activity" | "status" | "coupons" | "reviews";
+type AdminTab = "analytics" | "apps" | "users" | "payments" | "roles" | "notifications" | "activity" | "status" | "coupons" | "reviews";
 
 interface NavItem {
   id: AdminTab;
@@ -385,6 +386,7 @@ const navItems: NavItem[] = [
   { id: "analytics", label: "Analytics", icon: BarChart3 },
   { id: "apps", label: "Apps", icon: Package },
   { id: "users", label: "Users", icon: Users },
+  { id: "payments", label: "Payments", icon: TrendingUp },
   { id: "reviews", label: "Reviews", icon: Star },
   { id: "roles", label: "Roles", icon: Shield },
   { id: "notifications", label: "Notifications", icon: Bell },
@@ -799,6 +801,7 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
           {activeTab === "analytics" && <AnalyticsDashboard />}
           {activeTab === "apps" && <AppsTab />}
           {activeTab === "users" && <UserManagement />}
+          {activeTab === "payments" && <PaymentHistoryAdmin />}
           {activeTab === "reviews" && <AppReviewSystem />}
           {activeTab === "roles" && <RoleManagement />}
           {activeTab === "notifications" && <NotificationSystem />}
