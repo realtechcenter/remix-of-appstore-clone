@@ -18,15 +18,11 @@ interface AppGridProps {
 }
 
 const AppGridSkeleton = () => (
-  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
+  <div className="launchpad-grid">
     {Array.from({ length: 8 }).map((_, i) => (
-      <div key={i} className="app-card">
-        <div className="flex flex-col items-center text-center">
-          <Skeleton className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl mb-4" />
-          <Skeleton className="h-4 w-20 sm:w-24 mb-2" />
-          <Skeleton className="h-3 w-14 sm:w-16 mb-2" />
-          <Skeleton className="h-3 w-28 sm:w-32" />
-        </div>
+      <div key={i} className="flex flex-col items-center gap-2">
+        <Skeleton className="w-16 h-16 sm:w-20 sm:h-20 rounded-[22%]" />
+        <Skeleton className="h-3 w-16" />
       </div>
     ))}
   </div>
@@ -140,7 +136,7 @@ export const AppGrid = ({
         <EmptyState message="Failed to load apps. Please try again." />
       ) : apps.length > 0 ? (
         <div className={isFetching ? "opacity-70 transition-opacity" : ""}>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
+          <div className="launchpad-grid">
             {apps.map((app) => (
               <AppCard key={app.id} app={app} purchased={purchasedAppIds.has(app.id)} />
             ))}

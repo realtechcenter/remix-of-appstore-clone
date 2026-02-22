@@ -143,7 +143,61 @@
     @apply bg-sidebar-accent text-sidebar-accent-foreground font-medium;
   }
 
-  /* ── App Card — macOS icon grid ── */
+  /* ── Launchpad Grid ── */
+  .launchpad-grid {
+    @apply grid gap-x-2 gap-y-6;
+    grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+    justify-items: center;
+  }
+
+  @media (min-width: 640px) {
+    .launchpad-grid {
+      grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+      gap: 1rem 0.5rem;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .launchpad-grid {
+      grid-template-columns: repeat(7, 1fr);
+    }
+  }
+
+  .launchpad-item {
+    @apply flex flex-col items-center gap-1.5 cursor-pointer select-none;
+    transition: transform 0.15s ease;
+    width: 90px;
+  }
+
+  .launchpad-item:hover {
+    transform: scale(1.08);
+  }
+
+  .launchpad-item:active {
+    transform: scale(0.95);
+  }
+
+  .launchpad-icon {
+    @apply w-16 h-16 sm:w-[72px] sm:h-[72px] object-cover flex-shrink-0;
+    border-radius: 22%;
+    box-shadow: 0 2px 8px hsl(0 0% 0% / 0.12), 0 1px 3px hsl(0 0% 0% / 0.08);
+    transition: box-shadow 0.15s ease;
+  }
+
+  .launchpad-item:hover .launchpad-icon {
+    box-shadow: 0 4px 16px hsl(0 0% 0% / 0.18), 0 2px 6px hsl(0 0% 0% / 0.1);
+  }
+
+  .launchpad-label {
+    @apply text-[11px] sm:text-xs font-medium text-foreground text-center leading-tight;
+    max-width: 80px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-shadow: 0 0.5px 1px hsl(0 0% 0% / 0.05);
+  }
+
+  /* Legacy app-card kept for other usages */
   .app-card {
     @apply relative bg-card p-4 transition-all duration-200 cursor-pointer border border-border/60;
     border-radius: 0.75rem;
@@ -156,7 +210,6 @@
     transform: translateY(-1px);
   }
 
-  /* Update badge */
   .app-card-update-badge {
     @apply absolute top-2 left-2 w-5 h-5 bg-primary rounded-full flex items-center justify-center;
   }
