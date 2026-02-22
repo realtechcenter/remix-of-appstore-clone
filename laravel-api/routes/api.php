@@ -49,19 +49,37 @@ Route::get('/versions', [VersionController::class, 'index']);
 Route::post('/ai/chat', [AIChatController::class, 'chat']);
 Route::post('/ai/chat/stream', [AIChatController::class, 'streamChat']);
 
-// Mail test routes are inside the admin group below
-
-// Protected admin routes
+// Protected admin routes (admin + moderator)
 Route::middleware('auth.admin')->group(function () {
+    // App management (moderators can create/edit but NOT delete)
     Route::post('/apps', [AppController::class, 'store']);
     Route::put('/apps/{id}', [AppController::class, 'update']);
-    Route::delete('/apps/{id}', [AppController::class, 'destroy']);
     
     Route::post('/versions', [VersionController::class, 'store']);
     Route::put('/versions/{id}', [VersionController::class, 'update']);
-    Route::delete('/versions/{id}', [VersionController::class, 'destroy']);
     
     Route::post('/upload', [UploadController::class, 'store']);
+    
+    // Notifications (moderators can manage)
+    Route::get('/admin/notifications', [NotificationController::class, 'index']);
+    Route::post('/admin/notifications', [NotificationController::class, 'store']);
+    Route::put('/admin/notifications/{id}', [NotificationController::class, 'update']);
+    Route::delete('/admin/notifications/{id}', [NotificationController::class, 'destroy']);
+    
+    // App submissions/review (moderators can review)
+    Route::get('/admin/submissions', [AppSubmissionController::class, 'index']);
+    Route::put('/admin/submissions/{id}', [AppSubmissionController::class, 'update']);
+    
+    // Activity logs (moderators can view)
+    Route::get('/admin/activity-logs', [ActivityLogController::class, 'index']);
+});
+
+// Admin-only routes (no moderator access)
+Route::middleware('auth.admin:admin_only')->group(function () {
+    // App deletion (admin only)
+    Route::delete('/apps/{id}', [AppController::class, 'destroy']);
+    Route::delete('/versions/{id}', [VersionController::class, 'destroy']);
+    
     Route::post('/auth/change-password', [AuthController::class, 'changePassword']);
     
     // Admin user management
@@ -82,22 +100,9 @@ Route::middleware('auth.admin')->group(function () {
     Route::post('/admin/roles', [RoleController::class, 'store']);
     Route::delete('/admin/roles', [RoleController::class, 'destroy']);
     
-    // Activity logs
-    Route::get('/admin/activity-logs', [ActivityLogController::class, 'index']);
-    
     // User status (ban/suspend)
     Route::get('/admin/user-status', [UserStatusController::class, 'index']);
     Route::post('/admin/user-status', [UserStatusController::class, 'update']);
-    
-    // Notifications management
-    Route::get('/admin/notifications', [NotificationController::class, 'index']);
-    Route::post('/admin/notifications', [NotificationController::class, 'store']);
-    Route::put('/admin/notifications/{id}', [NotificationController::class, 'update']);
-    Route::delete('/admin/notifications/{id}', [NotificationController::class, 'destroy']);
-    
-    // App submissions/review
-    Route::get('/admin/submissions', [AppSubmissionController::class, 'index']);
-    Route::put('/admin/submissions/{id}', [AppSubmissionController::class, 'update']);
     
     // Admin receipts
     Route::get('/admin/receipts', [ReceiptController::class, 'adminIndex']);

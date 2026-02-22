@@ -6,6 +6,7 @@ interface User {
   full_name?: string;
   phone?: string;
   avatar_url?: string;
+  roles?: string[];
 }
 
 interface AuthContextType {
@@ -16,6 +17,10 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   updateUser: (userData: Partial<User>) => void;
+  hasRole: (role: string) => boolean;
+  isAdmin: boolean;
+  isModerator: boolean;
+  isAdminOrModerator: boolean;
 }
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://api.realtechcomputer.com';
@@ -189,8 +194,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const hasRole = (role: string) => {
+    return user?.roles?.includes(role) || false;
+  };
+
+  const isAdmin = hasRole('admin');
+  const isModerator = hasRole('moderator');
+  const isAdminOrModerator = isAdmin || isModerator;
+
   return (
-    <AuthContext.Provider value={{ user, token, loading, signUp, signIn, signOut, updateUser }}>
+    <AuthContext.Provider value={{ 
+      user, token, loading, signUp, signIn, signOut, updateUser,
+      hasRole, isAdmin, isModerator, isAdminOrModerator
+    }}>
       {children}
     </AuthContext.Provider>
   );

@@ -37,7 +37,14 @@ async function apiRequest<T>(endpoint: string, options: ApiOptions = {}): Promis
   };
   
   if (requiresAuth) {
-    headers['Authorization'] = `Bearer ${getApiKey()}`;
+    // Try admin API key first, then fall back to user auth token
+    const adminKey = getApiKey();
+    const userToken = getUserAuthToken();
+    if (adminKey) {
+      headers['Authorization'] = `Bearer ${adminKey}`;
+    } else if (userToken) {
+      headers['Authorization'] = `Bearer ${userToken}`;
+    }
   }
   
   // Include user auth token for download access verification on paid apps

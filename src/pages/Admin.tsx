@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { 
   Plus, Edit, Trash2, LogOut, Package, Layers, Search, X, Save, ArrowLeft, 
   ChevronLeft, ChevronRight, Users, BarChart3, Bell, Shield, Activity, 
-  UserX, Link, Tag, Play, Home, Menu, Download, Star, TrendingUp, Settings2, Loader2, ClipboardPaste
+  UserX, Link, Tag, Play, Home, Menu, Download, Star, TrendingUp, Settings2, Loader2, ClipboardPaste, ShieldAlert
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,56 +29,8 @@ import { CouponManagement } from "@/components/admin/CouponManagement";
 import { PaymentHistoryAdmin } from "@/components/admin/PaymentHistoryAdmin";
 import { cn } from "@/lib/utils";
 import { SystemSettingsPanel } from "@/components/admin/SystemSettings";
+import { useAuth } from "@/contexts/AuthContext";
 
-// ─── Login ───────────────────────────────────────────────────────────────────
-const AdminLogin = ({ onLogin }: { onLogin: () => void }) => {
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    try {
-      await authApi.login(username, password);
-      toast.success("Login successful");
-      onLogin();
-    } catch {
-      toast.error("Invalid credentials");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <div className="w-full max-w-sm">
-        <div className="text-center mb-8">
-          <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center mx-auto mb-4 shadow-md">
-            <Package className="w-6 h-6 text-primary-foreground" />
-          </div>
-          <h1 className="text-2xl font-bold">Admin Panel</h1>
-          <p className="text-sm text-muted-foreground mt-1">Sign in to manage your app store</p>
-        </div>
-        <div className="bg-card rounded-xl border border-border p-6 shadow-sm">
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div>
-              <Label htmlFor="username" className="text-sm font-medium">Username</Label>
-              <Input id="username" type="text" value={username} onChange={(e) => setUsername(e.target.value)} placeholder="admin" className="mt-1.5" />
-            </div>
-            <div>
-              <Label htmlFor="password" className="text-sm font-medium">Password</Label>
-              <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" className="mt-1.5" />
-            </div>
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Signing in..." : "Sign In"}
-            </Button>
-          </form>
-        </div>
-      </div>
-    </div>
-  );
-};
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type AppFormData = Omit<Partial<App>, 'screenshots' | 'videos'> & {
@@ -443,24 +395,26 @@ interface NavItem {
   label: string;
   icon: React.ElementType;
   badge?: number;
+  adminOnly?: boolean; // Only visible to admin role
 }
 
 const navItems: NavItem[] = [
-  { id: "analytics", label: "Analytics", icon: BarChart3 },
+  { id: "analytics", label: "Analytics", icon: BarChart3, adminOnly: true },
   { id: "apps", label: "Apps", icon: Package },
-  { id: "users", label: "Users", icon: Users },
-  { id: "payments", label: "Payments", icon: TrendingUp },
+  { id: "users", label: "Users", icon: Users, adminOnly: true },
+  { id: "payments", label: "Payments", icon: TrendingUp, adminOnly: true },
   { id: "reviews", label: "Reviews", icon: Star },
-  { id: "roles", label: "Roles", icon: Shield },
+  { id: "roles", label: "Roles", icon: Shield, adminOnly: true },
   { id: "notifications", label: "Notifications", icon: Bell },
   { id: "activity", label: "Activity", icon: Activity },
-  { id: "status", label: "Ban / Suspend", icon: UserX },
-  { id: "coupons", label: "Coupons", icon: Tag },
-  { id: "settings", label: "Settings", icon: Settings2 },
+  { id: "status", label: "Ban / Suspend", icon: UserX, adminOnly: true },
+  { id: "coupons", label: "Coupons", icon: Tag, adminOnly: true },
+  { id: "settings", label: "Settings", icon: Settings2, adminOnly: true },
 ];
 
 // ─── Apps Tab ─────────────────────────────────────────────────────────────────
 const AppsTab = () => {
+  const { isAdmin } = useAuth();
   const [apps, setApps] = useState<App[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -636,10 +590,12 @@ const AppsTab = () => {
                       {editLoading ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> : <Edit className="w-3.5 h-3.5 mr-1.5" />}
                       {editLoading ? "Loading..." : "Edit"}
                     </Button>
-                    <Button variant="destructive" size="sm" onClick={() => handleDeleteApp(selectedApp)} disabled={deletingAppId === selectedApp.id}>
-                      {deletingAppId === selectedApp.id ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5 mr-1.5" />}
-                      {deletingAppId === selectedApp.id ? "Deleting..." : "Delete"}
-                    </Button>
+                    {isAdmin && (
+                      <Button variant="destructive" size="sm" onClick={() => handleDeleteApp(selectedApp)} disabled={deletingAppId === selectedApp.id}>
+                        {deletingAppId === selectedApp.id ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5 mr-1.5" />}
+                        {deletingAppId === selectedApp.id ? "Deleting..." : "Delete"}
+                      </Button>
+                    )}
                   </div>
                 </div>
 
@@ -696,9 +652,11 @@ const AppsTab = () => {
                               <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => { setEditingVersion(version); setShowVersionForm(true); }}>
                                 <Edit className="w-3.5 h-3.5" />
                               </Button>
-                              <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-destructive hover:text-destructive" onClick={() => handleDeleteVersion(version)} disabled={deletingVersionId === version.id}>
-                                {deletingVersionId === version.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
-                              </Button>
+                              {isAdmin && (
+                                <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-destructive hover:text-destructive" onClick={() => handleDeleteVersion(version)} disabled={deletingVersionId === version.id}>
+                                  {deletingVersionId === version.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                                </Button>
+                              )}
                             </div>
                           </div>
                         ))}
@@ -763,14 +721,22 @@ const AppsTab = () => {
 };
 
 // ─── Main Dashboard ───────────────────────────────────────────────────────────
-const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
+const AdminDashboard = () => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<AdminTab>("analytics");
+  const { user, signOut, isAdmin } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  const handleLogout = () => { authApi.logout(); onLogout(); };
+  // Filter nav items based on role
+  const visibleNavItems = navItems.filter(item => !item.adminOnly || isAdmin);
+  const [activeTab, setActiveTab] = useState<AdminTab>(visibleNavItems[0]?.id || "apps");
 
-  const activeItem = navItems.find(n => n.id === activeTab);
+  const handleLogout = async () => {
+    authApi.logout();
+    await signOut();
+    navigate("/");
+  };
+
+  const activeItem = visibleNavItems.find(n => n.id === activeTab);
 
   return (
     <div className="min-h-screen bg-background flex">
@@ -787,7 +753,9 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
           </div>
           <div className="min-w-0">
             <p className="font-semibold text-sm leading-none">Admin Panel</p>
-            <p className="text-xs text-muted-foreground mt-0.5">App Store Manager</p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              {isAdmin ? "Administrator" : "Moderator"}
+            </p>
           </div>
           <button onClick={() => setSidebarOpen(false)} className="ml-auto lg:hidden p-1 rounded hover:bg-muted">
             <X className="w-4 h-4" />
@@ -796,7 +764,7 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
 
         {/* Nav Items */}
         <nav className="flex-1 p-3 overflow-y-auto space-y-0.5">
-          {navItems.map((item) => {
+          {visibleNavItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
             return (
@@ -825,8 +793,18 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
           })}
         </nav>
 
-        {/* Sidebar Footer */}
+        {/* User Info & Sidebar Footer */}
         <div className="p-3 border-t border-border space-y-1">
+          {user && (
+            <div className="px-3 py-2 mb-1">
+              <p className="text-sm font-medium truncate">{user.full_name || user.email}</p>
+              <div className="flex items-center gap-1 mt-0.5">
+                <Badge variant="outline" className="text-xs px-1.5 py-0">
+                  {isAdmin ? "Admin" : "Moderator"}
+                </Badge>
+              </div>
+            </div>
+          )}
           <button
             onClick={() => navigate("/")}
             className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-all"
@@ -873,18 +851,44 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
 
         {/* Page Content */}
         <main className="flex-1 p-4 sm:p-6 overflow-auto">
-          {activeTab === "analytics" && <AnalyticsDashboard />}
+          {activeTab === "analytics" && isAdmin && <AnalyticsDashboard />}
           {activeTab === "apps" && <AppsTab />}
-          {activeTab === "users" && <UserManagement />}
-          {activeTab === "payments" && <PaymentHistoryAdmin />}
+          {activeTab === "users" && isAdmin && <UserManagement />}
+          {activeTab === "payments" && isAdmin && <PaymentHistoryAdmin />}
           {activeTab === "reviews" && <AppReviewSystem />}
-          {activeTab === "roles" && <RoleManagement />}
+          {activeTab === "roles" && isAdmin && <RoleManagement />}
           {activeTab === "notifications" && <NotificationSystem />}
           {activeTab === "activity" && <ActivityLogs />}
-          {activeTab === "status" && <UserStatusManagement />}
-          {activeTab === "coupons" && <CouponManagement />}
-          {activeTab === "settings" && <SystemSettingsPanel />}
+          {activeTab === "status" && isAdmin && <UserStatusManagement />}
+          {activeTab === "coupons" && isAdmin && <CouponManagement />}
+          {activeTab === "settings" && isAdmin && <SystemSettingsPanel />}
         </main>
+      </div>
+    </div>
+  );
+};
+
+// ─── Access Denied Page ──────────────────────────────────────────────────────
+const AccessDenied = () => {
+  const navigate = useNavigate();
+  return (
+    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+      <div className="text-center max-w-sm">
+        <div className="w-16 h-16 bg-destructive/10 rounded-full flex items-center justify-center mx-auto mb-4">
+          <ShieldAlert className="w-8 h-8 text-destructive" />
+        </div>
+        <h1 className="text-2xl font-bold mb-2">Access Denied</h1>
+        <p className="text-muted-foreground mb-6">
+          You don't have permission to access the admin panel. Contact an administrator to get the required role.
+        </p>
+        <div className="flex gap-3 justify-center">
+          <Button variant="outline" onClick={() => navigate("/")}>
+            <Home className="w-4 h-4 mr-2" /> Back to Store
+          </Button>
+          <Button variant="outline" onClick={() => navigate("/auth")}>
+            Sign in with another account
+          </Button>
+        </div>
       </div>
     </div>
   );
@@ -892,10 +896,49 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
 
 // ─── Root ─────────────────────────────────────────────────────────────────────
 const Admin = () => {
-  const [isAuthenticated, setIsAuthenticated] = useState(authApi.isAuthenticated());
-  return isAuthenticated
-    ? <AdminDashboard onLogout={() => setIsAuthenticated(false)} />
-    : <AdminLogin onLogin={() => setIsAuthenticated(true)} />;
+  const { user, loading, isAdminOrModerator } = useAuth();
+  const navigate = useNavigate();
+
+  // Also check legacy admin auth for backward compatibility
+  const isLegacyAdmin = authApi.isAuthenticated();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  // If user is not logged in at all (no user auth and no legacy admin auth)
+  if (!user && !isLegacyAdmin) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <div className="text-center max-w-sm">
+          <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center mx-auto mb-4 shadow-md">
+            <Package className="w-6 h-6 text-primary-foreground" />
+          </div>
+          <h1 className="text-2xl font-bold mb-2">Admin Panel</h1>
+          <p className="text-muted-foreground mb-6">Please sign in to access the admin panel</p>
+          <Button onClick={() => navigate("/auth")} className="w-full">
+            Sign In
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Legacy admin auth (backward compatible)
+  if (isLegacyAdmin) {
+    return <AdminDashboard />;
+  }
+
+  // User is logged in but doesn't have admin/moderator role
+  if (!isAdminOrModerator) {
+    return <AccessDenied />;
+  }
+
+  return <AdminDashboard />;
 };
 
 export default Admin;

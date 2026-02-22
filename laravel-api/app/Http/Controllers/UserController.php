@@ -41,6 +41,9 @@ class UserController extends Controller
 
         $token = $this->generateToken($user);
 
+        // Load roles
+        $user->load('roles');
+
         return response()->json([
             'success' => true,
             'token' => $token,
@@ -48,6 +51,7 @@ class UserController extends Controller
                 'id' => $user->id,
                 'email' => $user->email,
                 'full_name' => $user->full_name,
+                'roles' => $user->roles->pluck('role')->toArray(),
             ],
         ]);
     }
@@ -98,6 +102,9 @@ class UserController extends Controller
 
         $token = $this->generateToken($user);
 
+        // Load roles
+        $user->load('roles');
+
         // Log successful login
         UserActivityLog::create([
             'user_id' => $user->id,
@@ -116,6 +123,7 @@ class UserController extends Controller
                 'full_name' => $user->full_name,
                 'phone' => $user->phone,
                 'avatar_url' => $user->avatar_url,
+                'roles' => $user->roles->pluck('role')->toArray(),
             ],
         ]);
     }
@@ -123,6 +131,7 @@ class UserController extends Controller
     public function me(Request $request)
     {
         $user = $request->user();
+        $user->load('roles');
 
         return response()->json([
             'user' => [
@@ -131,6 +140,7 @@ class UserController extends Controller
                 'full_name' => $user->full_name,
                 'phone' => $user->phone,
                 'avatar_url' => $user->avatar_url,
+                'roles' => $user->roles->pluck('role')->toArray(),
             ],
         ]);
     }
