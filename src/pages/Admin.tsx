@@ -217,32 +217,50 @@ const AppForm = ({ app, onSave, onCancel }: AppFormProps) => {
           </Button>
         </div>
         {videos.length === 0 && <p className="text-sm text-muted-foreground text-center py-3">No videos added.</p>}
-        {videos.map((video, index) => (
-          <div key={index} className="flex items-start gap-2 p-3 bg-background rounded-lg border border-border/50">
-            <div className="flex-1 space-y-2">
-              <div className="flex items-center gap-2">
-                <Input value={video.title} onChange={(e) => { const u=[...videos]; u[index]={...u[index],title:e.target.value}; setVideos(u); }} placeholder="Video title (auto-filled on paste)" className="text-sm" />
-                {fetchingTitle === index && <Loader2 className="w-4 h-4 animate-spin text-muted-foreground shrink-0" />}
+        {videos.map((video, index) => {
+          const getYouTubeId = (url: string) => {
+            const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([a-zA-Z0-9_-]{11})/);
+            return match ? match[1] : null;
+          };
+          const videoId = getYouTubeId(video.youtube_url);
+          return (
+            <div key={index} className="flex items-start gap-3 p-3 bg-background rounded-lg border border-border/50">
+              {videoId && (
+                <div className="shrink-0 w-40 aspect-video rounded-md overflow-hidden border border-border">
+                  <iframe
+                    src={`https://www.youtube.com/embed/${videoId}`}
+                    title={video.title || "YouTube video"}
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                    className="w-full h-full"
+                  />
+                </div>
+              )}
+              <div className="flex-1 space-y-2">
+                <div className="flex items-center gap-2">
+                  <Input value={video.title} onChange={(e) => { const u=[...videos]; u[index]={...u[index],title:e.target.value}; setVideos(u); }} placeholder="Video title (auto-filled on paste)" className="text-sm" />
+                  {fetchingTitle === index && <Loader2 className="w-4 h-4 animate-spin text-muted-foreground shrink-0" />}
+                </div>
+                <div className="flex items-center gap-2">
+                  <Input type="url" value={video.youtube_url} onChange={(e) => {
+                    const u=[...videos]; u[index]={...u[index],youtube_url:e.target.value}; setVideos(u);
+                  }} onPaste={(e) => {
+                    const text = e.clipboardData.getData('text');
+                    if (text && (text.includes("youtube.com") || text.includes("youtu.be"))) {
+                      setTimeout(() => fetchYouTubeTitle(text, index), 100);
+                    }
+                  }} placeholder="https://youtube.com/watch?v=..." className="text-sm" />
+                  <Button type="button" variant="outline" size="icon" className="shrink-0 h-9 w-9" onClick={() => handlePasteYouTubeUrl(index)} title="Paste from clipboard">
+                    <ClipboardPaste className="w-4 h-4" />
+                  </Button>
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                <Input type="url" value={video.youtube_url} onChange={(e) => {
-                  const u=[...videos]; u[index]={...u[index],youtube_url:e.target.value}; setVideos(u);
-                }} onPaste={(e) => {
-                  const text = e.clipboardData.getData('text');
-                  if (text && (text.includes("youtube.com") || text.includes("youtu.be"))) {
-                    setTimeout(() => fetchYouTubeTitle(text, index), 100);
-                  }
-                }} placeholder="https://youtube.com/watch?v=..." className="text-sm" />
-                <Button type="button" variant="outline" size="icon" className="shrink-0 h-9 w-9" onClick={() => handlePasteYouTubeUrl(index)} title="Paste from clipboard">
-                  <ClipboardPaste className="w-4 h-4" />
-                </Button>
-              </div>
+              <Button type="button" variant="ghost" size="icon" onClick={() => setVideos(videos.filter((_, i) => i !== index))} className="text-destructive hover:text-destructive shrink-0">
+                <X className="w-4 h-4" />
+              </Button>
             </div>
-            <Button type="button" variant="ghost" size="icon" onClick={() => setVideos(videos.filter((_, i) => i !== index))} className="text-destructive hover:text-destructive shrink-0">
-              <X className="w-4 h-4" />
-            </Button>
-          </div>
-        ))}
+          );
+        })}
       </div>
       <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
         <div className="flex items-center gap-2">
