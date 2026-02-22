@@ -938,7 +938,10 @@ const AppDetail = () => {
                             className="w-full h-14 text-base font-semibold gap-2 bg-green-600 hover:bg-green-700 text-white shadow-lg"
                           >
                             <Download className="w-5 h-5" />
-                            {translations.downloadForFree}
+                            {isPaidApp && hasPurchased 
+                              ? (language === 'km' ? 'ទាញយក' : 'Download')
+                              : translations.downloadForFree
+                            }
                             {latestVersion.file_size && (
                               <span className="text-white/80">({latestVersion.file_size})</span>
                             )}
