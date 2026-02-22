@@ -50,8 +50,19 @@ const PurchasedAppCard = ({ order, language }: PurchasedAppCardProps) => {
         <CollapsibleTrigger asChild>
           <div className="px-4 py-3 cursor-pointer hover:bg-accent/50 transition-colors">
             <div className="flex items-center gap-3">
-              {/* App initial icon */}
-              <div className="w-9 h-9 rounded-md bg-muted border border-border flex items-center justify-center flex-shrink-0">
+              {/* App icon */}
+              {order.app_icon_url ? (
+                <img 
+                  src={order.app_icon_url} 
+                  alt={order.app_name} 
+                  className="w-9 h-9 rounded-md border border-border flex-shrink-0 object-cover"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                    e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                  }}
+                />
+              ) : null}
+              <div className={`w-9 h-9 rounded-md bg-muted border border-border flex items-center justify-center flex-shrink-0 ${order.app_icon_url ? 'hidden' : ''}`}>
                 <Package className="w-4 h-4 text-muted-foreground" />
               </div>
 
