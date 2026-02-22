@@ -13,7 +13,7 @@ export function AboutPanel() {
       <GroupCard>
         <InfoRow label={language === 'km' ? 'ឈ្មោះកម្មវិធី' : 'App Name'} value="Macsofy" />
         <InfoRow label={language === 'km' ? 'កំណែ' : 'Version'} value="2.0.0" />
-        <InfoRow label={language === 'km' ? 'អ្នកអភិវឌ្ឍន៍' : 'Developer'} value="RealTech Computer" />
+        <InfoRow label={language === 'km' ? 'អ្នកអភិវឌ្ឍន៍' : 'Developer'} value="Macsofy" />
         <InfoRow label={language === 'km' ? 'គេហទំព័រ' : 'Website'} value="macsofy.com" />
       </GroupCard>
 
@@ -47,7 +47,7 @@ export function AboutPanel() {
       </GroupCard>
 
       <p className="text-center text-xs text-muted-foreground mt-8">
-        © {new Date().getFullYear()} RealTech Computer. All rights reserved.
+        © {new Date().getFullYear()} Macsofy. All rights reserved.
       </p>
     </div>
   );
