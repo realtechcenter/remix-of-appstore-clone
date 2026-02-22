@@ -1,11 +1,10 @@
 import { useState, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, Camera, User, Lock, Save, Loader2 } from 'lucide-react';
+import { ArrowLeft, Camera, User, Lock, Save, Loader2, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage, useTranslations } from '@/contexts/LanguageContext';
@@ -13,6 +12,41 @@ import { ImageCropper } from '@/components/ImageCropper';
 import { ThemeToggle } from '@/components/ThemeToggle';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://api.realtechcomputer.com';
+
+// iOS-style section group
+function SettingsGroup({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="bg-card rounded-[12px] overflow-hidden divide-y divide-border/60">
+      {children}
+    </div>
+  );
+}
+
+// iOS-style row
+function SettingsRow({ label, children, className = '' }: { label?: string; children: React.ReactNode; className?: string }) {
+  return (
+    <div className={`px-4 py-3 flex items-center gap-3 min-h-[44px] ${className}`}>
+      {label && <span className="text-sm text-foreground whitespace-nowrap min-w-[100px]">{label}</span>}
+      <div className="flex-1">{children}</div>
+    </div>
+  );
+}
+
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="text-xs text-muted-foreground uppercase tracking-wide px-4 pb-1.5 pt-6 first:pt-0">
+      {children}
+    </p>
+  );
+}
+
+function SectionFooter({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="text-xs text-muted-foreground px-4 pt-1.5 pb-2">
+      {children}
+    </p>
+  );
+}
 
 export default function Profile() {
   const navigate = useNavigate();
@@ -125,153 +159,163 @@ export default function Profile() {
 
   if (!user) { navigate('/auth'); return null; }
 
+  const iosInputClass = "bg-transparent border-none shadow-none focus-visible:ring-0 h-auto p-0 text-sm text-foreground placeholder:text-muted-foreground/50 text-right";
+
   return (
-    <div className={`min-h-screen bg-background ${language === 'km' ? 'font-khmer' : ''}`}>
-      {/* Notion-style top bar */}
-      <header className="sticky top-0 z-40 glass px-4 sm:px-8 py-2.5">
-        <div className="max-w-2xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => navigate(-1)}
-              className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors px-2 py-1.5 rounded-sm hover:bg-accent"
-            >
-              <ArrowLeft className="w-3.5 h-3.5" />
-              {language === 'km' ? 'ត្រឡប់' : 'Back'}
-            </button>
-            <span className="text-muted-foreground/40 text-sm">/</span>
-            <Link to="/" className="text-sm font-medium text-foreground hover:text-muted-foreground transition-colors">
-              Macsofy
-            </Link>
-          </div>
+    <div className={`min-h-screen bg-secondary/50 ${language === 'km' ? 'font-khmer' : ''}`}>
+      {/* iOS-style nav bar */}
+      <header className="sticky top-0 z-40 glass px-4 py-2.5">
+        <div className="max-w-lg mx-auto flex items-center justify-between">
+          <button
+            onClick={() => navigate(-1)}
+            className="flex items-center gap-0.5 text-sm text-primary font-medium transition-opacity hover:opacity-70"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            {language === 'km' ? 'ត្រឡប់' : 'Back'}
+          </button>
+          <span className="text-sm font-semibold text-foreground">{t.profileSettings}</span>
           <ThemeToggle />
         </div>
       </header>
 
-      <div className="max-w-2xl mx-auto px-4 sm:px-8 py-10">
-        {/* Page title — Notion doc style */}
-        <div className="mb-8">
-          <h1 className="text-2xl font-semibold text-foreground">{t.profileSettings}</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            {language === 'km' ? 'គ្រប់គ្រងព័ត៌មានគណនីរបស់អ្នក' : 'Manage your account information'}
-          </p>
-        </div>
-
-        {/* Personal Info Section */}
-        <section className="mb-8">
-          <div className="flex items-center gap-2 mb-4">
-            <User className="w-4 h-4 text-muted-foreground" />
-            <h2 className="text-sm font-semibold text-foreground uppercase tracking-wider">{t.personalInfo}</h2>
+      <div className="max-w-lg mx-auto px-4 py-6 space-y-6">
+        {/* Profile card — iOS Apple ID style */}
+        <SettingsGroup>
+          <div className="p-4 flex items-center gap-3.5">
+            <div className="relative flex-shrink-0">
+              <Avatar className="w-[60px] h-[60px]">
+                <AvatarImage src={avatarUrl} alt={fullName} />
+                <AvatarFallback className="text-xl bg-muted text-foreground font-medium">
+                  {fullName?.charAt(0) || user.email.charAt(0).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isUploadingImage}
+                className="absolute -bottom-0.5 -right-0.5 w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center shadow-sm disabled:opacity-50"
+              >
+                {isUploadingImage ? <Loader2 className="w-3 h-3 animate-spin" /> : <Camera className="w-3 h-3" />}
+              </button>
+              <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageSelect} className="hidden" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-base font-semibold text-foreground truncate">{fullName || user.email?.split('@')[0]}</p>
+              <p className="text-sm text-muted-foreground truncate">{user.email}</p>
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="text-xs text-primary mt-0.5 font-medium"
+              >
+                {language === 'km' ? 'ផ្លាស់ប្តូររូបភាព' : 'Change Photo'}
+              </button>
+            </div>
+            <ChevronRight className="w-4 h-4 text-muted-foreground/40 flex-shrink-0" />
           </div>
-          <div className="border border-border rounded-md bg-card divide-y divide-border">
-            {/* Avatar row */}
-            <div className="p-5 flex items-center gap-4">
-              <div className="relative flex-shrink-0">
-                <Avatar className="w-16 h-16 border border-border">
-                  <AvatarImage src={avatarUrl} alt={fullName} />
-                  <AvatarFallback className="text-lg bg-muted text-foreground font-medium">
-                    {fullName?.charAt(0) || user.email.charAt(0).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-                <button
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={isUploadingImage}
-                  className="absolute -bottom-1 -right-1 w-6 h-6 bg-foreground text-background rounded-full flex items-center justify-center hover:opacity-80 transition-opacity disabled:opacity-50"
-                >
-                  {isUploadingImage ? <Loader2 className="w-3 h-3 animate-spin" /> : <Camera className="w-3 h-3" />}
-                </button>
-                <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageSelect} className="hidden" />
-              </div>
-              <div>
-                <p className="text-sm font-medium">{fullName || user.email?.split('@')[0]}</p>
-                <p className="text-xs text-muted-foreground mt-0.5">{user.email}</p>
-                <button
-                  onClick={() => fileInputRef.current?.click()}
-                  className="text-xs text-muted-foreground hover:text-foreground mt-1 transition-colors"
-                >
-                  {language === 'km' ? 'ផ្លាស់ប្តូររូបភាព' : 'Change photo'}
-                </button>
-              </div>
-            </div>
+        </SettingsGroup>
 
-            {/* Email row */}
-            <div className="p-5 space-y-1.5">
-              <Label htmlFor="email" className="text-xs text-muted-foreground uppercase tracking-wide">{t.email}</Label>
-              <Input id="email" type="email" value={user.email} disabled className="bg-muted text-muted-foreground h-9 text-sm" />
-              <p className="text-xs text-muted-foreground">{language === 'km' ? 'អ៊ីមែលមិនអាចផ្លាស់ប្តូរបានទេ' : 'Email cannot be changed'}</p>
-            </div>
-
-            {/* Full name row */}
-            <div className="p-5 space-y-1.5">
-              <Label htmlFor="fullName" className="text-xs text-muted-foreground uppercase tracking-wide">{t.fullName}</Label>
+        {/* Personal Info */}
+        <div>
+          <SectionLabel>{t.personalInfo}</SectionLabel>
+          <SettingsGroup>
+            <SettingsRow label={t.email}>
+              <p className="text-sm text-muted-foreground text-right truncate">{user.email}</p>
+            </SettingsRow>
+            <SettingsRow label={t.fullName}>
               <Input
-                id="fullName"
-                type="text"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
-                placeholder={language === 'km' ? 'បញ្ចូលឈ្មោះពេញ' : 'Enter your full name'}
-                className="h-9 text-sm"
+                placeholder={language === 'km' ? 'បញ្ចូលឈ្មោះពេញ' : 'Enter name'}
+                className={iosInputClass}
               />
-            </div>
-
-            {/* Phone row */}
-            <div className="p-5 space-y-1.5">
-              <Label htmlFor="phone" className="text-xs text-muted-foreground uppercase tracking-wide">{t.phone}</Label>
+            </SettingsRow>
+            <SettingsRow label={t.phone}>
               <Input
-                id="phone"
                 type="tel"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
-                placeholder={language === 'km' ? 'បញ្ចូលលេខទូរស័ព្ទ' : 'Enter your phone number'}
-                className="h-9 text-sm"
+                placeholder={language === 'km' ? 'បញ្ចូលលេខទូរស័ព្ទ' : 'Enter phone'}
+                className={iosInputClass}
               />
-            </div>
+            </SettingsRow>
+          </SettingsGroup>
+          <SectionFooter>
+            {language === 'km' ? 'អ៊ីមែលមិនអាចផ្លាស់ប្តូរបានទេ។' : 'Email address cannot be changed.'}
+          </SectionFooter>
 
-            {/* Save button row */}
-            <div className="p-5">
-              <Button onClick={handleUpdateProfile} disabled={isUpdatingProfile} size="sm">
-                {isUpdatingProfile ? <><Loader2 className="w-3.5 h-3.5 animate-spin" />{language === 'km' ? 'កំពុងរក្សាទុក...' : 'Saving...'}</> : <><Save className="w-3.5 h-3.5" />{t.saveChanges}</>}
-              </Button>
-            </div>
+          <div className="mt-3">
+            <SettingsGroup>
+              <button
+                onClick={handleUpdateProfile}
+                disabled={isUpdatingProfile}
+                className="w-full px-4 py-3 text-sm font-medium text-primary text-center disabled:opacity-50 active:bg-accent/50 transition-colors"
+              >
+                {isUpdatingProfile ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    {language === 'km' ? 'កំពុងរក្សាទុក...' : 'Saving...'}
+                  </span>
+                ) : (
+                  language === 'km' ? 'រក្សាទុកការផ្លាស់ប្តូរ' : 'Save Changes'
+                )}
+              </button>
+            </SettingsGroup>
           </div>
-        </section>
+        </div>
 
-        {/* Password Section */}
-        <section>
-          <div className="flex items-center gap-2 mb-4">
-            <Lock className="w-4 h-4 text-muted-foreground" />
-            <h2 className="text-sm font-semibold text-foreground uppercase tracking-wider">{t.changePassword}</h2>
-          </div>
-          <div className="border border-border rounded-md bg-card divide-y divide-border">
-            <div className="p-5 space-y-1.5">
-              <Label htmlFor="currentPassword" className="text-xs text-muted-foreground uppercase tracking-wide">
-                {language === 'km' ? 'ពាក្យសម្ងាត់បច្ចុប្បន្ន' : 'Current Password'}
-              </Label>
-              <Input id="currentPassword" type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} placeholder="••••••••" className="h-9 text-sm" />
-            </div>
-            <div className="p-5 space-y-1.5">
-              <Label htmlFor="newPassword" className="text-xs text-muted-foreground uppercase tracking-wide">
-                {language === 'km' ? 'ពាក្យសម្ងាត់ថ្មី' : 'New Password'}
-              </Label>
-              <Input id="newPassword" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="••••••••" className="h-9 text-sm" />
-            </div>
-            <div className="p-5 space-y-1.5">
-              <Label htmlFor="confirmPassword" className="text-xs text-muted-foreground uppercase tracking-wide">
-                {language === 'km' ? 'បញ្ជាក់ពាក្យសម្ងាត់ថ្មី' : 'Confirm New Password'}
-              </Label>
-              <Input id="confirmPassword" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="••••••••" className="h-9 text-sm" />
-            </div>
-            <div className="p-5">
-              <Button
+        {/* Change Password */}
+        <div>
+          <SectionLabel>{t.changePassword}</SectionLabel>
+          <SettingsGroup>
+            <SettingsRow label={language === 'km' ? 'បច្ចុប្បន្ន' : 'Current'}>
+              <Input
+                type="password"
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+                placeholder="••••••••"
+                className={iosInputClass}
+              />
+            </SettingsRow>
+            <SettingsRow label={language === 'km' ? 'ថ្មី' : 'New'}>
+              <Input
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="••••••••"
+                className={iosInputClass}
+              />
+            </SettingsRow>
+            <SettingsRow label={language === 'km' ? 'បញ្ជាក់' : 'Confirm'}>
+              <Input
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="••••••••"
+                className={iosInputClass}
+              />
+            </SettingsRow>
+          </SettingsGroup>
+          <SectionFooter>
+            {language === 'km' ? 'ពាក្យសម្ងាត់ត្រូវមានយ៉ាងហោចណាស់ 6 តួអក្សរ។' : 'Password must be at least 6 characters.'}
+          </SectionFooter>
+
+          <div className="mt-3">
+            <SettingsGroup>
+              <button
                 onClick={handleChangePassword}
                 disabled={isChangingPassword || !currentPassword || !newPassword || !confirmPassword}
-                variant="secondary"
-                size="sm"
+                className="w-full px-4 py-3 text-sm font-medium text-primary text-center disabled:opacity-50 disabled:text-muted-foreground active:bg-accent/50 transition-colors"
               >
-                {isChangingPassword ? <><Loader2 className="w-3.5 h-3.5 animate-spin" />{language === 'km' ? 'កំពុងផ្លាស់ប្តូរ...' : 'Changing...'}</> : <><Lock className="w-3.5 h-3.5" />{t.changePassword}</>}
-              </Button>
-            </div>
+                {isChangingPassword ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    {language === 'km' ? 'កំពុងផ្លាស់ប្តូរ...' : 'Changing...'}
+                  </span>
+                ) : (
+                  t.changePassword
+                )}
+              </button>
+            </SettingsGroup>
           </div>
-        </section>
+        </div>
       </div>
 
       <ImageCropper isOpen={cropperOpen} onClose={() => setCropperOpen(false)} imageSrc={selectedImage} onCropComplete={handleCropComplete} />
