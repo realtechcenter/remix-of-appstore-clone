@@ -276,7 +276,6 @@ const AppForm = ({ app, onSave, onCancel }: AppFormProps) => {
         </div>
       </div>
       <div className="flex justify-end gap-3 pt-4 border-t border-border">
-        <Button type="button" variant="outline" onClick={onCancel}>Cancel</Button>
         <Button type="button" variant="outline" onClick={onCancel} disabled={saving}>Cancel</Button>
         <Button type="submit" disabled={saving}>
           {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
