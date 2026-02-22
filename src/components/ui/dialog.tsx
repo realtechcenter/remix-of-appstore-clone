@@ -63,13 +63,22 @@ const DialogContent = React.forwardRef<
       <DialogPrimitive.Content
         ref={ref}
         className={cn(
-          "fixed z-50 grid border-0 bg-card overflow-hidden duration-300 transition-all data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
-          maximized
-            ? "inset-0 w-full h-full max-w-none max-h-none rounded-none"
-            : "left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%] w-full max-w-lg max-h-[85vh] rounded-xl data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%]",
+          "fixed z-50 grid border-0 bg-card overflow-hidden data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 left-[50%] top-[50%]",
+          !maximized && "data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%]",
           className,
         )}
-        style={{ boxShadow: maximized ? 'none' : 'var(--shadow-window)' }}
+        style={{
+          boxShadow: maximized ? 'none' : 'var(--shadow-window)',
+          width: maximized ? '100vw' : undefined,
+          height: maximized ? '100vh' : undefined,
+          maxWidth: maximized ? '100vw' : '32rem',
+          maxHeight: maximized ? '100vh' : '85vh',
+          borderRadius: maximized ? 0 : '0.75rem',
+          transform: maximized
+            ? 'translate(-50%, -50%) scale(1)'
+            : 'translate(-50%, -50%)',
+          transition: 'width 0.3s ease, height 0.3s ease, max-width 0.3s ease, max-height 0.3s ease, border-radius 0.3s ease, box-shadow 0.3s ease',
+        }}
         {...props}
       >
         {/* macOS title bar */}
