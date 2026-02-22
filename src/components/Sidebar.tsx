@@ -39,31 +39,36 @@ export const Sidebar = ({ activeCategory, onCategoryChange, isOpen = false, onTo
   return (
     <aside
       className={cn(
-        "fixed inset-y-0 left-0 z-50 w-60 bg-card border-r border-border flex flex-col transition-transform duration-200",
+        "fixed inset-y-0 left-0 z-50 w-[220px] bg-sidebar/80 backdrop-blur-xl border-r border-sidebar-border flex flex-col transition-transform duration-200",
         isOpen ? "translate-x-0" : "-translate-x-full",
         "lg:translate-x-0 lg:static lg:flex"
       )}
     >
-      {/* Header */}
-      <div className="p-4 border-b border-border flex items-center gap-3">
-        <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 overflow-hidden">
-          <img src={macsofyLogo} alt="Macsofy" className="w-full h-full object-contain" />
+      {/* macOS Window Controls area + Logo */}
+      <div className="h-[52px] flex items-center gap-2.5 px-4 border-b border-sidebar-border/60">
+        {/* Decorative traffic lights */}
+        <div className="flex items-center gap-1.5 mr-1">
+          <span className="w-3 h-3 rounded-full bg-[hsl(0_80%_62%)] border border-[hsl(0_60%_50%/0.3)]" />
+          <span className="w-3 h-3 rounded-full bg-[hsl(45_90%_55%)] border border-[hsl(45_70%_45%/0.3)]" />
+          <span className="w-3 h-3 rounded-full bg-[hsl(120_55%_52%)] border border-[hsl(120_40%_42%/0.3)]" />
         </div>
-        <div className="min-w-0">
-          <p className="font-semibold text-sm leading-none">Macsofy</p>
-          <p className="text-xs text-muted-foreground mt-0.5">App Store</p>
+        <div className="flex items-center gap-2 ml-1">
+          <div className="w-6 h-6 rounded-md overflow-hidden shrink-0">
+            <img src={macsofyLogo} alt="Macsofy" className="w-full h-full object-contain" />
+          </div>
+          <span className="text-[13px] font-semibold text-foreground">Macsofy</span>
         </div>
         {onToggle && (
-          <button onClick={onToggle} className="ml-auto lg:hidden p-1 rounded hover:bg-muted">
-            <X className="w-4 h-4" />
+          <button onClick={onToggle} className="ml-auto lg:hidden p-1 rounded-md hover:bg-accent">
+            <X className="w-4 h-4 text-muted-foreground" />
           </button>
         )}
       </div>
 
       {/* Categories */}
-      <nav className="flex-1 overflow-y-auto p-3 space-y-4">
+      <nav className="flex-1 overflow-y-auto scrollbar-macos px-2 py-3 space-y-4">
         <div className="space-y-0.5">
-          <p className="px-3 py-1 text-[11px] font-semibold text-muted-foreground uppercase tracking-widest select-none">
+          <p className="px-2.5 py-1 text-[11px] font-semibold text-muted-foreground/70 uppercase tracking-wider select-none">
             {language === "km" ? "ប្រភេទ" : "Categories"}
           </p>
           {navItems.map((item) => {
@@ -74,13 +79,13 @@ export const Sidebar = ({ activeCategory, onCategoryChange, isOpen = false, onTo
                 key={item.id}
                 onClick={() => onCategoryChange(item.id)}
                 className={cn(
-                  "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all text-left",
+                  "w-full flex items-center gap-2.5 px-2.5 py-[7px] rounded-md text-[13px] font-medium transition-all text-left",
                   isActive
-                    ? "bg-primary text-primary-foreground shadow-sm"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                    ? "bg-primary text-primary-foreground"
+                    : "text-sidebar-foreground hover:bg-accent/70 hover:text-foreground"
                 )}
               >
-                <Icon className="w-4 h-4 shrink-0" />
+                <Icon className="w-[16px] h-[16px] shrink-0 opacity-80" />
                 <span className="flex-1 truncate">{item.label}</span>
               </button>
             );
@@ -90,7 +95,7 @@ export const Sidebar = ({ activeCategory, onCategoryChange, isOpen = false, onTo
         {/* User Menu */}
         {user && (
           <div className="space-y-0.5">
-            <p className="px-3 py-1 text-[11px] font-semibold text-muted-foreground uppercase tracking-widest select-none">
+            <p className="px-2.5 py-1 text-[11px] font-semibold text-muted-foreground/70 uppercase tracking-wider select-none">
               {language === "km" ? "គណនី" : "Account"}
             </p>
             {userMenuItems.map((item) => {
@@ -102,13 +107,13 @@ export const Sidebar = ({ activeCategory, onCategoryChange, isOpen = false, onTo
                   to={item.path}
                   onClick={() => onToggle?.()}
                   className={cn(
-                    "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all",
+                    "w-full flex items-center gap-2.5 px-2.5 py-[7px] rounded-md text-[13px] font-medium transition-all",
                     isActive
-                      ? "bg-primary text-primary-foreground shadow-sm"
-                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                      ? "bg-primary text-primary-foreground"
+                      : "text-sidebar-foreground hover:bg-accent/70 hover:text-foreground"
                   )}
                 >
-                  <Icon className="w-4 h-4 shrink-0" />
+                  <Icon className="w-[16px] h-[16px] shrink-0 opacity-80" />
                   <span className="flex-1 truncate">{item.label}</span>
                 </Link>
               );
@@ -118,21 +123,21 @@ export const Sidebar = ({ activeCategory, onCategoryChange, isOpen = false, onTo
       </nav>
 
       {/* Footer */}
-      <div className="p-3 border-t border-border">
+      <div className="px-3 py-2.5 border-t border-sidebar-border/60">
         {!user && (
           <Link
             to="/auth"
-            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-all mb-2"
+            className="w-full flex items-center gap-2.5 px-2.5 py-[7px] rounded-md text-[13px] font-medium text-sidebar-foreground hover:bg-accent/70 hover:text-foreground transition-all mb-1.5"
           >
-            <LogIn className="w-4 h-4" />
+            <LogIn className="w-4 h-4 opacity-80" />
             <span>{language === "km" ? "ចូល" : "Sign In"}</span>
           </Link>
         )}
-        <div className="flex flex-wrap gap-x-3 gap-y-1 px-1">
+        <div className="flex flex-wrap gap-x-3 gap-y-0.5 px-1">
           {["DMCA", "Privacy", "FAQ", "Contact"].map((link) => (
             <span
               key={link}
-              className="text-xs text-muted-foreground hover:text-foreground cursor-pointer transition-colors"
+              className="text-[11px] text-muted-foreground/60 hover:text-muted-foreground cursor-pointer transition-colors"
             >
               {link}
             </span>

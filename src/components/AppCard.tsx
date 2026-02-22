@@ -20,14 +20,14 @@ interface AppCardProps {
 
 const getInitialBg = (name: string): string => {
   const colors = [
-    "bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300",
-    "bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-300",
-    "bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-300",
-    "bg-orange-100 dark:bg-orange-950 text-orange-700 dark:text-orange-300",
-    "bg-pink-100 dark:bg-pink-950 text-pink-700 dark:text-pink-300",
-    "bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300",
-    "bg-cyan-100 dark:bg-cyan-950 text-cyan-700 dark:text-cyan-300",
-    "bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-300",
+    "bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400",
+    "bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-400",
+    "bg-green-100 dark:bg-green-900/40 text-green-600 dark:text-green-400",
+    "bg-orange-100 dark:bg-orange-900/40 text-orange-600 dark:text-orange-400",
+    "bg-pink-100 dark:bg-pink-900/40 text-pink-600 dark:text-pink-400",
+    "bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400",
+    "bg-cyan-100 dark:bg-cyan-900/40 text-cyan-600 dark:text-cyan-400",
+    "bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400",
   ];
   const hash = name.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0);
   return colors[hash % colors.length];
@@ -100,21 +100,23 @@ export const AppCard = (props: AppCardProps) => {
       {/* Update indicator */}
       {hasUpdate && (
         <div className="app-card-update-badge">
-          <ArrowUp className="w-2.5 h-2.5 text-background" />
+          <ArrowUp className="w-2.5 h-2.5 text-primary-foreground" />
         </div>
       )}
 
       <div className="flex flex-col items-center text-center gap-2">
-        {/* Icon */}
+        {/* Icon — macOS rounded rect */}
         {iconUrl ? (
           <img
             src={iconUrl}
             alt={displayName}
-            className="w-14 h-14 rounded-lg object-cover border border-border flex-shrink-0"
+            className="w-14 h-14 rounded-[12px] object-cover shadow-sm flex-shrink-0"
+            style={{ boxShadow: '0 1px 3px hsl(0 0% 0% / 0.1), 0 1px 2px hsl(0 0% 0% / 0.06)' }}
           />
         ) : (
           <div
-            className={`w-14 h-14 rounded-lg flex items-center justify-center flex-shrink-0 border border-border/50 ${colorClass}`}
+            className={`w-14 h-14 rounded-[12px] flex items-center justify-center flex-shrink-0 ${colorClass}`}
+            style={{ boxShadow: '0 1px 3px hsl(0 0% 0% / 0.1), 0 1px 2px hsl(0 0% 0% / 0.06)' }}
           >
             {icon && icon !== "📦" ? (
               <span className="text-2xl">{icon}</span>
@@ -125,13 +127,13 @@ export const AppCard = (props: AppCardProps) => {
         )}
 
         {/* Name */}
-        <h3 className="text-sm font-medium text-foreground line-clamp-1 group-hover:text-foreground transition-colors leading-tight">
+        <h3 className="text-[13px] font-medium text-foreground line-clamp-1 group-hover:text-foreground transition-colors leading-tight">
           {displayName}
         </h3>
 
         {/* Version */}
         {version && (
-          <span className="text-[11px] text-muted-foreground bg-muted px-2 py-0.5 rounded-sm">
+          <span className="text-[11px] text-muted-foreground bg-muted/80 px-2 py-0.5 rounded-md">
             v{version}
           </span>
         )}
@@ -165,7 +167,7 @@ export const AppCard = (props: AppCardProps) => {
 
         {/* Size on hover */}
         {fileSize && (
-          <div className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-150 bg-primary text-primary-foreground text-[10px] px-1.5 py-0.5 rounded-full flex items-center gap-1">
+          <div className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-150 bg-foreground/80 text-background text-[10px] px-1.5 py-0.5 rounded-md flex items-center gap-1">
             <HardDrive className="w-2.5 h-2.5" />
             <span>{fileSize}</span>
           </div>
