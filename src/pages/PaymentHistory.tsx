@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -113,11 +114,22 @@ const PaymentCard = ({ order, language }: PaymentCardProps) => {
   );
 };
 
+type StatusFilter = 'all' | 'pending' | 'paid' | 'failed' | 'expired';
+
+const filterTabs: { value: StatusFilter; label: string; labelKm: string }[] = [
+  { value: 'pending', label: 'Pending',  labelKm: 'រង់ចាំ' },
+  { value: 'all',     label: 'All',      labelKm: 'ទាំងអស់' },
+  { value: 'paid',    label: 'Paid',     labelKm: 'បានបង់ប្រាក់' },
+  { value: 'failed',  label: 'Failed',   labelKm: 'បរាជ័យ' },
+  { value: 'expired', label: 'Expired',  labelKm: 'ផុតកំណត់' },
+];
+
 const PaymentHistory = () => {
   const navigate = useNavigate();
   const { language } = useLanguage();
   const { user, signOut } = useAuth();
   const { data: orders, isLoading, error } = useOrders();
+  const [filter, setFilter] = useState<StatusFilter>('pending');
 
   if (!user) {
     return (
@@ -140,6 +152,10 @@ const PaymentHistory = () => {
   }, 0) || 0;
   const paidCount   = orders?.filter(o => o.status === 'paid').length || 0;
   const pendingCount = orders?.filter(o => o.status === 'pending').length || 0;
+
+  const filteredOrders = orders
+    ?.filter(o => filter === 'all' || o.status === filter)
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
   return (
     <div className="min-h-screen bg-background">
@@ -178,6 +194,29 @@ const PaymentHistory = () => {
           <p className="text-sm text-muted-foreground mt-1">
             {language === 'km' ? 'មើលប្រតិបត្តិការបង់ប្រាក់ទាំងអស់របស់អ្នក' : 'View all your payment transactions'}
           </p>
+        </div>
+
+        {/* Filter tabs */}
+        <div className="flex gap-1.5 mb-4 overflow-x-auto pb-1">
+          {filterTabs.map(tab => {
+            const count = tab.value === 'all' 
+              ? orders?.length || 0
+              : orders?.filter(o => o.status === tab.value).length || 0;
+            return (
+              <button
+                key={tab.value}
+                onClick={() => setFilter(tab.value)}
+                className={`px-3 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-colors ${
+                  filter === tab.value
+                    ? 'bg-primary text-primary-foreground'
+                    : 'bg-muted text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                {language === 'km' ? tab.labelKm : tab.label}
+                {count > 0 && <span className="ml-1.5 opacity-70">({count})</span>}
+              </button>
+            );
+          })}
         </div>
 
         {/* Summary — Notion-style property row */}
@@ -225,18 +264,26 @@ const PaymentHistory = () => {
               {language === 'km' ? 'ព្យាយាមម្ដងទៀត' : 'Try Again'}
             </Button>
           </div>
-        ) : !orders || orders.length === 0 ? (
+        ) : !filteredOrders || filteredOrders.length === 0 ? (
           <div className="text-center py-16 border border-border rounded-md bg-card">
             <CreditCard className="w-8 h-8 text-muted-foreground/40 mx-auto mb-3" />
-            <h2 className="text-sm font-medium mb-1">{language === 'km' ? 'គ្មានប្រវត្តិបង់ប្រាក់ទេ' : 'No transactions yet'}</h2>
+            <h2 className="text-sm font-medium mb-1">
+              {filter === 'all'
+                ? (language === 'km' ? 'គ្មានប្រវត្តិបង់ប្រាក់ទេ' : 'No transactions yet')
+                : (language === 'km' ? `គ្មានការបង់ប្រាក់ ${filterTabs.find(t => t.value === filter)?.labelKm}` : `No ${filter} orders`)
+              }
+            </h2>
             <p className="text-xs text-muted-foreground mb-4">
-              {language === 'km' ? 'អ្នកមិនទាន់បានធ្វើប្រតិបត្តិការទេ' : "You haven't made any transactions yet"}
+              {filter !== 'all' 
+                ? (language === 'km' ? 'សាកល្បងជ្រើសរើសតម្រងផ្សេង' : 'Try selecting a different filter')
+                : (language === 'km' ? 'អ្នកមិនទាន់បានធ្វើប្រតិបត្តិការទេ' : "You haven't made any transactions yet")
+              }
             </p>
-            <Link to="/"><Button size="sm" variant="outline">{language === 'km' ? 'រុករកកម្មវិធី' : 'Browse Apps'}</Button></Link>
+            {filter === 'all' && <Link to="/"><Button size="sm" variant="outline">{language === 'km' ? 'រុករកកម្មវិធី' : 'Browse Apps'}</Button></Link>}
           </div>
         ) : (
           <div className="space-y-2">
-            {orders.map((order) => (
+            {filteredOrders.map((order) => (
               <PaymentCard key={order.id} order={order} language={language} />
             ))}
           </div>
