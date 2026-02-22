@@ -463,7 +463,19 @@ export interface UserWithRoles {
   user_id: number;
   full_name: string | null;
   email: string | null;
-  roles: ('admin' | 'moderator' | 'user')[];
+  roles: string[];
+}
+
+export interface PermissionDef {
+  key: string;
+  label: string;
+  group: string;
+}
+
+export interface PermissionsData {
+  permissions: PermissionDef[];
+  roles: Record<string, string[]>;
+  role_names: string[];
 }
 
 // Roles API
@@ -478,6 +490,29 @@ export const rolesApi = {
   
   remove: async (userId: number, role: string): Promise<{ success: boolean; message: string }> => {
     return apiRequest('admin/roles', { method: 'DELETE', body: { user_id: userId, role } });
+  },
+};
+
+// Permissions API
+export const permissionsApi = {
+  getAll: async (): Promise<PermissionsData> => {
+    return apiRequest<{ success: boolean } & PermissionsData>('admin/permissions').then(r => ({
+      permissions: r.permissions,
+      roles: r.roles,
+      role_names: r.role_names,
+    }));
+  },
+
+  createRole: async (role: string, permissions: string[]): Promise<{ success: boolean; message: string }> => {
+    return apiRequest('admin/permissions/role', { method: 'POST', body: { role, permissions } });
+  },
+
+  updateRole: async (role: string, permissions: string[]): Promise<{ success: boolean; message: string }> => {
+    return apiRequest('admin/permissions/role', { method: 'PUT', body: { role, permissions } });
+  },
+
+  deleteRole: async (role: string): Promise<{ success: boolean; message: string }> => {
+    return apiRequest(`admin/permissions/role/${role}`, { method: 'DELETE' });
   },
 };
 

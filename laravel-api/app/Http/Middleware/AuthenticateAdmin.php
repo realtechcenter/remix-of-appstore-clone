@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use App\Models\Admin;
 use App\Models\User;
+use App\Models\RolePermission;
 use Closure;
 use Illuminate\Http\Request;
 use Firebase\JWT\JWT;
@@ -13,10 +14,10 @@ class AuthenticateAdmin
 {
     /**
      * Handle an incoming request.
-     * Accepts both legacy admin tokens and user JWT tokens (for users with admin/moderator roles).
+     * Accepts both legacy admin tokens and user JWT tokens (for users with roles that have admin-level permissions).
      * 
-     * Pass 'admin_only' as parameter to restrict to admin role only.
-     * Pass 'admin_or_moderator' (default) to allow both.
+     * Pass 'admin_only' as parameter to restrict to users with roles.manage permission.
+     * Default allows any user with at least one admin-level permission.
      */
     public function handle(Request $request, Closure $next, string $level = 'admin_or_moderator')
     {
@@ -35,8 +36,8 @@ class AuthenticateAdmin
             $request->setUserResolver(function () use ($admin) {
                 return $admin;
             });
-            // Legacy admin has full access
             $request->attributes->set('admin_role', 'admin');
+            $request->attributes->set('user_permissions', ['*']); // Legacy admin has all permissions
             return $next($request);
         }
 
@@ -60,23 +61,33 @@ class AuthenticateAdmin
                 }
             }
 
-            // Check user roles
+            // Get user roles and their permissions
             $userRoles = $user->roles->pluck('role')->toArray();
-            $isAdmin = in_array('admin', $userRoles);
-            $isModerator = in_array('moderator', $userRoles);
+            $userPermissions = RolePermission::getPermissionsForRoles($userRoles);
 
-            if ($level === 'admin_only' && !$isAdmin) {
-                return response()->json(['error' => 'Admin access required'], 403);
+            $isAdmin = in_array('admin', $userRoles);
+
+            // For admin_only level, require admin role or roles.manage permission
+            if ($level === 'admin_only' && !$isAdmin && !in_array('roles.manage', $userPermissions)) {
+                // Check if user has ANY of the required admin-only permissions
+                $adminOnlyPerms = ['users.manage', 'orders.manage', 'roles.manage', 'user_status.manage', 'coupons.manage', 'settings.manage', 'analytics.view', 'receipts.view'];
+                $hasAdminPerm = !empty(array_intersect($adminOnlyPerms, $userPermissions));
+                
+                if (!$hasAdminPerm) {
+                    return response()->json(['error' => 'Admin access required'], 403);
+                }
             }
 
-            if (!$isAdmin && !$isModerator) {
+            // For default level, user needs at least one permission
+            if (!$isAdmin && empty($userPermissions)) {
                 return response()->json(['error' => 'You do not have permission to access this resource'], 403);
             }
 
             $request->setUserResolver(function () use ($user) {
                 return $user;
             });
-            $request->attributes->set('admin_role', $isAdmin ? 'admin' : 'moderator');
+            $request->attributes->set('admin_role', $isAdmin ? 'admin' : 'custom');
+            $request->attributes->set('user_permissions', $isAdmin ? ['*'] : $userPermissions);
 
             return $next($request);
 

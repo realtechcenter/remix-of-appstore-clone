@@ -13,11 +13,13 @@ interface AuthContextType {
   user: User | null;
   token: string | null;
   loading: boolean;
+  permissions: string[];
   signUp: (email: string, password: string, fullName?: string) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   updateUser: (userData: Partial<User>) => void;
   hasRole: (role: string) => boolean;
+  hasPermission: (permission: string) => boolean;
   isAdmin: boolean;
   isModerator: boolean;
   isAdminOrModerator: boolean;
@@ -39,22 +41,46 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [permissions, setPermissions] = useState<string[]>([]);
 
   useEffect(() => {
-    // Check for existing token
     const storedToken = localStorage.getItem('auth_token');
     const storedUser = localStorage.getItem('auth_user');
     
     if (storedToken && storedUser) {
       setToken(storedToken);
       setUser(JSON.parse(storedUser));
-      
-      // Verify token is still valid
       verifyToken(storedToken);
     } else {
       setLoading(false);
     }
   }, []);
+
+  // Fetch permissions when user/token changes
+  useEffect(() => {
+    if (token && user) {
+      fetchPermissions(token);
+    } else {
+      setPermissions([]);
+    }
+  }, [token, user?.id]);
+
+  const fetchPermissions = async (authToken: string) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/users/permissions`, {
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${authToken}`,
+        },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setPermissions(data.permissions || []);
+      }
+    } catch (error) {
+      console.error('Failed to fetch permissions:', error);
+    }
+  };
 
   const verifyToken = async (authToken: string) => {
     try {
@@ -68,26 +94,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
         
-        // Handle banned/suspended users - store info for Auth page to display
         if (response.status === 403 && (data.status === 'banned' || data.status === 'suspended')) {
           localStorage.removeItem('auth_token');
           localStorage.removeItem('auth_user');
           setToken(null);
           setUser(null);
-          
-          // Store the ban info to show dialog on login page
           sessionStorage.setItem('ban_info', JSON.stringify({
             status: data.status,
             reason: data.reason,
             suspendedUntil: data.suspended_until,
           }));
-          
-          // Redirect to auth page to show the ban dialog
           window.location.href = '/auth';
           return;
         }
         
-        // Token invalid, clear storage
         localStorage.removeItem('auth_token');
         localStorage.removeItem('auth_user');
         setToken(null);
@@ -103,7 +123,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     } catch (error) {
       console.error('Token verification failed:', error);
-      // Keep existing user data on network error
     } finally {
       setLoading(false);
     }
@@ -113,15 +132,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        body: JSON.stringify({
-          email,
-          password,
-          full_name: fullName,
-        }),
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify({ email, password, full_name: fullName }),
       });
       
       const data = await response.json();
@@ -130,7 +142,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         return { error: new Error(data.error || data.message || 'Registration failed') };
       }
       
-      // Save token and user
       localStorage.setItem('auth_token', data.token);
       localStorage.setItem('auth_user', JSON.stringify(data.user));
       setToken(data.token);
@@ -146,19 +157,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       const response = await fetch(`${API_BASE_URL}/api/users/login`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        body: JSON.stringify({
-          email,
-          password,
-        }),
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify({ email, password }),
       });
       
       const data = await response.json();
       
-      // Handle banned/suspended users
       if (response.status === 403 && (data.status === 'banned' || data.status === 'suspended')) {
         return { error: new Error(data.error || 'Your account has been restricted.') };
       }
@@ -167,7 +171,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         return { error: new Error(data.error || data.message || 'Login failed') };
       }
       
-      // Save token and user
       localStorage.setItem('auth_token', data.token);
       localStorage.setItem('auth_user', JSON.stringify(data.user));
       setToken(data.token);
@@ -184,6 +187,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     localStorage.removeItem('auth_user');
     setToken(null);
     setUser(null);
+    setPermissions([]);
   };
 
   const updateUser = (userData: Partial<User>) => {
@@ -194,25 +198,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const hasRole = (role: string) => {
-    return user?.roles?.includes(role) || false;
-  };
+  const hasRole = (role: string) => user?.roles?.includes(role) || false;
+  const hasPermission = (permission: string) => permissions.includes(permission);
 
   const isAdmin = hasRole('admin');
   const isModerator = hasRole('moderator');
-  const isAdminOrModerator = isAdmin || isModerator;
+  const isAdminOrModerator = isAdmin || isModerator || permissions.length > 0;
 
   return (
     <AuthContext.Provider value={{ 
-      user, token, loading, signUp, signIn, signOut, updateUser,
-      hasRole, isAdmin, isModerator, isAdminOrModerator
+      user, token, loading, permissions, signUp, signIn, signOut, updateUser,
+      hasRole, hasPermission, isAdmin, isModerator, isAdminOrModerator
     }}>
       {children}
     </AuthContext.Provider>
   );
 };
 
-// Helper to get auth header
 export const getAuthHeader = () => {
   const token = localStorage.getItem('auth_token');
   return token ? { 'Authorization': `Bearer ${token}` } : {};
