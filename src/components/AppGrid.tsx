@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
 import { AppCard } from "./AppCard";
@@ -62,7 +62,7 @@ export const AppGrid = ({
         newParams.set('appPage', String(newPage));
       }
       return newParams;
-    }, { replace: true });
+    });
   }, [currentPage, setSearchParams]);
   
   const { data, isLoading, error, isFetching } = usePaginatedApps({
@@ -88,10 +88,16 @@ export const AppGrid = ({
     );
   }, [orders]);
 
-  // Reset to page 1 when search or filters change
+  // Reset to page 1 when search or filters change (but not on initial mount)
+  const prevSearchRef = useRef(searchQuery);
+  const prevFiltersRef = useRef(filters);
   useEffect(() => {
-    if (currentPage !== 1) {
-      setCurrentPage(1);
+    if (prevSearchRef.current !== searchQuery || prevFiltersRef.current !== filters) {
+      prevSearchRef.current = searchQuery;
+      prevFiltersRef.current = filters;
+      if (currentPage !== 1) {
+        setCurrentPage(1);
+      }
     }
   }, [searchQuery, filters]);
 

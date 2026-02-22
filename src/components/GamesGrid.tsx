@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useCallback } from "react";
+import { useEffect, useMemo, useCallback, useRef } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
 import { AppCard } from "./AppCard";
@@ -51,7 +51,7 @@ export const GamesGrid = ({ searchQuery = "", itemsPerPage = 10 }: GamesGridProp
         newParams.set('gamePage', String(newPage));
       }
       return newParams;
-    }, { replace: true });
+    });
   }, [currentPage, setSearchParams]);
   
   const { data, isLoading, error, isFetching } = usePaginatedApps({
@@ -74,10 +74,14 @@ export const GamesGrid = ({ searchQuery = "", itemsPerPage = 10 }: GamesGridProp
     );
   }, [orders]);
 
-  // Reset to page 1 when search changes
+  // Reset to page 1 when search changes (but not on initial mount)
+  const prevSearchRef = useRef(searchQuery);
   useEffect(() => {
-    if (currentPage !== 1) {
-      setCurrentPage(1);
+    if (prevSearchRef.current !== searchQuery) {
+      prevSearchRef.current = searchQuery;
+      if (currentPage !== 1) {
+        setCurrentPage(1);
+      }
     }
   }, [searchQuery]);
 
