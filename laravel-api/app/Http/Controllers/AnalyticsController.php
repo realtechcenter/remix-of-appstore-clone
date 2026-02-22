@@ -11,16 +11,28 @@ class AnalyticsController extends Controller
 {
     public function dashboard(Request $request)
     {
-        $days = $request->input('days', 30);
-        $startDate = now()->subDays($days);
+        // Support from/to date range or fallback to days parameter
+        $from = $request->input('from');
+        $to = $request->input('to');
+
+        if ($from && $to) {
+            $startDate = \Carbon\Carbon::parse($from)->startOfDay();
+            $endDate = \Carbon\Carbon::parse($to)->endOfDay();
+        } else {
+            $days = $request->input('days', 30);
+            $startDate = now()->subDays($days)->startOfDay();
+            $endDate = now()->endOfDay();
+        }
 
         // Get order statistics
-        $orders = Order::where('created_at', '>=', $startDate)->get();
+        $orders = Order::where('created_at', '>=', $startDate)
+            ->where('created_at', '<=', $endDate)
+            ->get();
         $paidOrders = $orders->where('status', 'paid');
 
         // Get user statistics
         $totalUsers = User::count();
-        $newUsers = User::where('created_at', '>=', $startDate)->count();
+        $newUsers = User::where('created_at', '>=', $startDate)->where('created_at', '<=', $endDate)->count();
 
         // Calculate stats
         $stats = [
@@ -36,6 +48,7 @@ class AnalyticsController extends Controller
         // Revenue by date
         $revenueByDate = Order::where('status', 'paid')
             ->where('created_at', '>=', $startDate)
+            ->where('created_at', '<=', $endDate)
             ->select(
                 DB::raw('DATE(created_at) as date'),
                 DB::raw('SUM(amount) as revenue'),
@@ -47,6 +60,7 @@ class AnalyticsController extends Controller
 
         // Orders by status
         $ordersByStatus = Order::where('created_at', '>=', $startDate)
+            ->where('created_at', '<=', $endDate)
             ->select('status', DB::raw('COUNT(*) as count'))
             ->groupBy('status')
             ->get();
@@ -60,6 +74,7 @@ class AnalyticsController extends Controller
         // Top apps by revenue
         $topApps = Order::where('status', 'paid')
             ->where('created_at', '>=', $startDate)
+            ->where('created_at', '<=', $endDate)
             ->select('app_id', 'app_name', DB::raw('SUM(amount) as revenue'), DB::raw('COUNT(*) as sales'))
             ->groupBy('app_id', 'app_name')
             ->orderByDesc('revenue')
