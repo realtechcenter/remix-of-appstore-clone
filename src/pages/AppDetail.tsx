@@ -548,10 +548,15 @@ const AppDetail = () => {
   const fromPath = (location.state as { from?: string })?.from || '/';
   
   const handleBack = () => {
-    // Use browser back if we have history, otherwise navigate to stored path
-    if (window.history.length > 2) {
-      navigate(-1);
-    } else {
+    // Always try browser back first, with a fallback
+    // Set a flag and use navigate(-1); if it doesn't navigate away, use fromPath
+    try {
+      if (window.history.state && window.history.state.idx > 0) {
+        navigate(-1);
+      } else {
+        navigate(fromPath);
+      }
+    } catch {
       navigate(fromPath);
     }
   };
@@ -642,12 +647,11 @@ const AppDetail = () => {
         {/* Header */}
         <header className="sticky top-0 z-40 glass py-3 sm:py-4 px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-2 sm:gap-4">
-            {/* Back button on mobile */}
+            {/* Back button */}
             <Button 
               variant="ghost" 
               size="icon" 
               onClick={handleBack}
-              className="lg:hidden"
             >
               <ArrowLeft className="w-5 h-5" />
             </Button>
