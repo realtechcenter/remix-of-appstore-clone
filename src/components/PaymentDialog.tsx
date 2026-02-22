@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Loader2, CheckCircle, XCircle, Download, PartyPopper, Save, Tag, Smartphone, AlertTriangle } from 'lucide-react';
+import { Loader2, CheckCircle, X, Download, PartyPopper, Save, Tag, AlertTriangle } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
@@ -22,21 +22,19 @@ interface PaymentDialogProps {
   onPaymentSuccess: () => void;
 }
 
-// KHQR Logo Component
 const KHQRLogo = () => (
   <img src="https://macsofy.com/images/khqr-icon.svg" alt="KHQR" className="h-4" />
 );
 
-// Dollar Symbol Component for QR center
 const DollarSymbol = () => (
   <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-    <div className="w-8 h-8 bg-gray-800 rounded-full flex items-center justify-center shadow-lg border-2 border-white">
-      <span className="text-white text-sm font-bold">$</span>
+    <div className="w-7 h-7 bg-gray-800 rounded-full flex items-center justify-center shadow-md border-2 border-white">
+      <span className="text-white text-xs font-bold">$</span>
     </div>
   </div>
 );
 
-const COUNTDOWN_SECONDS = 3 * 60; // 3 minutes
+const COUNTDOWN_SECONDS = 3 * 60;
 
 export const PaymentDialog = ({
   open,
@@ -80,29 +78,18 @@ export const PaymentDialog = ({
     };
   }, [open, user]);
 
-  // Countdown timer — only ticks when verifying
   useEffect(() => {
     if (status !== 'ready' && status !== 'scanned') return;
-
-    if (countdown <= 0) {
-      setStatus('error');
-      return;
-    }
-
-    const timer = setInterval(() => {
-      setCountdown(prev => prev - 1);
-    }, 1000);
-
+    if (countdown <= 0) { setStatus('error'); return; }
+    const timer = setInterval(() => setCountdown(prev => prev - 1), 1000);
     return () => clearInterval(timer);
   }, [status, countdown]);
 
-  // Poll for payment verification
   useEffect(() => {
     if ((status === 'ready' || status === 'scanned') && orderId && md5) {
       const interval = setInterval(async () => {
         try {
           const result = await verifyPayment(orderId, md5);
-
           if (result.status === 'paid' || result.status === 'approved') {
             setStatus('success');
             clearInterval(interval);
@@ -116,7 +103,6 @@ export const PaymentDialog = ({
           console.error('Verification error:', err);
         }
       }, 5000);
-
       return () => clearInterval(interval);
     }
   }, [status, orderId, md5, appId, language]);
@@ -124,37 +110,15 @@ export const PaymentDialog = ({
   const initializePayment = async () => {
     try {
       setStatus('loading');
-      
-      const order = await createOrder.mutateAsync({
-        appId,
-        appName,
-        amount: finalPrice,
-      });
-
+      const order = await createOrder.mutateAsync({ appId, appName, amount: finalPrice });
       setOrderId(order.id);
-          
       if (coupon) {
-        try {
-          await couponsApi.apply(coupon.id, order.id, priceNum);
-        } catch (err) {
-          console.error('Failed to apply coupon:', err);
-        }
+        try { await couponsApi.apply(coupon.id, order.id, priceNum); } catch (err) { console.error('Failed to apply coupon:', err); }
       }
-
       const qrData = await generateKHQR(order.id, finalPrice);
-
       setMd5(qrData.md5);
       setQrString(qrData.qr_string);
-
-      const qrUrl = await QRCode.toDataURL(qrData.qr_string, {
-        width: 180,
-        margin: 1,
-        color: {
-          dark: '#000000',
-          light: '#ffffff',
-        },
-      });
-
+      const qrUrl = await QRCode.toDataURL(qrData.qr_string, { width: 160, margin: 1, color: { dark: '#000000', light: '#ffffff' } });
       setQrDataUrl(qrUrl);
       setStatus('ready');
     } catch (err) {
@@ -164,30 +128,20 @@ export const PaymentDialog = ({
     }
   };
 
-  // Auto-open ABA Mobile on mobile devices
   useEffect(() => {
     if (!qrString || status !== 'ready') return;
-
     const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent || '');
     const abaUrl = `abamobilebank://ababank.com?type=payway&qrcode=${encodeURIComponent(qrString)}`;
-
     if (isMobile) {
       const t = setTimeout(() => {
-        try {
-          toast.message(language === 'km' ? 'កំពុងផ្ដល់ទៅ ABA Mobile...' : 'Opening ABA Mobile...');
-          window.location.href = abaUrl;
-        } catch (err) {
-          // ignore in test environments
-        }
+        try { toast.message(language === 'km' ? 'កំពុងផ្ដល់ទៅ ABA Mobile...' : 'Opening ABA Mobile...'); window.location.href = abaUrl; } catch (err) {}
       }, 400);
-
       return () => clearTimeout(t);
     }
   }, [qrString, status, language]);
 
   const handleSaveQR = () => {
     if (!qrDataUrl) return;
-    
     const link = document.createElement('a');
     link.download = `KHQR-${appName}-${finalPrice.toFixed(2)}USD.png`;
     link.href = qrDataUrl;
@@ -195,7 +149,7 @@ export const PaymentDialog = ({
     toast.success(language === 'km' ? 'QR Code បានរក្សាទុក!' : 'QR Code saved!');
   };
 
-  const formatAmount = (amount: number) => amount.toFixed(2);
+  const fmt = (n: number) => n.toFixed(2);
 
   const formatCountdown = (secs: number) => {
     const m = Math.floor(secs / 60).toString().padStart(2, '0');
@@ -203,192 +157,156 @@ export const PaymentDialog = ({
     return `${m}:${s}`;
   };
 
-  // Intercept close attempts while payment is pending
   const handleOpenChange = (nextOpen: boolean) => {
-    if (!nextOpen && (status === 'ready' || status === 'scanned')) {
-      setShowCloseWarning(true);
-      return;
-    }
+    if (!nextOpen && (status === 'ready' || status === 'scanned')) { setShowCloseWarning(true); return; }
     onOpenChange(nextOpen);
   };
 
-  const handleConfirmClose = () => {
-    setShowCloseWarning(false);
-    onOpenChange(false);
-  };
+  const handleConfirmClose = () => { setShowCloseWarning(false); onOpenChange(false); };
 
-  const isVerifying = status === 'ready' || status === 'scanned';
   const countdownUrgent = countdown <= 60;
 
   return (
     <>
       <Dialog open={open} onOpenChange={handleOpenChange}>
-        <DialogContent className="max-w-[200px] p-0 overflow-hidden gap-0 [&>button]:hidden">
-          {/* Visible Header with title + close button */}
-          <DialogHeader className="flex flex-row items-center justify-between px-4 py-3 border-b border-border">
-            <DialogTitle className="text-sm font-semibold">
+        <DialogContent className="max-w-[300px] p-0 overflow-hidden gap-0 rounded-2xl [&>button]:hidden">
+          {/* Header */}
+          <DialogHeader className="flex flex-row items-center justify-between px-3 py-2.5 border-b border-border/50">
+            <DialogTitle className="text-[13px] font-semibold">
               {language === 'km' ? 'ការ​បង់​ប្រាក់' : 'Payment'}
             </DialogTitle>
             <button
               onClick={() => handleOpenChange(false)}
-              className="rounded-sm opacity-70 hover:opacity-100 transition-opacity"
+              className="w-6 h-6 rounded-full flex items-center justify-center hover:bg-muted transition-colors"
             >
-              <XCircle className="w-5 h-5" />
+              <X className="w-3.5 h-3.5 text-muted-foreground" />
               <span className="sr-only">Close</span>
             </button>
           </DialogHeader>
           
+          {/* Loading */}
           {status === 'loading' && (
-            <div className="p-6 flex flex-col items-center gap-3">
-              <Loader2 className="w-8 h-8 animate-spin text-red-500" />
-              <p className="text-sm text-muted-foreground">
+            <div className="py-10 flex flex-col items-center gap-2.5">
+              <Loader2 className="w-6 h-6 animate-spin text-[#E21A1A]" />
+              <p className="text-xs text-muted-foreground">
                 {language === 'km' ? 'កំពុង​បង្កើត QR Code...' : 'Generating QR Code...'}
               </p>
             </div>
           )}
 
+          {/* Ready — QR visible */}
           {status === 'ready' && (
             <div className="flex flex-col">
               {/* KHQR Card */}
-              <div ref={qrRef} className="bg-white rounded-xl overflow-hidden shadow-sm mx-4 mt-4 border border-gray-200">
-                {/* Red Header with KHQR */}
-                <div className="bg-[#E21A1A] px-4 py-2 flex justify-center items-center">
+              <div ref={qrRef} className="bg-white rounded-xl overflow-hidden mx-3 mt-3 border border-gray-100 shadow-sm">
+                {/* Red banner */}
+                <div className="bg-[#E21A1A] py-1.5 flex justify-center">
                   <KHQRLogo />
                 </div>
                 
-                {/* White Content Area */}
-                <div className="px-4 py-3">
-                  <p className="text-gray-700 text-sm font-medium truncate">{appName}</p>
-                  
-                  <div className="flex items-baseline gap-1.5 mt-0.5">
-                    {coupon && discountAmount > 0 ? (
-                      <>
-                        <span className="text-lg text-gray-400 line-through">
-                          {formatAmount(priceNum)}
-                        </span>
-                        <span className="text-2xl font-bold text-gray-900">
-                          {formatAmount(finalPrice)}
-                        </span>
-                      </>
-                    ) : (
-                      <span className="text-2xl font-bold text-gray-900">
-                        {formatAmount(finalPrice)}
-                      </span>
+                {/* Info */}
+                <div className="px-3 py-2">
+                  <p className="text-gray-700 text-xs font-medium truncate">{appName}</p>
+                  <div className="flex items-baseline gap-1 mt-0.5">
+                    {coupon && discountAmount > 0 && (
+                      <span className="text-sm text-gray-400 line-through">{fmt(priceNum)}</span>
                     )}
-                    <span className="text-gray-500 text-sm font-medium">USD</span>
+                    <span className="text-xl font-bold text-gray-900">{fmt(finalPrice)}</span>
+                    <span className="text-gray-500 text-[11px] font-medium">USD</span>
                   </div>
-                  
                   {coupon && (
-                    <div className="flex items-center gap-1 mt-1 text-xs text-green-600">
-                      <Tag className="w-3 h-3" />
+                    <div className="flex items-center gap-1 mt-0.5 text-[10px] text-green-600">
+                      <Tag className="w-2.5 h-2.5" />
                       <span>{coupon.coupon.code} (-${discountAmount.toFixed(2)})</span>
                     </div>
                   )}
                 </div>
 
-                <div className="px-3">
-                  <div className="border-t border-dashed border-gray-300"></div>
-                </div>
+                <div className="mx-3"><div className="border-t border-dashed border-gray-200" /></div>
 
-                {/* QR Code Section */}
-                <div className="p-4 flex flex-col items-center gap-3">
+                {/* QR */}
+                <div className="p-3 flex flex-col items-center gap-2">
                   <div className="relative">
-                    {qrDataUrl && (
-                      <img 
-                        src={qrDataUrl} 
-                        alt="KHQR Code" 
-                        className="w-44 h-44"
-                      />
-                    )}
+                    {qrDataUrl && <img src={qrDataUrl} alt="KHQR Code" className="w-36 h-36" />}
                     <DollarSymbol />
                   </div>
-                  <img
-                    src="https://macsofy.com/images/payment_icons.png"
-                    alt="Payment icons"
-                    className="w-full object-contain"
-                  />
+                  <img src="https://macsofy.com/images/payment_icons.png" alt="Payment icons" className="w-full max-w-[200px] object-contain opacity-80" />
                 </div>
               </div>
 
-              {/* Countdown + Instructions */}
-              <div className="flex flex-col items-center gap-1 mt-3 px-4">
-                <div className="flex items-center gap-2">
-                  <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
-                  <span className="text-xs text-muted-foreground">
-                    {language === 'km' ? 'កំពុងផ្ទៀងផ្ទាត់' : 'Verifying'}
-                  </span>
-                  <span className={`text-sm font-mono font-bold ${countdownUrgent ? 'text-red-500 animate-pulse' : 'text-primary'}`}>
-                    {formatCountdown(countdown)}
-                  </span>
-                </div>
-                <p className="text-muted-foreground text-xs text-center">
-                  {language === 'km' 
-                    ? 'ស្កេនជាមួយកម្មវិធីធនាគារដែលគាំទ្របាគង'
-                    : 'Scan with any Bakong-supported banking app'
-                  }
-                </p>
+              {/* Status bar */}
+              <div className="flex items-center justify-center gap-1.5 mt-2.5 px-3">
+                <Loader2 className="w-3 h-3 animate-spin text-muted-foreground" />
+                <span className="text-[11px] text-muted-foreground">
+                  {language === 'km' ? 'កំពុងផ្ទៀងផ្ទាត់' : 'Verifying'}
+                </span>
+                <span className={`text-xs font-mono font-bold ${countdownUrgent ? 'text-[#E21A1A] animate-pulse' : 'text-muted-foreground'}`}>
+                  {formatCountdown(countdown)}
+                </span>
               </div>
+              <p className="text-muted-foreground text-[10px] text-center mt-0.5 px-3">
+                {language === 'km' 
+                  ? 'ស្កេនជាមួយកម្មវិធីធនាគារដែលគាំទ្របាគង'
+                  : 'Scan with any Bakong-supported banking app'
+                }
+              </p>
 
-              {/* Action Buttons */}
-              <div className="p-4 space-y-2">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={handleSaveQR}
-                  className="w-full gap-2"
-                >
-                  <Save className="w-4 h-4" />
-                  {language === 'km' ? 'រក្សាទុក QR Code' : 'Save QR Code'}
+              {/* Save button */}
+              <div className="p-3 pt-2">
+                <Button variant="outline" size="sm" onClick={handleSaveQR} className="w-full gap-1.5 h-8 text-xs">
+                  <Save className="w-3.5 h-3.5" />
+                  {language === 'km' ? 'រក្សាទុក QR' : 'Save QR'}
                 </Button>
-
               </div>
             </div>
           )}
 
+          {/* Scanned */}
           {status === 'scanned' && (
-            <div className="p-6 flex flex-col items-center gap-3">
-              <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
-                <Loader2 className="w-6 h-6 animate-spin text-blue-500" />
+            <div className="py-8 px-4 flex flex-col items-center gap-2.5">
+              <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center">
+                <Loader2 className="w-5 h-5 animate-spin text-blue-500" />
               </div>
-              <p className="text-sm font-semibold text-blue-600">
-                {language === 'km' ? 'QR បានស្កេន!' : 'ABA Bank QR Scanned!'}
+              <p className="text-xs font-semibold text-blue-600">
+                {language === 'km' ? 'QR បានស្កេន!' : 'QR Scanned!'}
               </p>
-              <p className="text-xs text-muted-foreground text-center">
+              <p className="text-[10px] text-muted-foreground text-center leading-relaxed">
                 {language === 'km' 
                   ? 'សូមបញ្ជាក់ការទូទាត់នៅក្នុងកម្មវិធីធនាគាររបស់អ្នក'
-                  : 'Please confirm the payment in your banking app'
+                  : 'Confirm the payment in your banking app'
                 }
               </p>
-              {/* Countdown for scanned state */}
-              <span className={`text-sm font-mono font-bold ${countdownUrgent ? 'text-red-500 animate-pulse' : 'text-muted-foreground'}`}>
+              <span className={`text-xs font-mono font-bold ${countdownUrgent ? 'text-[#E21A1A] animate-pulse' : 'text-muted-foreground'}`}>
                 {formatCountdown(countdown)}
               </span>
             </div>
           )}
 
+          {/* Verifying */}
           {status === 'verifying' && (
-            <div className="p-6 flex flex-col items-center gap-3">
-              <Loader2 className="w-8 h-8 animate-spin text-red-500" />
-              <p className="text-sm text-muted-foreground">
+            <div className="py-10 flex flex-col items-center gap-2.5">
+              <Loader2 className="w-6 h-6 animate-spin text-[#E21A1A]" />
+              <p className="text-xs text-muted-foreground">
                 {language === 'km' ? 'ការ​ផ្ទៀងផ្ទាត់​ការ​បង់ប្រាក់...' : 'Verifying payment...'}
               </p>
             </div>
           )}
 
+          {/* Success */}
           {status === 'success' && (
-            <div className="p-6 flex flex-col items-center gap-4">
+            <div className="py-6 px-4 flex flex-col items-center gap-3">
               <div className="relative">
-                <div className="w-14 h-14 rounded-full bg-green-100 flex items-center justify-center">
-                  <CheckCircle className="w-8 h-8 text-green-500" />
+                <div className="w-12 h-12 rounded-full bg-green-50 flex items-center justify-center">
+                  <CheckCircle className="w-7 h-7 text-green-500" />
                 </div>
-                <PartyPopper className="w-6 h-6 text-yellow-500 absolute -top-1 -right-1 animate-bounce" />
+                <PartyPopper className="w-5 h-5 text-yellow-500 absolute -top-1 -right-1 animate-bounce" />
               </div>
               
-              <div className="text-center space-y-1">
-                <p className="text-base font-bold text-green-500">
+              <div className="text-center space-y-0.5">
+                <p className="text-sm font-bold text-green-500">
                   {language === 'km' ? 'ការបង់ប្រាក់បានជោគជ័យ!' : 'Payment Successful!'}
                 </p>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-[10px] text-muted-foreground">
                   {language === 'km' 
                     ? `អរគុណសម្រាប់ការទិញ ${appName}!`
                     : `Thank you for purchasing ${appName}!`
@@ -396,36 +314,34 @@ export const PaymentDialog = ({
                 </p>
               </div>
 
-              <div className="w-full space-y-2">
+              <div className="w-full space-y-1.5 mt-1">
                 {downloadUrl && (
                   <Button 
-                    className="w-full gap-2 bg-[#E21A1A] hover:bg-[#C41515]" 
+                    className="w-full gap-1.5 bg-[#E21A1A] hover:bg-[#C41515] h-8 text-xs" 
                     size="sm"
                     onClick={() => window.open(downloadUrl, '_blank')}
                   >
-                    <Download className="w-4 h-4" />
+                    <Download className="w-3.5 h-3.5" />
                     {language === 'km' ? 'ទាញយកឥឡូវ' : 'Download Now'}
                   </Button>
                 )}
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  className="w-full"
-                  onClick={() => onOpenChange(false)}
-                >
+                <Button variant="outline" size="sm" className="w-full h-8 text-xs" onClick={() => onOpenChange(false)}>
                   {language === 'km' ? 'បិទ' : 'Close'}
                 </Button>
               </div>
             </div>
           )}
 
+          {/* Error */}
           {status === 'error' && (
-            <div className="p-6 flex flex-col items-center gap-3">
-              <XCircle className="w-12 h-12 text-red-500" />
-              <p className="text-sm font-semibold text-red-500">
+            <div className="py-8 px-4 flex flex-col items-center gap-2.5">
+              <div className="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center">
+                <X className="w-5 h-5 text-[#E21A1A]" />
+              </div>
+              <p className="text-xs font-semibold text-[#E21A1A]">
                 {language === 'km' ? 'ការ​បង់​ប្រាក់​បាន​បរាជ័យ!' : 'Payment Failed'}
               </p>
-              <Button onClick={initializePayment} size="sm" className="bg-[#E21A1A] hover:bg-[#C41515]">
+              <Button onClick={initializePayment} size="sm" className="bg-[#E21A1A] hover:bg-[#C41515] h-8 text-xs">
                 {language === 'km' ? 'ព្យាយាម​ម្តង​ទៀត' : 'Try Again'}
               </Button>
             </div>
@@ -433,30 +349,27 @@ export const PaymentDialog = ({
         </DialogContent>
       </Dialog>
 
-      {/* Close Warning Dialog */}
+      {/* Close Warning */}
       <AlertDialog open={showCloseWarning} onOpenChange={setShowCloseWarning}>
-        <AlertDialogContent>
+        <AlertDialogContent className="max-w-[280px] rounded-2xl">
           <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
-              <AlertTriangle className="w-5 h-5 text-yellow-500" />
+            <AlertDialogTitle className="flex items-center gap-2 text-sm">
+              <AlertTriangle className="w-4 h-4 text-yellow-500" />
               {language === 'km' ? 'បិទការទូទាត់?' : 'Cancel Payment?'}
             </AlertDialogTitle>
-            <AlertDialogDescription>
+            <AlertDialogDescription className="text-xs">
               {language === 'km'
-                ? 'ប្រសិនបើអ្នកបិទ ការផ្ទៀងផ្ទាត់ការទូទាត់នឹងឈប់។ តើអ្នកប្រាកដថាចង់បិទមែនទេ?'
-                : 'If you close this dialog, payment verification will stop. Are you sure you want to cancel?'
+                ? 'ប្រសិនបើអ្នកបិទ ការផ្ទៀងផ្ទាត់ការទូទាត់នឹងឈប់។'
+                : 'Payment verification will stop if you close this.'
               }
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>
-              {language === 'km' ? 'បន្ត' : 'Continue Paying'}
+          <AlertDialogFooter className="gap-2">
+            <AlertDialogCancel className="h-8 text-xs">
+              {language === 'km' ? 'បន្ត' : 'Keep Paying'}
             </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleConfirmClose}
-              className="bg-destructive hover:bg-destructive/90"
-            >
-              {language === 'km' ? 'បិទ' : 'Close Anyway'}
+            <AlertDialogAction onClick={handleConfirmClose} className="bg-destructive hover:bg-destructive/90 h-8 text-xs">
+              {language === 'km' ? 'បិទ' : 'Close'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
