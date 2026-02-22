@@ -52,7 +52,7 @@ const DialogContent = React.forwardRef<
 DialogContent.displayName = DialogPrimitive.Content.displayName;
 
 const DialogHeader = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
-  <div className={cn("sticky top-0 z-10 bg-background -mx-6 px-6 -mt-6 pt-6 pb-4 border-b border-border/60 flex flex-col space-y-1.5 text-center sm:text-left", className)} {...props} />
+  <div className={cn("sticky top-0 z-10 bg-background pb-4 flex flex-col space-y-1.5 text-center sm:text-left", className)} {...props} />
 );
 DialogHeader.displayName = "DialogHeader";
 
