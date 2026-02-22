@@ -126,15 +126,13 @@ const AppForm = ({ app, onSave, onCancel }: AppFormProps) => {
           <Input id="name_km" value={formData.name_km} onChange={(e) => setFormData({ ...formData, name_km: e.target.value })} className="mt-1.5" />
         </div>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <Label htmlFor="description">Description (English)</Label>
-          <RichTextEditor value={formData.description || ''} onChange={(html) => setFormData({ ...formData, description: html })} minHeight="120px" className="mt-1.5" />
-        </div>
-        <div>
-          <Label htmlFor="description_km">ការពិពណ៌នា (ខ្មែរ)</Label>
-          <RichTextEditor value={formData.description_km || ''} onChange={(html) => setFormData({ ...formData, description_km: html })} minHeight="120px" className="mt-1.5" />
-        </div>
+      <div>
+        <Label htmlFor="description">Description (English)</Label>
+        <RichTextEditor value={formData.description || ''} onChange={(html) => setFormData({ ...formData, description: html })} minHeight="150px" className="mt-1.5" />
+      </div>
+      <div>
+        <Label htmlFor="description_km">ការពិពណ៌នា (ខ្មែរ)</Label>
+        <RichTextEditor value={formData.description_km || ''} onChange={(html) => setFormData({ ...formData, description_km: html })} minHeight="150px" className="mt-1.5" />
       </div>
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div>
