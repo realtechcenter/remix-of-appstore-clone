@@ -548,16 +548,14 @@ const AppDetail = () => {
   const fromPath = (location.state as { from?: string })?.from || '/';
   
   const handleBack = () => {
-    // Always try browser back first, with a fallback
-    // Set a flag and use navigate(-1); if it doesn't navigate away, use fromPath
-    try {
-      if (window.history.state && window.history.state.idx > 0) {
-        navigate(-1);
-      } else {
-        navigate(fromPath);
-      }
-    } catch {
+    // If we have a stored path with search params (e.g. /?appPage=2), use it
+    // This preserves pagination state
+    if (fromPath && fromPath !== '/') {
       navigate(fromPath);
+    } else if (window.history.state && window.history.state.idx > 0) {
+      navigate(-1);
+    } else {
+      navigate('/');
     }
   };
   
