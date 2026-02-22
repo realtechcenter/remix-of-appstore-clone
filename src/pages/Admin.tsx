@@ -395,28 +395,29 @@ interface NavItem {
   label: string;
   icon: React.ElementType;
   badge?: number;
-  adminOnly?: boolean; // Only visible to admin role
+  permission?: string; // Required permission to see this tab
 }
 
 const navItems: NavItem[] = [
-  { id: "analytics", label: "Analytics", icon: BarChart3, adminOnly: true },
-  { id: "apps", label: "Apps", icon: Package },
-  { id: "users", label: "Users", icon: Users, adminOnly: true },
-  { id: "payments", label: "Payments", icon: TrendingUp, adminOnly: true },
-  { id: "reviews", label: "Reviews", icon: Star },
-  { id: "roles", label: "Roles", icon: Shield, adminOnly: true },
-  { id: "notifications", label: "Notifications", icon: Bell },
-  { id: "activity", label: "Activity", icon: Activity },
-  { id: "status", label: "Ban / Suspend", icon: UserX, adminOnly: true },
-  { id: "coupons", label: "Coupons", icon: Tag, adminOnly: true },
-  { id: "settings", label: "Settings", icon: Settings2, adminOnly: true },
+  { id: "analytics", label: "Analytics", icon: BarChart3, permission: "analytics.view" },
+  { id: "apps", label: "Apps", icon: Package, permission: "apps.view" },
+  { id: "users", label: "Users", icon: Users, permission: "users.view" },
+  { id: "payments", label: "Payments", icon: TrendingUp, permission: "orders.view" },
+  { id: "reviews", label: "Reviews", icon: Star, permission: "reviews.manage" },
+  { id: "roles", label: "Roles", icon: Shield, permission: "roles.manage" },
+  { id: "notifications", label: "Notifications", icon: Bell, permission: "notifications.manage" },
+  { id: "activity", label: "Activity", icon: Activity, permission: "activity.view" },
+  { id: "status", label: "Ban / Suspend", icon: UserX, permission: "user_status.manage" },
+  { id: "coupons", label: "Coupons", icon: Tag, permission: "coupons.manage" },
+  { id: "settings", label: "Settings", icon: Settings2, permission: "settings.manage" },
 ];
 
 // ─── Apps Tab ─────────────────────────────────────────────────────────────────
 const AppsTab = () => {
-  const { isAdmin: isAuthAdmin } = useAuth();
+  const { isAdmin: isAuthAdmin, hasPermission } = useAuth();
   const isLegacyAdmin = authApi.isAuthenticated();
   const isAdmin = isAuthAdmin || isLegacyAdmin;
+  const canDelete = isAdmin || hasPermission('apps.delete');
   const [apps, setApps] = useState<App[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -592,7 +593,7 @@ const AppsTab = () => {
                       {editLoading ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> : <Edit className="w-3.5 h-3.5 mr-1.5" />}
                       {editLoading ? "Loading..." : "Edit"}
                     </Button>
-                    {isAdmin && (
+                    {canDelete && (
                       <Button variant="destructive" size="sm" onClick={() => handleDeleteApp(selectedApp)} disabled={deletingAppId === selectedApp.id}>
                         {deletingAppId === selectedApp.id ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5 mr-1.5" />}
                         {deletingAppId === selectedApp.id ? "Deleting..." : "Delete"}
@@ -654,7 +655,7 @@ const AppsTab = () => {
                               <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => { setEditingVersion(version); setShowVersionForm(true); }}>
                                 <Edit className="w-3.5 h-3.5" />
                               </Button>
-                              {isAdmin && (
+                              {canDelete && (
                                 <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-destructive hover:text-destructive" onClick={() => handleDeleteVersion(version)} disabled={deletingVersionId === version.id}>
                                   {deletingVersionId === version.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
                                 </Button>
@@ -725,15 +726,17 @@ const AppsTab = () => {
 // ─── Main Dashboard ───────────────────────────────────────────────────────────
 const AdminDashboard = () => {
   const navigate = useNavigate();
-  const { user, signOut, isAdmin: isAuthAdmin } = useAuth();
+  const { user, signOut, isAdmin: isAuthAdmin, hasPermission } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Legacy admin gets full admin access
   const isLegacyAdmin = authApi.isAuthenticated();
   const isAdmin = isAuthAdmin || isLegacyAdmin;
 
-  // Filter nav items based on role
-  const visibleNavItems = navItems.filter(item => !item.adminOnly || isAdmin);
+  // Filter nav items based on permissions (legacy admin & admin role see all)
+  const visibleNavItems = navItems.filter(item => 
+    isAdmin || !item.permission || hasPermission(item.permission)
+  );
   const [activeTab, setActiveTab] = useState<AdminTab>(visibleNavItems[0]?.id || "apps");
 
   const handleLogout = async () => {
@@ -855,19 +858,19 @@ const AdminDashboard = () => {
           </div>
         </header>
 
-        {/* Page Content */}
+        {/* Page Content - tabs are already filtered by visibleNavItems so no need for extra permission checks */}
         <main className="flex-1 p-4 sm:p-6 overflow-auto">
-          {activeTab === "analytics" && isAdmin && <AnalyticsDashboard />}
+          {activeTab === "analytics" && <AnalyticsDashboard />}
           {activeTab === "apps" && <AppsTab />}
-          {activeTab === "users" && isAdmin && <UserManagement />}
-          {activeTab === "payments" && isAdmin && <PaymentHistoryAdmin />}
+          {activeTab === "users" && <UserManagement />}
+          {activeTab === "payments" && <PaymentHistoryAdmin />}
           {activeTab === "reviews" && <AppReviewSystem />}
-          {activeTab === "roles" && isAdmin && <RoleManagement />}
+          {activeTab === "roles" && <RoleManagement />}
           {activeTab === "notifications" && <NotificationSystem />}
           {activeTab === "activity" && <ActivityLogs />}
-          {activeTab === "status" && isAdmin && <UserStatusManagement />}
-          {activeTab === "coupons" && isAdmin && <CouponManagement />}
-          {activeTab === "settings" && isAdmin && <SystemSettingsPanel />}
+          {activeTab === "status" && <UserStatusManagement />}
+          {activeTab === "coupons" && <CouponManagement />}
+          {activeTab === "settings" && <SystemSettingsPanel />}
         </main>
       </div>
     </div>

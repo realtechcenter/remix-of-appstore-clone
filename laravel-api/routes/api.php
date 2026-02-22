@@ -100,6 +100,12 @@ Route::middleware('auth.admin:admin_only')->group(function () {
     Route::post('/admin/roles', [RoleController::class, 'store']);
     Route::delete('/admin/roles', [RoleController::class, 'destroy']);
     
+    // Permissions management
+    Route::get('/admin/permissions', [RoleController::class, 'permissions']);
+    Route::post('/admin/permissions/role', [RoleController::class, 'createRole']);
+    Route::put('/admin/permissions/role', [RoleController::class, 'updateRolePermissions']);
+    Route::delete('/admin/permissions/role/{role}', [RoleController::class, 'deleteRole']);
+    
     // User status (ban/suspend)
     Route::get('/admin/user-status', [UserStatusController::class, 'index']);
     Route::post('/admin/user-status', [UserStatusController::class, 'update']);
@@ -126,6 +132,7 @@ Route::middleware('auth.user')->group(function () {
     Route::get('/users/me', [UserController::class, 'me']);
     Route::put('/users/profile', [UserController::class, 'updateProfile']);
     Route::post('/users/change-password', [UserController::class, 'changePassword']);
+    Route::get('/users/permissions', [RoleController::class, 'myPermissions']);
     Route::post('/users/upload-avatar', [UploadController::class, 'uploadAvatar']);
     
     Route::get('/orders', [OrderController::class, 'index']);
