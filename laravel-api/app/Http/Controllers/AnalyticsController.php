@@ -14,10 +14,22 @@ class AnalyticsController extends Controller
         // Support from/to date range or fallback to days parameter
         $from = $request->input('from');
         $to = $request->input('to');
+        $tzOffset = $request->input('tz_offset'); // e.g. "+07:00"
 
         if ($from && $to) {
-            $startDate = \Carbon\Carbon::parse($from)->startOfDay();
-            $endDate = \Carbon\Carbon::parse($to)->endOfDay();
+            // If timezone offset provided, convert from user's local timezone to UTC
+            if ($tzOffset) {
+                $tz = new \DateTimeZone($tzOffset);
+                $startDate = new \DateTime($from . ' 00:00:00', $tz);
+                $startDate->setTimezone(new \DateTimeZone('UTC'));
+                $endDate = new \DateTime($to . ' 23:59:59', $tz);
+                $endDate->setTimezone(new \DateTimeZone('UTC'));
+                $startDate = \Carbon\Carbon::instance($startDate);
+                $endDate = \Carbon\Carbon::instance($endDate);
+            } else {
+                $startDate = \Carbon\Carbon::parse($from)->startOfDay();
+                $endDate = \Carbon\Carbon::parse($to)->endOfDay();
+            }
         } else {
             $days = $request->input('days', 30);
             $startDate = now()->subDays($days)->startOfDay();

@@ -439,6 +439,11 @@ export const analyticsApi = {
     if (from && to) {
       params.set('from', from);
       params.set('to', to);
+      // Send timezone offset so server can interpret dates in user's local timezone
+      const offsetMinutes = new Date().getTimezoneOffset();
+      const offsetHours = -offsetMinutes / 60; // e.g. UTC+7 = 7
+      const sign = offsetHours >= 0 ? '+' : '-';
+      params.set('tz_offset', `${sign}${String(Math.abs(Math.floor(offsetHours))).padStart(2, '0')}:${String(Math.abs(offsetMinutes) % 60).padStart(2, '0')}`);
     } else {
       params.set('days', String(days));
     }
