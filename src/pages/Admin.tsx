@@ -134,7 +134,7 @@ const AppForm = ({ app, onSave, onCancel }: AppFormProps) => {
         <Label htmlFor="description_km">ការពិពណ៌នា (ខ្មែរ)</Label>
         <RichTextEditor value={formData.description_km || ''} onChange={(html) => setFormData({ ...formData, description_km: html })} minHeight="150px" className="mt-1.5" />
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <Label htmlFor="category">Category</Label>
           <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value as App["category"] })}>
