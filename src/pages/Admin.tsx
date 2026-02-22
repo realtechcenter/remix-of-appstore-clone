@@ -433,9 +433,12 @@ const AppsTab = () => {
 
   const handleSelectApp = async (app: App) => { setSelectedApp(app); await loadAppVersions(app.id); };
 
+  const [editLoading, setEditLoading] = useState(false);
   const handleEditApp = async (app: App) => {
+    setEditLoading(true);
     try { const full = await appsApi.getById(app.id, true); setEditingApp(full); }
     catch { setEditingApp(app); }
+    finally { setEditLoading(false); }
     setShowAppForm(true);
   };
 
@@ -563,8 +566,9 @@ const AppsTab = () => {
                     </div>
                   </div>
                   <div className="flex gap-2 shrink-0">
-                    <Button variant="outline" size="sm" onClick={() => handleEditApp(selectedApp)}>
-                      <Edit className="w-3.5 h-3.5 mr-1.5" /> Edit
+                    <Button variant="outline" size="sm" onClick={() => handleEditApp(selectedApp)} disabled={editLoading}>
+                      {editLoading ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> : <Edit className="w-3.5 h-3.5 mr-1.5" />}
+                      {editLoading ? "Loading..." : "Edit"}
                     </Button>
                     <Button variant="destructive" size="sm" onClick={() => handleDeleteApp(selectedApp)}>
                       <Trash2 className="w-3.5 h-3.5 mr-1.5" /> Delete
