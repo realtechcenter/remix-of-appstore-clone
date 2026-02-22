@@ -22,6 +22,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { PaymentDialog } from "@/components/PaymentDialog";
 import { CouponSuggestion } from "@/components/CouponSuggestion";
 import { useHasPurchased } from "@/hooks/useOrders";
+import { RichContent } from "@/components/RichTextEditor";
 
 const getGradientFromName = (name: string | undefined): string => {
   const gradients = [
@@ -165,9 +166,7 @@ const VersionItem = ({
         {/* Changelog */}
         {(version.changelog || version.changelog_km) && (
           <div className="p-3 bg-muted/20 rounded-lg border border-border/30">
-            <p className="text-sm text-muted-foreground">
-              {t(version.changelog_km, version.changelog)}
-            </p>
+            <RichContent html={t(version.changelog_km, version.changelog) || ''} className="text-sm text-muted-foreground" />
           </div>
         )}
         
@@ -982,9 +981,7 @@ const AppDetail = () => {
                     <div>
                       <h2 className="text-xl font-semibold mb-3">{translations.description}</h2>
                       <div className="w-16 h-1 bg-primary rounded-full mb-6" />
-                      <p className="text-muted-foreground leading-relaxed whitespace-pre-wrap text-base">
-                        {displayDescription}
-                      </p>
+                      <RichContent html={displayDescription} className="text-muted-foreground" />
                     </div>
                   </div>
                 )}
