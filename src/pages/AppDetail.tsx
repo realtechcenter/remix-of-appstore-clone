@@ -548,12 +548,10 @@ const AppDetail = () => {
   const fromPath = (location.state as { from?: string })?.from || '/';
   
   const handleBack = () => {
-    // If we have a stored path with search params (e.g. /?appPage=2), use it
-    // This preserves pagination state
-    if (fromPath && fromPath !== '/') {
-      navigate(fromPath);
-    } else if (window.history.state && window.history.state.idx > 0) {
-      navigate(-1);
+    // Navigate to the stored path which includes search params (e.g. /?appPage=2)
+    if (fromPath) {
+      const url = new URL(fromPath, window.location.origin);
+      navigate({ pathname: url.pathname, search: url.search });
     } else {
       navigate('/');
     }
