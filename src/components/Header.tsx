@@ -1,4 +1,4 @@
-import { Search, X, User, LogOut, ShoppingBag, Menu, Settings, CreditCard, ChevronDown } from "lucide-react";
+import { Search, X, User, LogOut, ShoppingBag, Menu, Settings, CreditCard, ChevronDown, Heart } from "lucide-react";
 import { useState } from "react";
 import { useLanguage, useTranslations } from "@/contexts/LanguageContext";
 import { Link, useNavigate } from "react-router-dom";
@@ -6,6 +6,7 @@ import { ThemeToggle } from "./ThemeToggle";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "./ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { NotificationBell } from "./NotificationBell";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -87,6 +88,19 @@ export const Header = ({ searchQuery, onSearchChange, onMenuToggle, isSidebarOpe
 
         {/* Theme Toggle */}
         <ThemeToggle />
+
+        {/* Wishlist */}
+        {user && (
+          <Link
+            to="/wishlist"
+            className="p-1.5 rounded-md hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <Heart className="w-4 h-4" />
+          </Link>
+        )}
+
+        {/* Notifications */}
+        {user && <NotificationBell />}
 
         {/* Language selector */}
         <div className="relative">

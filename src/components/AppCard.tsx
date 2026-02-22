@@ -1,6 +1,7 @@
-import { ArrowUp, Package, HardDrive, DollarSign, Download } from "lucide-react";
+import { ArrowUp, Package, HardDrive, DollarSign, Download, Heart } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useWishlist } from "@/hooks/useWishlist";
 import type { App } from "@/lib/api";
 
 interface AppCardProps {
@@ -46,6 +47,9 @@ export const AppCard = (props: AppCardProps) => {
   const { t, language } = useLanguage();
   const navigate = useNavigate();
   const location = useLocation();
+  const { toggle, isWishlisted } = useWishlist();
+
+  const appId = props.app?.id;
 
   const name = props.app?.name || props.name || "";
   const nameKm = props.app?.name_km || props.name_km;
@@ -102,6 +106,16 @@ export const AppCard = (props: AppCardProps) => {
         <div className="app-card-update-badge">
           <ArrowUp className="w-2.5 h-2.5 text-primary-foreground" />
         </div>
+      )}
+
+      {/* Wishlist heart */}
+      {appId && (
+        <button
+          onClick={(e) => { e.stopPropagation(); toggle(appId); }}
+          className="absolute top-1.5 left-1.5 z-10 p-1 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-150 hover:scale-110"
+        >
+          <Heart className={`w-3.5 h-3.5 transition-colors ${isWishlisted(appId) ? 'fill-destructive text-destructive' : 'text-muted-foreground/60 hover:text-destructive'}`} />
+        </button>
       )}
 
       <div className="flex flex-col items-center text-center gap-2">
