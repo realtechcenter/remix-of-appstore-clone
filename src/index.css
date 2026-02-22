@@ -15,36 +15,36 @@
     --popover: 0 0% 100%;
     --popover-foreground: 340 15% 9%;
 
-    /* ✦ Crimson Rose #E40046 */
-    --primary: 342 100% 45%;
+    /* ✦ Emerald Green #10B981 */
+    --primary: 160 84% 39%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 340 20% 95%;
-    --secondary-foreground: 340 15% 25%;
+    --secondary: 160 20% 95%;
+    --secondary-foreground: 160 15% 25%;
 
-    --muted: 340 10% 95%;
-    --muted-foreground: 340 8% 48%;
+    --muted: 160 10% 95%;
+    --muted-foreground: 160 8% 48%;
 
-    --accent: 342 100% 95%;
-    --accent-foreground: 342 100% 38%;
+    --accent: 160 84% 95%;
+    --accent-foreground: 160 84% 32%;
 
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 340 10% 90%;
-    --input: 340 10% 90%;
-    --ring: 342 100% 45%;
+    --border: 160 10% 90%;
+    --input: 160 10% 90%;
+    --ring: 160 84% 39%;
 
     --radius: 0.5rem;
 
-    --sidebar-background: 340 30% 98%;
-    --sidebar-foreground: 340 8% 46%;
-    --sidebar-primary: 342 100% 45%;
+    --sidebar-background: 160 30% 98%;
+    --sidebar-foreground: 160 8% 46%;
+    --sidebar-primary: 160 84% 39%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 342 100% 94%;
-    --sidebar-accent-foreground: 342 100% 38%;
-    --sidebar-border: 340 10% 90%;
-    --sidebar-ring: 342 100% 45%;
+    --sidebar-accent: 160 84% 94%;
+    --sidebar-accent-foreground: 160 84% 32%;
+    --sidebar-border: 160 10% 90%;
+    --sidebar-ring: 160 84% 39%;
 
     --brand-purple: 262 83% 58%;
     --brand-blue: 217 91% 60%;
@@ -52,54 +52,54 @@
     --brand-orange: 25 95% 58%;
     --brand-pink: 330 85% 60%;
 
-    --shadow-subtle: 0 1px 2px hsl(342 100% 45% / 0.06), 0 1px 3px hsl(0 0% 0% / 0.06);
-    --shadow-card: 0 1px 3px hsl(342 100% 45% / 0.07), 0 1px 2px hsl(0 0% 0% / 0.04);
-    --shadow-card-hover: 0 4px 12px hsl(342 100% 45% / 0.10), 0 1px 4px hsl(0 0% 0% / 0.05);
+    --shadow-subtle: 0 1px 2px hsl(160 84% 39% / 0.06), 0 1px 3px hsl(0 0% 0% / 0.06);
+    --shadow-card: 0 1px 3px hsl(160 84% 39% / 0.07), 0 1px 2px hsl(0 0% 0% / 0.04);
+    --shadow-card-hover: 0 4px 12px hsl(160 84% 39% / 0.10), 0 1px 4px hsl(0 0% 0% / 0.05);
 
     --font-sans: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol";
     --font-khmer: "Kantumruy Pro", sans-serif;
   }
 
   .dark {
-    --background: 340 18% 8%;
-    --foreground: 340 10% 94%;
+    --background: 160 18% 8%;
+    --foreground: 160 10% 94%;
 
-    --card: 340 16% 11%;
-    --card-foreground: 340 10% 94%;
+    --card: 160 16% 11%;
+    --card-foreground: 160 10% 94%;
 
-    --popover: 340 16% 12%;
-    --popover-foreground: 340 10% 94%;
+    --popover: 160 16% 12%;
+    --popover-foreground: 160 10% 94%;
 
-    --primary: 342 100% 55%;
+    --primary: 160 84% 45%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 340 14% 17%;
-    --secondary-foreground: 340 10% 70%;
+    --secondary: 160 14% 17%;
+    --secondary-foreground: 160 10% 70%;
 
-    --muted: 340 14% 16%;
-    --muted-foreground: 340 8% 52%;
+    --muted: 160 14% 16%;
+    --muted-foreground: 160 8% 52%;
 
-    --accent: 342 80% 20%;
-    --accent-foreground: 342 100% 80%;
+    --accent: 160 80% 20%;
+    --accent-foreground: 160 84% 80%;
 
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 340 14% 18%;
-    --input: 340 14% 18%;
-    --ring: 342 100% 55%;
+    --border: 160 14% 18%;
+    --input: 160 14% 18%;
+    --ring: 160 84% 45%;
 
-    --sidebar-background: 340 20% 6%;
-    --sidebar-foreground: 340 8% 52%;
-    --sidebar-primary: 342 100% 55%;
+    --sidebar-background: 160 20% 6%;
+    --sidebar-foreground: 160 8% 52%;
+    --sidebar-primary: 160 84% 45%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 342 70% 18%;
-    --sidebar-accent-foreground: 342 100% 82%;
-    --sidebar-border: 340 14% 16%;
-    --sidebar-ring: 342 100% 55%;
+    --sidebar-accent: 160 70% 18%;
+    --sidebar-accent-foreground: 160 84% 82%;
+    --sidebar-border: 160 14% 16%;
+    --sidebar-ring: 160 84% 45%;
 
     --shadow-card: 0 1px 3px hsl(0 0% 0% / 0.5), 0 1px 2px hsl(0 0% 0% / 0.3);
-    --shadow-card-hover: 0 8px 24px hsl(342 100% 45% / 0.28), 0 2px 8px hsl(0 0% 0% / 0.4);
+    --shadow-card-hover: 0 8px 24px hsl(160 84% 39% / 0.28), 0 2px 8px hsl(0 0% 0% / 0.4);
   }
 }
 
