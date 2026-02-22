@@ -9,7 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import {
   Search, ChevronLeft, ChevronRight, DollarSign, CheckCircle, Clock,
-  XCircle, Hash, Receipt, Calendar, CreditCard, Trash2, ThumbsUp
+  XCircle, Hash, Receipt, Calendar, CreditCard, Trash2, ThumbsUp, Loader2
 } from "lucide-react";
 
 const statusConfig: Record<string, { variant: "default" | "secondary" | "destructive" | "outline"; label: string }> = {
@@ -198,9 +198,10 @@ export const PaymentHistoryAdmin = () => {
                               size="icon"
                               className="h-7 w-7"
                               onClick={() => approveMutation.mutate(order.id)}
+                              disabled={approveMutation.isPending}
                               title="Approve"
                             >
-                              <ThumbsUp className="w-3.5 h-3.5 text-primary" />
+                              {approveMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ThumbsUp className="w-3.5 h-3.5 text-primary" />}
                             </Button>
                           )}
                           <Button
@@ -210,9 +211,10 @@ export const PaymentHistoryAdmin = () => {
                             onClick={() => {
                               if (confirm("Delete this order?")) deleteMutation.mutate(order.id);
                             }}
+                            disabled={deleteMutation.isPending}
                             title="Delete"
                           >
-                            <Trash2 className="w-3.5 h-3.5 text-destructive" />
+                            {deleteMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5 text-destructive" />}
                           </Button>
                         </div>
                       </td>

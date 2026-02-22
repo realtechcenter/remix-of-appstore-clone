@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { 
   Bell, Plus, Send, Trash2, Edit, Calendar, Users, 
-  Megaphone, Gift, AlertCircle
+  Megaphone, Gift, AlertCircle, Loader2
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -279,8 +279,9 @@ export const NotificationSystem = () => {
                             deleteNotification.mutate(notification.id);
                           }
                         }}
+                        disabled={deleteNotification.isPending}
                       >
-                        <Trash2 className="w-4 h-4 text-destructive" />
+                        {deleteNotification.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4 text-destructive" />}
                       </Button>
                     </div>
                   </div>
@@ -418,8 +419,8 @@ export const NotificationSystem = () => {
                 Cancel
               </Button>
               <Button type="submit" disabled={saveNotification.isPending}>
-                <Send className="w-4 h-4 mr-2" />
-                {editingNotification ? "Update" : "Publish"}
+                {saveNotification.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Send className="w-4 h-4 mr-2" />}
+                {saveNotification.isPending ? "Saving..." : editingNotification ? "Update" : "Publish"}
               </Button>
             </DialogFooter>
           </form>

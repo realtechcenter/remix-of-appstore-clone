@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Ban, UserCheck, Clock, Search, Filter, User } from "lucide-react";
+import { Ban, UserCheck, Clock, Search, Filter, User, Loader2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -88,9 +88,9 @@ export const UserStatusManagement = () => {
                   </div>
                 </div>
                 <div className="flex gap-2">
-                  {userStatus !== "active" && <Button variant="outline" size="sm" onClick={() => { setSelectedUser(user); setActionType("active"); setShowDialog(true); }}><UserCheck className="w-4 h-4 mr-1" />Restore</Button>}
-                  {userStatus !== "suspended" && <Button variant="outline" size="sm" onClick={() => { setSelectedUser(user); setActionType("suspended"); setShowDialog(true); }}><Clock className="w-4 h-4 mr-1" />Suspend</Button>}
-                  {userStatus !== "banned" && <Button variant="destructive" size="sm" onClick={() => { setSelectedUser(user); setActionType("banned"); setShowDialog(true); }}><Ban className="w-4 h-4 mr-1" />Ban</Button>}
+                  {userStatus !== "active" && <Button variant="outline" size="sm" onClick={() => { setSelectedUser(user); setActionType("active"); setShowDialog(true); }} disabled={updateStatus.isPending}><UserCheck className="w-4 h-4 mr-1" />Restore</Button>}
+                  {userStatus !== "suspended" && <Button variant="outline" size="sm" onClick={() => { setSelectedUser(user); setActionType("suspended"); setShowDialog(true); }} disabled={updateStatus.isPending}><Clock className="w-4 h-4 mr-1" />Suspend</Button>}
+                  {userStatus !== "banned" && <Button variant="destructive" size="sm" onClick={() => { setSelectedUser(user); setActionType("banned"); setShowDialog(true); }} disabled={updateStatus.isPending}><Ban className="w-4 h-4 mr-1" />Ban</Button>}
                 </div>
               </CardContent>
             </Card>
@@ -110,7 +110,10 @@ export const UserStatusManagement = () => {
           )}
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowDialog(false)}>Cancel</Button>
-            <Button variant={actionType === "banned" ? "destructive" : "default"} onClick={() => updateStatus.mutate({ userId: selectedUser!.user_id, status: actionType, reason, suspendUntil })}>{actionType === "active" ? "Restore" : actionType === "suspended" ? "Suspend" : "Ban"}</Button>
+            <Button variant={actionType === "banned" ? "destructive" : "default"} onClick={() => updateStatus.mutate({ userId: selectedUser!.user_id, status: actionType, reason, suspendUntil })} disabled={updateStatus.isPending}>
+              {updateStatus.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+              {updateStatus.isPending ? "Processing..." : actionType === "active" ? "Restore" : actionType === "suspended" ? "Suspend" : "Ban"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
