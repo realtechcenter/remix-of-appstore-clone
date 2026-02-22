@@ -195,14 +195,6 @@ export const HeroSlider = () => {
 
       {/* Progress bar + dot indicators */}
       <div className="absolute bottom-0 left-0 right-0 z-20">
-        {/* Thin progress bar */}
-        <div className="h-0.5 bg-white/10">
-          <div
-            className="h-full bg-white/70 transition-none"
-            style={{ width: `${progress}%` }}
-          />
-        </div>
-
         {/* Dot indicators */}
         <div className="absolute bottom-3 right-4 flex items-center gap-1.5">
           {slides.map((_, index) => (
