@@ -8,6 +8,7 @@ export interface Order {
   user_id: number;
   app_id: number;
   app_name: string;
+  app_icon_url?: string;
   amount: number;
   currency: string;
   status: 'pending' | 'paid' | 'failed' | 'expired';

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Order;
+use App\Models\App;
 use Illuminate\Http\Request;
 
 class OrderController extends Controller
@@ -12,6 +13,15 @@ class OrderController extends Controller
         $orders = Order::where('user_id', $request->user()->id)
             ->orderBy('created_at', 'desc')
             ->get();
+
+        // Attach app icon_url to each order
+        $appIds = $orders->pluck('app_id')->unique()->toArray();
+        $apps = App::whereIn('id', $appIds)->pluck('icon_url', 'id');
+        
+        $orders = $orders->map(function ($order) use ($apps) {
+            $order->app_icon_url = $apps[$order->app_id] ?? null;
+            return $order;
+        });
 
         return response()->json(['orders' => $orders]);
     }
