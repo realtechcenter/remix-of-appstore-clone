@@ -414,7 +414,9 @@ const navItems: NavItem[] = [
 
 // ─── Apps Tab ─────────────────────────────────────────────────────────────────
 const AppsTab = () => {
-  const { isAdmin } = useAuth();
+  const { isAdmin: isAuthAdmin } = useAuth();
+  const isLegacyAdmin = authApi.isAuthenticated();
+  const isAdmin = isAuthAdmin || isLegacyAdmin;
   const [apps, setApps] = useState<App[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -723,8 +725,12 @@ const AppsTab = () => {
 // ─── Main Dashboard ───────────────────────────────────────────────────────────
 const AdminDashboard = () => {
   const navigate = useNavigate();
-  const { user, signOut, isAdmin } = useAuth();
+  const { user, signOut, isAdmin: isAuthAdmin } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // Legacy admin gets full admin access
+  const isLegacyAdmin = authApi.isAuthenticated();
+  const isAdmin = isAuthAdmin || isLegacyAdmin;
 
   // Filter nav items based on role
   const visibleNavItems = navItems.filter(item => !item.adminOnly || isAdmin);
