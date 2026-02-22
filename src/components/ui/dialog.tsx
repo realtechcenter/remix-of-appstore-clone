@@ -26,12 +26,11 @@ const DialogOverlay = React.forwardRef<
 ));
 DialogOverlay.displayName = DialogPrimitive.Overlay.displayName;
 
-// macOS traffic light dots
-const TrafficLights = ({ onClose }: { onClose?: () => void }) => (
+// macOS traffic light dots (red close + green maximize)
+const TrafficLights = ({ onMaximize }: { onMaximize?: () => void }) => (
   <div className="flex items-center gap-2">
     <DialogPrimitive.Close asChild>
       <button
-        onClick={onClose}
         className="w-3 h-3 rounded-full bg-[#FF5F57] hover:brightness-90 transition-all group relative focus:outline-none"
         aria-label="Close"
       >
@@ -40,37 +39,51 @@ const TrafficLights = ({ onClose }: { onClose?: () => void }) => (
         </svg>
       </button>
     </DialogPrimitive.Close>
-    <span className="w-3 h-3 rounded-full bg-[#FEBC2E]" />
-    <span className="w-3 h-3 rounded-full bg-[#28C840]" />
+    <button
+      onClick={onMaximize}
+      className="w-3 h-3 rounded-full bg-[#28C840] hover:brightness-90 transition-all group relative focus:outline-none"
+      aria-label="Maximize"
+    >
+      <svg className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity text-[#006500]" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.2">
+        <path d="M3 3h6v6H3z" />
+      </svg>
+    </button>
   </div>
 );
 
 const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
->(({ className, children, ...props }, ref) => (
-  <DialogPortal>
-    <DialogOverlay />
-    <DialogPrimitive.Content
-      ref={ref}
-      className={cn(
-        "fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] border-0 bg-card overflow-hidden max-h-[85vh] duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] rounded-xl",
-        className,
-      )}
-      style={{ boxShadow: 'var(--shadow-window)' }}
-      {...props}
-    >
-      {/* macOS title bar */}
-      <div className="flex items-center px-4 py-2.5 bg-muted/60 border-b border-border/50 shrink-0">
-        <TrafficLights />
-      </div>
-      {/* Content area */}
-      <div className="overflow-y-auto flex-1 p-6">
-        {children}
-      </div>
-    </DialogPrimitive.Content>
-  </DialogPortal>
-));
+>(({ className, children, ...props }, ref) => {
+  const [maximized, setMaximized] = React.useState(false);
+
+  return (
+    <DialogPortal>
+      <DialogOverlay />
+      <DialogPrimitive.Content
+        ref={ref}
+        className={cn(
+          "fixed z-50 grid border-0 bg-card overflow-hidden duration-300 transition-all data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
+          maximized
+            ? "inset-0 w-full h-full max-w-none max-h-none rounded-none"
+            : "left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%] w-full max-w-lg max-h-[85vh] rounded-xl data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%]",
+          className,
+        )}
+        style={{ boxShadow: maximized ? 'none' : 'var(--shadow-window)' }}
+        {...props}
+      >
+        {/* macOS title bar */}
+        <div className="flex items-center px-4 py-2.5 bg-muted/60 border-b border-border/50 shrink-0">
+          <TrafficLights onMaximize={() => setMaximized(m => !m)} />
+        </div>
+        {/* Content area */}
+        <div className="overflow-y-auto flex-1 p-6">
+          {children}
+        </div>
+      </DialogPrimitive.Content>
+    </DialogPortal>
+  );
+});
 DialogContent.displayName = DialogPrimitive.Content.displayName;
 
 const DialogHeader = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
