@@ -223,7 +223,7 @@ export const PaymentDialog = ({
   return (
     <>
       <Dialog open={open} onOpenChange={handleOpenChange}>
-        <DialogContent className="max-w-[260px] p-0 overflow-hidden gap-0 [&>button]:hidden">
+        <DialogContent className="max-w-[200px] p-0 overflow-hidden gap-0 [&>button]:hidden">
           {/* Visible Header with title + close button */}
           <DialogHeader className="flex flex-row items-center justify-between px-4 py-3 border-b border-border">
             <DialogTitle className="text-sm font-semibold">
