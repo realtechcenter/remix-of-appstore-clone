@@ -42,6 +42,17 @@ class VersionController extends Controller
                 try {
                     $decoded = JWT::decode($token, new Key(config('app.jwt_secret'), 'HS256'));
                     $userId = $decoded->user_id ?? null;
+
+                    // Check if user has super_admin or admin role
+                    if ($userId) {
+                        $hasAdminRole = \App\Models\UserRole::where('user_id', $userId)
+                            ->whereIn('role', ['super_admin', 'admin'])
+                            ->exists();
+                        if ($hasAdminRole) {
+                            $isAdmin = true;
+                            $canAccessDownloads = true;
+                        }
+                    }
                 } catch (\Exception $e) {
                     // Invalid token, continue as guest
                 }
