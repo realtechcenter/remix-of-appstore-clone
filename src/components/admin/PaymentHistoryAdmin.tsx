@@ -189,29 +189,29 @@ export const PaymentHistoryAdmin = () => {
       {/* Summary */}
       {pagination && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <div className="border border-border rounded-lg bg-card p-3">
-            <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
+          <div className="border border-blue-200 dark:border-blue-500/20 rounded-lg bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-500/10 dark:to-blue-600/5 p-3">
+            <div className="flex items-center gap-2 text-xs text-blue-600 dark:text-blue-400 mb-1">
               <CreditCard className="w-3.5 h-3.5" /> Total Orders
             </div>
-            <p className="text-lg font-semibold">{pagination.total}</p>
+            <p className="text-lg font-semibold text-blue-700 dark:text-blue-300">{pagination.total}</p>
           </div>
-          <div className="border border-border rounded-lg bg-card p-3">
-            <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
+          <div className="border border-emerald-200 dark:border-emerald-500/20 rounded-lg bg-gradient-to-br from-emerald-50 to-emerald-100/50 dark:from-emerald-500/10 dark:to-emerald-600/5 p-3">
+            <div className="flex items-center gap-2 text-xs text-emerald-600 dark:text-emerald-400 mb-1">
               <DollarSign className="w-3.5 h-3.5" /> Page Revenue
             </div>
-            <p className="text-lg font-semibold">${totalRevenue.toFixed(2)}</p>
+            <p className="text-lg font-semibold text-emerald-700 dark:text-emerald-300">${totalRevenue.toFixed(2)}</p>
           </div>
-          <div className="border border-border rounded-lg bg-card p-3">
-            <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
+          <div className="border border-violet-200 dark:border-violet-500/20 rounded-lg bg-gradient-to-br from-violet-50 to-violet-100/50 dark:from-violet-500/10 dark:to-violet-600/5 p-3">
+            <div className="flex items-center gap-2 text-xs text-violet-600 dark:text-violet-400 mb-1">
               <CheckCircle className="w-3.5 h-3.5" /> Paid (page)
             </div>
-            <p className="text-lg font-semibold">{filtered.filter(o => o.status === "paid").length}</p>
+            <p className="text-lg font-semibold text-violet-700 dark:text-violet-300">{filtered.filter(o => o.status === "paid").length}</p>
           </div>
-          <div className="border border-border rounded-lg bg-card p-3">
-            <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
+          <div className="border border-amber-200 dark:border-amber-500/20 rounded-lg bg-gradient-to-br from-amber-50 to-amber-100/50 dark:from-amber-500/10 dark:to-amber-600/5 p-3">
+            <div className="flex items-center gap-2 text-xs text-amber-600 dark:text-amber-400 mb-1">
               <Clock className="w-3.5 h-3.5" /> Pending (page)
             </div>
-            <p className="text-lg font-semibold">{filtered.filter(o => o.status === "pending").length}</p>
+            <p className="text-lg font-semibold text-amber-700 dark:text-amber-300">{filtered.filter(o => o.status === "pending").length}</p>
           </div>
         </div>
       )}
