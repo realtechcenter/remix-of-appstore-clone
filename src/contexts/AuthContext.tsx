@@ -21,6 +21,7 @@ interface AuthContextType {
   hasRole: (role: string) => boolean;
   hasPermission: (permission: string) => boolean;
   isAdmin: boolean;
+  isSuperAdmin: boolean;
   isModerator: boolean;
   isAdminOrModerator: boolean;
 }
@@ -201,14 +202,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const hasRole = (role: string) => user?.roles?.includes(role) || false;
   const hasPermission = (permission: string) => permissions.includes(permission);
 
-  const isAdmin = hasRole('admin');
+  const isSuperAdmin = hasRole('super_admin');
+  const isAdmin = hasRole('admin') || isSuperAdmin;
   const isModerator = hasRole('moderator');
   const isAdminOrModerator = isAdmin || isModerator || permissions.length > 0;
 
   return (
     <AuthContext.Provider value={{ 
       user, token, loading, permissions, signUp, signIn, signOut, updateUser,
-      hasRole, hasPermission, isAdmin, isModerator, isAdminOrModerator
+      hasRole, hasPermission, isAdmin, isSuperAdmin, isModerator, isAdminOrModerator
     }}>
       {children}
     </AuthContext.Provider>

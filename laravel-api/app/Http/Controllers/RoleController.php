@@ -47,8 +47,15 @@ class RoleController extends Controller
             return response()->json(['error' => $validator->errors()->first()], 422);
         }
 
+        // Only super_admin can assign super_admin or admin roles
+        if (in_array($request->role, ['super_admin', 'admin'])) {
+            if (!$this->isSuperAdmin($request)) {
+                return response()->json(['error' => 'Only Super Admin can assign this role'], 403);
+            }
+        }
+
         $roleExists = RolePermission::where('role', $request->role)->exists();
-        if (!$roleExists && !in_array($request->role, ['admin', 'moderator', 'user'])) {
+        if (!$roleExists && !in_array($request->role, ['super_admin', 'admin', 'moderator', 'user'])) {
             return response()->json(['error' => 'Role does not exist. Create it first in permission settings.'], 422);
         }
 
@@ -90,6 +97,13 @@ class RoleController extends Controller
             return response()->json(['error' => $validator->errors()->first()], 422);
         }
 
+        // Only super_admin can remove super_admin or admin roles
+        if (in_array($request->role, ['super_admin', 'admin'])) {
+            if (!$this->isSuperAdmin($request)) {
+                return response()->json(['error' => 'Only Super Admin can remove this role'], 403);
+            }
+        }
+
         $deleted = UserRole::where('user_id', $request->user_id)
             ->where('role', $request->role)
             ->delete();
@@ -111,8 +125,13 @@ class RoleController extends Controller
         ]);
     }
 
-    public function permissions()
+    public function permissions(Request $request)
     {
+        // Only super_admin can view/manage permissions
+        if (!$this->isSuperAdmin($request)) {
+            return response()->json(['error' => 'Only Super Admin can manage permissions'], 403);
+        }
+
         $allPermissions = RolePermission::allPermissionKeys();
         $roles = RolePermission::all()->groupBy('role')->map(function ($perms) {
             return $perms->pluck('permission')->toArray();
@@ -133,6 +152,10 @@ class RoleController extends Controller
 
     public function createRole(Request $request)
     {
+        if (!$this->isSuperAdmin($request)) {
+            return response()->json(['error' => 'Only Super Admin can create roles'], 403);
+        }
+
         $validator = Validator::make($request->all(), [
             'role' => 'required|string|max:50|regex:/^[a-z_]+$/',
             'permissions' => 'required|array',
@@ -169,6 +192,10 @@ class RoleController extends Controller
 
     public function updateRolePermissions(Request $request)
     {
+        if (!$this->isSuperAdmin($request)) {
+            return response()->json(['error' => 'Only Super Admin can update permissions'], 403);
+        }
+
         $validator = Validator::make($request->all(), [
             'role' => 'required|string|max:50',
             'permissions' => 'required|array',
@@ -207,7 +234,11 @@ class RoleController extends Controller
 
     public function deleteRole(Request $request, string $role)
     {
-        if (in_array($role, ['admin', 'user'])) {
+        if (!$this->isSuperAdmin($request)) {
+            return response()->json(['error' => 'Only Super Admin can delete roles'], 403);
+        }
+
+        if (in_array($role, ['super_admin', 'admin', 'user'])) {
             return response()->json(['error' => 'Cannot delete built-in roles'], 422);
         }
 
@@ -232,10 +263,34 @@ class RoleController extends Controller
         $userRoles = $user->roles->pluck('role')->toArray();
         $permissions = RolePermission::getPermissionsForRoles($userRoles);
 
+        // Add special flag for super_admin
+        $isSuperAdmin = in_array('super_admin', $userRoles);
+
         return response()->json([
             'success' => true,
             'roles' => $userRoles,
             'permissions' => $permissions,
+            'is_super_admin' => $isSuperAdmin,
         ]);
+    }
+
+    /**
+     * Check if the current request user is a super_admin.
+     */
+    private function isSuperAdmin(Request $request): bool
+    {
+        // Legacy admin tokens have all permissions
+        $permissions = $request->attributes->get('user_permissions', []);
+        if (in_array('*', $permissions)) {
+            return true;
+        }
+
+        $user = $request->user();
+        if (!$user || !method_exists($user, 'roles')) {
+            return false;
+        }
+
+        $user->load('roles');
+        return $user->roles->pluck('role')->contains('super_admin');
     }
 }

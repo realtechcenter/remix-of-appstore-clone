@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Shield, Crown, User, Plus, Search, X, Check, Loader2, Settings2, Trash2, ChevronDown, ChevronRight } from "lucide-react";
+import { Shield, Crown, User, Plus, Search, X, Check, Loader2, Settings2, Trash2, ChevronDown, ChevronRight, ShieldAlert } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,14 +12,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { rolesApi, adminUsersApi, permissionsApi, type UserWithRoles, type PermissionDef } from "@/lib/api";
 import { toast } from "sonner";
-
+import { useAuth } from "@/contexts/AuthContext";
 const roleIcons: Record<string, React.ElementType> = {
+  super_admin: ShieldAlert,
   admin: Crown,
   moderator: Shield,
   user: User,
 };
 
 const roleColors: Record<string, string> = {
+  super_admin: "bg-amber-500/20 text-amber-600",
   admin: "bg-red-500/20 text-red-600",
   moderator: "bg-blue-500/20 text-blue-600",
   user: "bg-muted text-muted-foreground",
@@ -27,6 +29,7 @@ const roleColors: Record<string, string> = {
 
 export const RoleManagement = () => {
   const queryClient = useQueryClient();
+  const { isSuperAdmin } = useAuth();
   const [activeSubTab, setActiveSubTab] = useState<"assign" | "permissions">("assign");
 
   return (
@@ -39,15 +42,19 @@ export const RoleManagement = () => {
       <Tabs value={activeSubTab} onValueChange={(v) => setActiveSubTab(v as any)}>
         <TabsList>
           <TabsTrigger value="assign">Assign Roles</TabsTrigger>
-          <TabsTrigger value="permissions">Role Permissions</TabsTrigger>
+          {isSuperAdmin && (
+            <TabsTrigger value="permissions">Role Permissions</TabsTrigger>
+          )}
         </TabsList>
 
         <TabsContent value="assign" className="mt-4">
           <AssignRolesTab />
         </TabsContent>
-        <TabsContent value="permissions" className="mt-4">
-          <PermissionsTab />
-        </TabsContent>
+        {isSuperAdmin && (
+          <TabsContent value="permissions" className="mt-4">
+            <PermissionsTab />
+          </TabsContent>
+        )}
       </Tabs>
     </div>
   );
