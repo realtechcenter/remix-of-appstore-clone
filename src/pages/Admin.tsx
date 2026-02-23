@@ -759,14 +759,14 @@ const AppsTab = () => {
       </div>
 
       <Dialog open={showAppForm} onOpenChange={setShowAppForm}>
-        <DialogContent className="max-w-4xl w-[95vw] max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-6xl w-[95vw] max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle>{editingApp ? "Edit App" : "Add New App"}</DialogTitle></DialogHeader>
           <AppForm app={editingApp} onSave={handleSaveApp} onCancel={() => { setShowAppForm(false); setEditingApp(undefined); }} />
         </DialogContent>
       </Dialog>
 
       <Dialog open={showVersionForm} onOpenChange={setShowVersionForm}>
-        <DialogContent className="max-w-4xl w-[95vw] max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-6xl w-[95vw] max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle>{editingVersion ? "Edit Version" : "Add New Version"}</DialogTitle></DialogHeader>
           {selectedApp && (
             <VersionForm appId={selectedApp.id} version={editingVersion} onSave={handleSaveVersion} onCancel={() => { setShowVersionForm(false); setEditingVersion(undefined); }} />
