@@ -128,19 +128,28 @@ const VersionItem = ({
     }
   };
   
+  const isHidden = version.is_visible === false;
+
   return (
-    <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-      <CollapsibleTrigger asChild>
-        <button className="w-full flex items-center justify-between p-4 rounded-xl bg-muted/50 hover:bg-muted transition-colors text-left">
+    <Collapsible open={isHidden ? false : isOpen} onOpenChange={isHidden ? undefined : setIsOpen}>
+      <CollapsibleTrigger asChild disabled={isHidden}>
+        <button className={`w-full flex items-center justify-between p-4 rounded-xl transition-colors text-left ${
+          isHidden 
+            ? 'bg-muted/30 opacity-50 cursor-not-allowed' 
+            : 'bg-muted/50 hover:bg-muted'
+        }`}>
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-primary/10">
-              <Package className="w-5 h-5 text-primary" />
+            <div className={`p-2 rounded-lg ${isHidden ? 'bg-muted' : 'bg-primary/10'}`}>
+              <Package className={`w-5 h-5 ${isHidden ? 'text-muted-foreground' : 'text-primary'}`} />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="font-semibold text-foreground">v{version.version}</span>
-                {isLatest && (
+                <span className={`font-semibold ${isHidden ? 'text-muted-foreground line-through' : 'text-foreground'}`}>v{version.version}</span>
+                {isLatest && !isHidden && (
                   <Badge variant="default" className="text-xs">{translations.latest}</Badge>
+                )}
+                {isHidden && (
+                  <Badge variant="secondary" className="text-xs text-muted-foreground">{language === 'km' ? 'មិនមាន' : 'Unavailable'}</Badge>
                 )}
               </div>
               <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
@@ -159,7 +168,7 @@ const VersionItem = ({
               </div>
             </div>
           </div>
-          <ChevronDown className={`w-5 h-5 text-muted-foreground transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+          {!isHidden && <ChevronDown className={`w-5 h-5 text-muted-foreground transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />}
         </button>
       </CollapsibleTrigger>
       

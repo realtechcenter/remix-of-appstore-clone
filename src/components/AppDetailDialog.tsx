@@ -50,48 +50,58 @@ const PreviousVersionsDialog = ({
         
         <ScrollArea className="max-h-[60vh]">
           <div className="space-y-3 pr-4">
-            {versions.map((version) => (
-              <div 
-                key={version.id}
-                className="flex items-center justify-between p-4 rounded-xl bg-muted/50 hover:bg-muted transition-colors"
-              >
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium">v{version.version}</span>
-                    {version.is_latest && (
-                      <Badge variant="default" className="text-xs">Latest</Badge>
+            {versions.map((version) => {
+              const isHidden = version.is_visible === false;
+              return (
+                <div 
+                  key={version.id}
+                  className={`flex items-center justify-between p-4 rounded-xl transition-colors ${
+                    isHidden 
+                      ? 'bg-muted/30 opacity-50 cursor-not-allowed' 
+                      : 'bg-muted/50 hover:bg-muted'
+                  }`}
+                >
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className={`font-medium ${isHidden ? 'text-muted-foreground line-through' : ''}`}>v{version.version}</span>
+                      {version.is_latest && !isHidden && (
+                        <Badge variant="default" className="text-xs">Latest</Badge>
+                      )}
+                      {isHidden && (
+                        <Badge variant="secondary" className="text-xs text-muted-foreground">Unavailable</Badge>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                      {version.release_date && (
+                        <span className="flex items-center gap-1">
+                          <Calendar className="w-3 h-3" />
+                          {new Date(version.release_date).toLocaleDateString()}
+                        </span>
+                      )}
+                      {version.file_size && (
+                        <span className="flex items-center gap-1">
+                          <HardDrive className="w-3 h-3" />
+                          {version.file_size}
+                        </span>
+                      )}
+                    </div>
+                    {(version.changelog || version.changelog_km) && (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {t(version.changelog_km, version.changelog)}
+                      </p>
                     )}
                   </div>
-                  <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                    {version.release_date && (
-                      <span className="flex items-center gap-1">
-                        <Calendar className="w-3 h-3" />
-                        {new Date(version.release_date).toLocaleDateString()}
-                      </span>
-                    )}
-                    {version.file_size && (
-                      <span className="flex items-center gap-1">
-                        <HardDrive className="w-3 h-3" />
-                        {version.file_size}
-                      </span>
-                    )}
-                  </div>
-                  {(version.changelog || version.changelog_km) && (
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {t(version.changelog_km, version.changelog)}
-                    </p>
+                  
+                  {!isHidden && version.download_url && (
+                    <a href={version.download_url} target="_blank" rel="noopener noreferrer">
+                      <Button size="sm" variant="outline" className="gap-1.5">
+                        <Download className="w-3.5 h-3.5" />
+                      </Button>
+                    </a>
                   )}
                 </div>
-                
-                {version.download_url && (
-                  <a href={version.download_url} target="_blank" rel="noopener noreferrer">
-                    <Button size="sm" variant="outline" className="gap-1.5">
-                      <Download className="w-3.5 h-3.5" />
-                    </Button>
-                  </a>
-                )}
-              </div>
-            ))}
+              );
+            })}
           </div>
         </ScrollArea>
       </DialogContent>
