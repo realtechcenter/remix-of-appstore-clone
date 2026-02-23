@@ -149,6 +149,22 @@ const PaymentHistory = () => {
   const queryClient = useQueryClient();
   const verifiedRef = useRef(false);
 
+  // Guide user to verify pending orders on first visit
+  const guidedRef = useRef(false);
+  useEffect(() => {
+    if (!orders || guidedRef.current) return;
+    const pendingCount_ = orders.filter(o => o.status === 'pending').length;
+    if (pendingCount_ > 0) {
+      guidedRef.current = true;
+      toast.info(
+        language === 'km'
+          ? `អ្នកមានការបញ្ជាទិញ ${pendingCount_} កំពុងរង់ចាំ។ សូមចុច "ផ្ទៀងផ្ទាត់ការបង់ប្រាក់" ដើម្បីពិនិត្យស្ថានភាព។`
+          : `You have ${pendingCount_} pending order(s). Tap "Verify Payment" on each to check the status.`,
+        { duration: 6000 }
+      );
+    }
+  }, [orders, language]);
+
   // Auto-verify pending orders on page load
   useEffect(() => {
     if (!orders || verifiedRef.current) return;
