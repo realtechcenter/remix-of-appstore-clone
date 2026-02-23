@@ -767,23 +767,52 @@ export const bunnyApi = {
     apiRequest<{ message: string }>('bunny/config', { method: 'PUT', body: data }),
   testConnection: () => apiRequest<BunnyTestResult>('bunny/test'),
 
+  getCredentials: () => apiRequest<{ api_key: string; zone_name: string; storage_host: string; cdn_host: string }>('bunny/credentials'),
+
   listFiles: (path: string = '') =>
     apiRequest<{ files: BunnyFile[]; current_path: string }>(`bunny/files?path=${encodeURIComponent(path)}`),
 
-  uploadFile: async (file: File, path: string = '') => {
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('path', path);
+  /**
+   * Upload file directly to Bunny Storage (bypasses Laravel server).
+   * Uses XMLHttpRequest for progress tracking.
+   */
+  uploadFile: async (
+    file: File,
+    path: string = '',
+    onProgress?: (percent: number) => void
+  ): Promise<{ success: boolean; message: string; path: string; cdn_url: string | null }> => {
+    // Fetch Bunny credentials from backend
+    const creds = await bunnyApi.getCredentials();
+    const fileName = file.name;
+    const fullPath = path ? `${path.replace(/\/$/, '')}/${fileName}` : fileName;
+    const uploadUrl = `https://${creds.storage_host}/${creds.zone_name}/${fullPath}`;
 
-    const token = getApiKey() || getUserAuthToken();
-    const response = await fetch(`${API_BASE_URL}/api/bunny/files/upload`, {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${token}` },
-      body: formData,
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open('PUT', uploadUrl, true);
+      xhr.setRequestHeader('AccessKey', creds.api_key);
+      xhr.setRequestHeader('Content-Type', 'application/octet-stream');
+
+      xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable && onProgress) {
+          onProgress(Math.round((e.loaded / e.total) * 100));
+        }
+      };
+
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          const cdnUrl = creds.cdn_host ? `https://${creds.cdn_host}/${fullPath}` : null;
+          resolve({ success: true, message: 'File uploaded successfully', path: fullPath, cdn_url: cdnUrl });
+        } else {
+          reject(new Error(`Upload failed (${xhr.status}): ${xhr.responseText}`));
+        }
+      };
+
+      xhr.onerror = () => reject(new Error('Upload failed: network error'));
+      xhr.ontimeout = () => reject(new Error('Upload failed: timeout'));
+
+      xhr.send(file);
     });
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.error || 'Upload failed');
-    return data as { success: boolean; message: string; path: string; cdn_url: string | null };
   },
 
   createFolder: (path: string) =>

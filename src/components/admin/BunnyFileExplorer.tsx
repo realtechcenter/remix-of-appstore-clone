@@ -224,7 +224,11 @@ export const BunnyFileExplorer = () => {
     try {
       for (const file of filesToUpload) {
         setUploadCurrentName(file.name);
-        await bunnyApi.uploadFile(file, currentPath);
+        await bunnyApi.uploadFile(file, currentPath, (percent) => {
+          // Per-file progress blended with overall progress
+          const overallPercent = Math.round(((completed + percent / 100) / filesToUpload.length) * 100);
+          setUploadProgress(overallPercent);
+        });
         completed++;
         setUploadCompleted(completed);
         setUploadProgress(Math.round((completed / filesToUpload.length) * 100));

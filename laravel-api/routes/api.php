@@ -81,6 +81,7 @@ Route::middleware('auth.admin')->group(function () {
     Route::get('/bunny/config', [BunnyStorageController::class, 'config']);
     Route::put('/bunny/config', [BunnyStorageController::class, 'updateConfig']);
     Route::get('/bunny/test', [BunnyStorageController::class, 'test']);
+    Route::get('/bunny/credentials', [BunnyStorageController::class, 'credentials']);
     Route::get('/bunny/files', [BunnyStorageController::class, 'listFiles']);
     Route::post('/bunny/files/upload', [BunnyStorageController::class, 'uploadFile']);
     Route::post('/bunny/files/folder', [BunnyStorageController::class, 'createFolder']);
