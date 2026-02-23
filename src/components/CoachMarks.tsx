@@ -41,7 +41,12 @@ export const CoachMarks = ({ steps, storageKey, onComplete }: CoachMarksProps) =
     if (el) {
       setRect(el.getBoundingClientRect());
     } else {
-      setRect(null);
+      // Auto-skip to next step if target not found
+      if (current < steps.length - 1) {
+        setCurrent((s) => s + 1);
+      } else {
+        setRect(null);
+      }
     }
   }, [visible, current, steps]);
 

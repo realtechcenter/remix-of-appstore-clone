@@ -7,6 +7,34 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
+import { CoachMarks, type CoachStep } from "@/components/CoachMarks";
+
+const aiChatTourSteps: CoachStep[] = [
+  {
+    target: "ai-chat-input",
+    titleEn: "Ask Anything",
+    titleKm: "សួរអ្វីក៏បាន",
+    descEn: "Type what you're looking for — e.g. \"best video editor\" or \"free photo tool\". The AI will recommend apps for you.",
+    descKm: "វាយអ្វីដែលអ្នកកំពុងរក — ឧ. \"កម្មវិធីកាត់វីដេអូល្អបំផុត\" ឬ \"ឧបករណ៍រូបភាពឥតគិតថ្លៃ\"។ AI នឹងណែនាំកម្មវិធីសម្រាប់អ្នក។",
+    placement: "top",
+  },
+  {
+    target: "ai-chat-fullscreen",
+    titleEn: "Full Screen Mode",
+    titleKm: "ទម្រង់ពេញអេក្រង់",
+    descEn: "Click to expand the chat into a full-page view for a better experience.",
+    descKm: "ចុចដើម្បីពង្រីកការជជែកទៅជាទិដ្ឋភាពពេញទំព័រ។",
+    placement: "bottom",
+  },
+  {
+    target: "ai-chat-clear",
+    titleEn: "Clear Chat",
+    titleKm: "សម្អាតការសន្ទនា",
+    descEn: "Start fresh by clearing the conversation history.",
+    descKm: "ចាប់ផ្ដើមថ្មីដោយសម្អាតប្រវត្តិសន្ទនា។",
+    placement: "bottom",
+  },
+];
 
 interface Message {
   role: "user" | "assistant";
@@ -582,6 +610,7 @@ export const AIChatBot = () => {
                     onClick={handleClearChat}
                     className="text-white hover:bg-white/20 h-8 w-8"
                     title={language === 'km' ? 'សម្អាតការសន្ទនា' : 'Clear chat'}
+                    data-tour="ai-chat-clear"
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
@@ -592,6 +621,7 @@ export const AIChatBot = () => {
                   onClick={() => setIsFullPage(true)}
                   className="text-white hover:bg-white/20 h-8 w-8"
                   title={language === 'km' ? 'ពង្រីកទំហំពេញ' : 'Full screen'}
+                  data-tour="ai-chat-fullscreen"
                 >
                   <Maximize2 className="h-4 w-4" />
                 </Button>
@@ -666,7 +696,7 @@ export const AIChatBot = () => {
             </ScrollArea>
 
             {/* Input */}
-            <div className="p-4 border-t bg-background">
+            <div className="p-4 border-t bg-background" data-tour="ai-chat-input">
               <div className="flex gap-2">
                 <Input
                   ref={inputRef}
@@ -689,6 +719,14 @@ export const AIChatBot = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* AI Chat Coach Marks — only when chat is open */}
+      {isOpen && !isFullPage && (
+        <CoachMarks
+          steps={aiChatTourSteps}
+          storageKey="ai-chat-coach-dismissed"
+        />
       )}
     </>
   );
