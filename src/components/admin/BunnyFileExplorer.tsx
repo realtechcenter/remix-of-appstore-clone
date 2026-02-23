@@ -383,28 +383,6 @@ export const BunnyFileExplorer = () => {
             </button>
           ))}
         </div>
-
-        {/* Quick actions */}
-        <div className="mt-auto space-y-2">
-          <Button
-            variant="outline"
-            size="sm"
-            className="w-full gap-2 justify-start"
-            onClick={() => setShowNewFolder(true)}
-          >
-            <FolderPlus className="w-4 h-4" /> New Folder
-          </Button>
-          <input ref={fileInputRef} type="file" multiple onChange={handleUpload} className="hidden" />
-          <Button
-            size="sm"
-            className="w-full gap-2 justify-start bg-emerald-500 hover:bg-emerald-600 text-white dark:bg-emerald-600 dark:hover:bg-emerald-500"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={uploading}
-          >
-            {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
-            {uploading ? `Uploading ${uploadProgress}%` : "Upload Files"}
-          </Button>
-        </div>
       </div>
 
       {/* ─── Main Content ──────────────────────────────────────────────── */}
@@ -493,10 +471,28 @@ export const BunnyFileExplorer = () => {
             <RefreshCw className={cn("w-4 h-4", loading && "animate-spin")} />
           </Button>
 
-          {/* Mobile upload button */}
-          <div className="flex lg:hidden items-center gap-1">
-            <input ref={fileInputRef} type="file" multiple onChange={handleUpload} className="hidden" />
-            <Button size="sm" className="h-8 gap-1.5" onClick={() => fileInputRef.current?.click()} disabled={uploading}>
+          <div className="h-5 w-px bg-border hidden sm:block" />
+
+          <Button variant="outline" size="sm" className="h-8 gap-1.5 hidden sm:flex" onClick={() => setShowNewFolder(true)}>
+            <FolderPlus className="w-3.5 h-3.5" /> New Folder
+          </Button>
+          <input ref={fileInputRef} type="file" multiple onChange={handleUpload} className="hidden" />
+          <Button
+            size="sm"
+            className="h-8 gap-1.5 hidden sm:flex bg-emerald-500 hover:bg-emerald-600 text-white dark:bg-emerald-600 dark:hover:bg-emerald-500"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploading}
+          >
+            {uploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
+            Upload
+          </Button>
+
+          {/* Mobile buttons */}
+          <div className="flex sm:hidden items-center gap-1">
+            <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setShowNewFolder(true)}>
+              <FolderPlus className="w-3.5 h-3.5" />
+            </Button>
+            <Button size="icon" className="h-8 w-8 bg-emerald-500 hover:bg-emerald-600 text-white" onClick={() => fileInputRef.current?.click()} disabled={uploading}>
               <Upload className="w-3.5 h-3.5" />
             </Button>
           </div>
