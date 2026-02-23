@@ -317,14 +317,11 @@ const VersionForm = ({ appId, version, onSave, onCancel }: VersionFormProps) => 
       </div>
       <div className="space-y-3">
         <Label>Legacy Download URL (optional)</Label>
-        <div className="flex items-start gap-4">
-          <FileUpload type="versions" currentUrl={formData.download_url} onUpload={(url) => setFormData({ ...formData, download_url: url })} label="" />
-          <div className="flex-1 flex gap-2">
-            <Input type="url" value={formData.download_url} onChange={(e) => setFormData({ ...formData, download_url: e.target.value })} placeholder="Or paste download URL..." className="text-sm flex-1" />
-            <Button type="button" variant="outline" size="sm" className="shrink-0 gap-1 h-9" onClick={() => { setPickerTarget({ type: 'legacy' }); setPickerOpen(true); }}>
-              <HardDrive className="w-3.5 h-3.5" /> Browse
-            </Button>
-          </div>
+        <div className="flex gap-2">
+          <Input type="url" value={formData.download_url} onChange={(e) => setFormData({ ...formData, download_url: e.target.value })} placeholder="Paste download URL or browse Bunny..." className="text-sm flex-1" />
+          <Button type="button" variant="outline" size="sm" className="shrink-0 gap-1 h-9" onClick={() => { setPickerTarget({ type: 'legacy' }); setPickerOpen(true); }}>
+            <HardDrive className="w-3.5 h-3.5" /> Browse
+          </Button>
         </div>
       </div>
       <div className="space-y-3 border border-border rounded-lg p-4 bg-muted/30">
