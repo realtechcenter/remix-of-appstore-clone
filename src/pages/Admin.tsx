@@ -362,15 +362,13 @@ const VersionForm = ({ appId, version, onSave, onCancel }: VersionFormProps) => 
           </div>
         )}
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <Label htmlFor="changelog">Changelog (English)</Label>
-          <RichTextEditor value={formData.changelog || ''} onChange={(html) => setFormData({ ...formData, changelog: html })} minHeight="100px" className="mt-1.5" />
-        </div>
-        <div>
-          <Label htmlFor="changelog_km">កំណត់ហេតុ (ខ្មែរ)</Label>
-          <RichTextEditor value={formData.changelog_km || ''} onChange={(html) => setFormData({ ...formData, changelog_km: html })} minHeight="100px" className="mt-1.5" />
-        </div>
+      <div>
+        <Label htmlFor="changelog">Changelog (English)</Label>
+        <RichTextEditor value={formData.changelog || ''} onChange={(html) => setFormData({ ...formData, changelog: html })} minHeight="100px" className="mt-1.5" />
+      </div>
+      <div>
+        <Label htmlFor="changelog_km">កំណត់ហេតុ (ខ្មែរ)</Label>
+        <RichTextEditor value={formData.changelog_km || ''} onChange={(html) => setFormData({ ...formData, changelog_km: html })} minHeight="100px" className="mt-1.5" />
       </div>
       <div className="flex items-center gap-2">
         <Switch id="is_latest" checked={formData.is_latest} onCheckedChange={(c) => setFormData({ ...formData, is_latest: c })} />
