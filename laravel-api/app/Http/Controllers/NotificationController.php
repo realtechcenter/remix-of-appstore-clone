@@ -3,11 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Models\Notification;
+use App\Traits\LogsAdminActivity;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
 class NotificationController extends Controller
 {
+    use LogsAdminActivity;
+
     public function index(Request $request)
     {
         $notifications = Notification::orderBy('created_at', 'desc')->get();
@@ -51,6 +54,12 @@ class NotificationController extends Controller
             'created_by' => $adminId,
         ]);
 
+        $this->logActivity($request, 'notification_create', [
+            'notification_id' => $notification->id,
+            'title' => $notification->title,
+            'type' => $notification->type,
+        ]);
+
         return response()->json([
             'success' => true,
             'message' => 'Notification created successfully',
@@ -88,6 +97,11 @@ class NotificationController extends Controller
             'published_at', 'expires_at'
         ]));
 
+        $this->logActivity($request, 'notification_update', [
+            'notification_id' => $id,
+            'title' => $notification->title,
+        ]);
+
         return response()->json([
             'success' => true,
             'message' => 'Notification updated successfully',
@@ -95,7 +109,7 @@ class NotificationController extends Controller
         ]);
     }
 
-    public function destroy($id)
+    public function destroy(Request $request, $id)
     {
         $notification = Notification::find($id);
 
@@ -103,7 +117,10 @@ class NotificationController extends Controller
             return response()->json(['error' => 'Notification not found'], 404);
         }
 
+        $notifData = ['notification_id' => $id, 'title' => $notification->title];
         $notification->delete();
+
+        $this->logActivity($request, 'notification_delete', $notifData);
 
         return response()->json([
             'success' => true,
@@ -111,7 +128,6 @@ class NotificationController extends Controller
         ]);
     }
 
-    // Public endpoint for users to get their notifications
     public function userNotifications(Request $request)
     {
         $userId = $request->attributes->get('user_id');

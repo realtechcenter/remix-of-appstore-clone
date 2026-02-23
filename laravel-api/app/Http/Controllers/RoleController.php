@@ -5,13 +5,14 @@ namespace App\Http\Controllers;
 use App\Models\UserRole;
 use App\Models\User;
 use App\Models\RolePermission;
+use App\Traits\LogsAdminActivity;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
 
 class RoleController extends Controller
 {
-    // ─── User Roles ───────────────────────────────────────────────────────
+    use LogsAdminActivity;
 
     public function index(Request $request)
     {
@@ -19,7 +20,6 @@ class RoleController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
-        // Group by user
         $usersWithRoles = $roles->groupBy('user_id')->map(function ($userRoles) {
             $firstRole = $userRoles->first();
             return [
@@ -47,13 +47,11 @@ class RoleController extends Controller
             return response()->json(['error' => $validator->errors()->first()], 422);
         }
 
-        // Check if role exists in role_permissions
         $roleExists = RolePermission::where('role', $request->role)->exists();
         if (!$roleExists && !in_array($request->role, ['admin', 'moderator', 'user'])) {
             return response()->json(['error' => 'Role does not exist. Create it first in permission settings.'], 422);
         }
 
-        // Check if already exists
         $existing = UserRole::where('user_id', $request->user_id)
             ->where('role', $request->role)
             ->first();
@@ -64,6 +62,13 @@ class RoleController extends Controller
 
         $role = UserRole::create([
             'user_id' => $request->user_id,
+            'role' => $request->role,
+        ]);
+
+        $user = User::find($request->user_id);
+        $this->logActivity($request, 'role_assign', [
+            'target_user_id' => $request->user_id,
+            'target_email' => $user->email ?? null,
             'role' => $request->role,
         ]);
 
@@ -93,17 +98,19 @@ class RoleController extends Controller
             return response()->json(['error' => 'Role not found'], 404);
         }
 
+        $user = User::find($request->user_id);
+        $this->logActivity($request, 'role_remove', [
+            'target_user_id' => $request->user_id,
+            'target_email' => $user->email ?? null,
+            'role' => $request->role,
+        ]);
+
         return response()->json([
             'success' => true,
             'message' => 'Role removed successfully',
         ]);
     }
 
-    // ─── Permission Management ────────────────────────────────────────────
-
-    /**
-     * Get all available permissions and all role-permission mappings.
-     */
     public function permissions()
     {
         $allPermissions = RolePermission::allPermissionKeys();
@@ -111,7 +118,6 @@ class RoleController extends Controller
             return $perms->pluck('permission')->toArray();
         });
 
-        // Include default roles even if they have no permissions yet
         $allRoleNames = RolePermission::allRoles();
         if (!in_array('admin', $allRoleNames)) $allRoleNames[] = 'admin';
         if (!in_array('moderator', $allRoleNames)) $allRoleNames[] = 'moderator';
@@ -125,9 +131,6 @@ class RoleController extends Controller
         ]);
     }
 
-    /**
-     * Create a new custom role.
-     */
     public function createRole(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -142,12 +145,10 @@ class RoleController extends Controller
 
         $role = strtolower($request->role);
 
-        // Check if role already exists
         if (RolePermission::where('role', $role)->exists()) {
             return response()->json(['error' => 'Role already exists'], 422);
         }
 
-        // Insert all permissions for this role
         $now = now();
         $inserts = array_map(function ($perm) use ($role, $now) {
             return ['role' => $role, 'permission' => $perm, 'created_at' => $now, 'updated_at' => $now];
@@ -155,15 +156,17 @@ class RoleController extends Controller
 
         RolePermission::insert($inserts);
 
+        $this->logActivity($request, 'role_create', [
+            'role' => $role,
+            'permissions_count' => count($request->permissions),
+        ]);
+
         return response()->json([
             'success' => true,
             'message' => "Role '{$role}' created with " . count($request->permissions) . " permissions",
         ]);
     }
 
-    /**
-     * Update permissions for an existing role.
-     */
     public function updateRolePermissions(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -179,10 +182,8 @@ class RoleController extends Controller
         $role = $request->role;
 
         DB::transaction(function () use ($role, $request) {
-            // Remove all existing permissions for this role
             RolePermission::where('role', $role)->delete();
 
-            // Insert new permissions
             $now = now();
             $inserts = array_map(function ($perm) use ($role, $now) {
                 return ['role' => $role, 'permission' => $perm, 'created_at' => $now, 'updated_at' => $now];
@@ -193,26 +194,29 @@ class RoleController extends Controller
             }
         });
 
+        $this->logActivity($request, 'role_permissions_update', [
+            'role' => $role,
+            'permissions_count' => count($request->permissions),
+        ]);
+
         return response()->json([
             'success' => true,
             'message' => "Permissions updated for role '{$role}'",
         ]);
     }
 
-    /**
-     * Delete a custom role and all its permissions.
-     */
     public function deleteRole(Request $request, string $role)
     {
         if (in_array($role, ['admin', 'user'])) {
             return response()->json(['error' => 'Cannot delete built-in roles'], 422);
         }
 
-        // Remove role permissions
         RolePermission::where('role', $role)->delete();
-
-        // Remove role from all users
         UserRole::where('role', $role)->delete();
+
+        $this->logActivity($request, 'role_delete', [
+            'role' => $role,
+        ]);
 
         return response()->json([
             'success' => true,
@@ -220,9 +224,6 @@ class RoleController extends Controller
         ]);
     }
 
-    /**
-     * Get permissions for the currently authenticated user.
-     */
     public function myPermissions(Request $request)
     {
         $user = $request->user();

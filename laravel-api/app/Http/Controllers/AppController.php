@@ -6,10 +6,13 @@ use App\Models\App;
 use App\Models\AppScreenshot;
 use App\Models\AppVideo;
 use App\Models\Order;
+use App\Traits\LogsAdminActivity;
 use Illuminate\Http\Request;
 
 class AppController extends Controller
 {
+    use LogsAdminActivity;
+
     public function index(Request $request)
     {
         $query = App::with(['versions' => function ($q) {
@@ -195,6 +198,11 @@ class AppController extends Controller
             }
         }
 
+        $this->logActivity($request, 'app_create', [
+            'app_id' => $app->id,
+            'app_name' => $app->name,
+        ]);
+
         return response()->json([
             'success' => true,
             'id' => $app->id,
@@ -249,13 +257,18 @@ class AppController extends Controller
             }
         }
 
+        $this->logActivity($request, 'app_update', [
+            'app_id' => $app->id,
+            'app_name' => $app->name,
+        ]);
+
         return response()->json([
             'success' => true,
             'message' => 'App updated successfully',
         ]);
     }
 
-    public function destroy($id)
+    public function destroy(Request $request, $id)
     {
         $app = App::find($id);
 
@@ -263,7 +276,13 @@ class AppController extends Controller
             return response()->json(['error' => 'App not found'], 404);
         }
 
+        $appName = $app->name;
         $app->delete();
+
+        $this->logActivity($request, 'app_delete', [
+            'app_id' => $id,
+            'app_name' => $appName,
+        ]);
 
         return response()->json([
             'success' => true,
