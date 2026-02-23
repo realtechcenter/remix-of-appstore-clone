@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import {
   Search, ChevronLeft, ChevronRight, DollarSign, CheckCircle, Clock,
@@ -24,6 +25,7 @@ export const PaymentHistoryAdmin = () => {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const perPage = 20;
 
   const { data, isLoading } = useQuery({
@@ -53,10 +55,19 @@ export const PaymentHistoryAdmin = () => {
     onError: () => toast.error("Failed to delete order"),
   });
 
+  const bulkDeleteMutation = useMutation({
+    mutationFn: (orderIds: string[]) => adminUsersApi.bulkDeleteOrders(orderIds),
+    onSuccess: (data) => {
+      toast.success(data.message || "Orders deleted");
+      setSelectedIds(new Set());
+      queryClient.invalidateQueries({ queryKey: ["admin-all-orders"] });
+    },
+    onError: () => toast.error("Failed to delete orders"),
+  });
+
   const orders = data?.orders || [];
   const pagination = data?.pagination;
 
-  // Client-side search filter
   const filtered = searchQuery
     ? orders.filter(o =>
         o.app_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -67,18 +78,71 @@ export const PaymentHistoryAdmin = () => {
       )
     : orders;
 
-  // Summary stats from current page
   const totalRevenue = filtered.filter(o => o.status === "paid").reduce((s, o) => {
     const amt = typeof o.amount === "string" ? parseFloat(o.amount) : o.amount;
     return s + amt;
   }, 0);
 
+  const allFilteredIds = filtered.map(o => o.id);
+  const allSelected = filtered.length > 0 && allFilteredIds.every(id => selectedIds.has(id));
+  const someSelected = allFilteredIds.some(id => selectedIds.has(id));
+
+  const toggleSelectAll = () => {
+    if (allSelected) {
+      setSelectedIds(prev => {
+        const next = new Set(prev);
+        allFilteredIds.forEach(id => next.delete(id));
+        return next;
+      });
+    } else {
+      setSelectedIds(prev => {
+        const next = new Set(prev);
+        allFilteredIds.forEach(id => next.add(id));
+        return next;
+      });
+    }
+  };
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const handleBulkDelete = () => {
+    const ids = Array.from(selectedIds);
+    if (ids.length === 0) return;
+    if (!confirm(`Delete ${ids.length} selected order(s)? This cannot be undone.`)) return;
+    bulkDeleteMutation.mutate(ids);
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h2 className="text-xl font-semibold">Payment History</h2>
-        <p className="text-sm text-muted-foreground mt-1">View and manage all payment transactions</p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h2 className="text-xl font-semibold">Payment History</h2>
+          <p className="text-sm text-muted-foreground mt-1">View and manage all payment transactions</p>
+        </div>
+        {selectedIds.size > 0 && (
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={handleBulkDelete}
+            disabled={bulkDeleteMutation.isPending}
+            className="gap-1.5"
+          >
+            {bulkDeleteMutation.isPending ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <Trash2 className="w-3.5 h-3.5" />
+            )}
+            Delete {selectedIds.size} selected
+          </Button>
+        )}
       </div>
 
       {/* Filters */}
@@ -92,7 +156,7 @@ export const PaymentHistoryAdmin = () => {
             className="pl-9"
           />
         </div>
-        <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setCurrentPage(1); }}>
+        <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setCurrentPage(1); setSelectedIds(new Set()); }}>
           <SelectTrigger className="w-[140px]">
             <SelectValue placeholder="Status" />
           </SelectTrigger>
@@ -157,6 +221,14 @@ export const PaymentHistoryAdmin = () => {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border bg-muted/50">
+                  <th className="px-4 py-3 w-10">
+                    <Checkbox
+                      checked={allSelected}
+                      onCheckedChange={toggleSelectAll}
+                      aria-label="Select all"
+                      className={someSelected && !allSelected ? "data-[state=unchecked]:bg-primary/20" : ""}
+                    />
+                  </th>
                   <th className="text-left px-4 py-3 font-medium text-muted-foreground">User</th>
                   <th className="text-left px-4 py-3 font-medium text-muted-foreground">App</th>
                   <th className="text-left px-4 py-3 font-medium text-muted-foreground">Amount</th>
@@ -170,8 +242,16 @@ export const PaymentHistoryAdmin = () => {
                 {filtered.map((order) => {
                   const status = statusConfig[order.status] || statusConfig.pending;
                   const amount = typeof order.amount === "string" ? parseFloat(order.amount) : order.amount;
+                  const isSelected = selectedIds.has(order.id);
                   return (
-                    <tr key={order.id} className="hover:bg-muted/30 transition-colors">
+                    <tr key={order.id} className={`hover:bg-muted/30 transition-colors ${isSelected ? "bg-primary/5" : ""}`}>
+                      <td className="px-4 py-3">
+                        <Checkbox
+                          checked={isSelected}
+                          onCheckedChange={() => toggleSelect(order.id)}
+                          aria-label={`Select order ${order.id}`}
+                        />
+                      </td>
                       <td className="px-4 py-3">
                         <div className="font-medium text-xs">{order.user?.full_name || "—"}</div>
                         <div className="text-xs text-muted-foreground">{order.user?.email}</div>
@@ -238,7 +318,7 @@ export const PaymentHistoryAdmin = () => {
               variant="outline"
               size="sm"
               disabled={currentPage <= 1}
-              onClick={() => setCurrentPage(p => p - 1)}
+              onClick={() => { setCurrentPage(p => p - 1); setSelectedIds(new Set()); }}
             >
               <ChevronLeft className="w-4 h-4" />
             </Button>
@@ -246,7 +326,7 @@ export const PaymentHistoryAdmin = () => {
               variant="outline"
               size="sm"
               disabled={currentPage >= pagination.total_pages}
-              onClick={() => setCurrentPage(p => p + 1)}
+              onClick={() => { setCurrentPage(p => p + 1); setSelectedIds(new Set()); }}
             >
               <ChevronRight className="w-4 h-4" />
             </Button>

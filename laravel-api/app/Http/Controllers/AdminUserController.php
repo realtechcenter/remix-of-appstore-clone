@@ -225,6 +225,31 @@ class AdminUserController extends Controller
     }
 
     /**
+     * Bulk delete orders
+     */
+    public function bulkDeleteOrders(Request $request)
+    {
+        $request->validate([
+            'order_ids' => 'required|array|min:1',
+            'order_ids.*' => 'string',
+        ]);
+
+        $orderIds = $request->input('order_ids');
+        $deleted = Order::whereIn('id', $orderIds)->delete();
+
+        $this->logActivity($request, 'admin_bulk_delete_orders', [
+            'count' => $deleted,
+            'order_ids' => $orderIds,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => "$deleted order(s) deleted successfully",
+            'deleted_count' => $deleted,
+        ]);
+    }
+
+    /**
      * Get all orders (payment history) across all users
      */
     public function allOrders(Request $request)

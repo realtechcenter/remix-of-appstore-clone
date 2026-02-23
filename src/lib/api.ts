@@ -409,6 +409,10 @@ export const adminUsersApi = {
   deleteOrder: async (orderId: string): Promise<{ success: boolean; message: string }> => {
     return apiRequest(`admin/orders/${orderId}`, { method: 'DELETE' });
   },
+
+  bulkDeleteOrders: async (orderIds: string[]): Promise<{ success: boolean; message: string; deleted_count: number }> => {
+    return apiRequest('admin/orders/bulk-delete', { method: 'POST', body: { order_ids: orderIds } });
+  },
 };
 
 // Analytics Types
