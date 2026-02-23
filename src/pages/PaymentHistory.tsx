@@ -329,8 +329,8 @@ const PaymentHistory = () => {
               </p>
               <p className="text-xs text-amber-700/80 dark:text-amber-400/70 mt-1">
                 {language === 'km'
-                  ? 'សូមទាក់ទងមកយើងតាម Facebook Page សម្រាប់ជំនួយ។'
-                  : 'Please contact us via our Facebook Page for support.'}
+                  ? 'សូមចុចប៊ូតុង "ផ្ទៀងផ្ទាត់ការបង់ប្រាក់" នៅលើការបញ្ជាទិញរបស់អ្នកជាមុនសិន។ បើនៅតែ Pending សូមទាក់ទងមកយើងតាម Facebook Page។'
+                  : 'First, try clicking "Verify Payment" on your order below. If it still shows Pending, contact us via our Facebook Page.'}
               </p>
               <a
                 href="https://www.facebook.com/macsofy"
