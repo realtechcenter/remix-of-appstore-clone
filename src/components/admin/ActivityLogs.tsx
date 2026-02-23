@@ -287,7 +287,7 @@ export const ActivityLogs = () => {
               const ActionIcon = config.icon;
               return (
                 <div
-                  key={log.id}
+                  key={`${log.id}-${index}`}
                   className="flex items-center gap-3 px-4 py-3 hover:bg-accent/40 transition-colors duration-100 group"
                   style={{ animationDelay: `${index * 20}ms` }}
                 >
