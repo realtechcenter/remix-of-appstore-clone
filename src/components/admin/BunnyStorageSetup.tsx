@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { bunnyApi, type BunnyConfig, type BunnyTestResult } from "@/lib/api";
+import { BunnyFileExplorer } from "./BunnyFileExplorer";
 
 export const BunnyStorageSetup = () => {
   const [config, setConfig] = useState<BunnyConfig | null>(null);
@@ -236,16 +237,14 @@ export const BunnyStorageSetup = () => {
       </div>
 
       {/* Setup Instructions */}
-      {!config?.configured && (
-        <div className="border border-dashed border-border rounded-xl p-5 bg-muted/30">
-          <h3 className="font-medium mb-2">Setup Instructions</h3>
-          <ol className="text-sm text-muted-foreground space-y-1.5 list-decimal list-inside">
-            <li>Go to your <span className="font-medium text-foreground">Bunny.net Dashboard</span></li>
-            <li>Navigate to <span className="font-medium text-foreground">Storage → Storage Zones</span></li>
-            <li>Copy your <span className="font-medium text-foreground">Password (API Key)</span>, <span className="font-medium text-foreground">Zone Name</span>, and <span className="font-medium text-foreground">Hostname</span></li>
-            <li>Fill in the fields above and click <span className="font-medium text-foreground">Save Settings</span></li>
-            <li>Click <span className="font-medium text-foreground">Test Connection</span> to verify</li>
-          </ol>
+        </div>
+      )}
+
+      {/* File Explorer */}
+      {config?.configured && (
+        <div className="space-y-3">
+          <h3 className="font-medium">File Explorer</h3>
+          <BunnyFileExplorer />
         </div>
       )}
     </div>
