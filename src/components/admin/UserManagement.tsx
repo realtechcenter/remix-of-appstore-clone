@@ -52,10 +52,10 @@ export const UserManagement = () => {
   }, [currentPage, searchQuery]);
 
   useEffect(() => {
-    if (showGrantDialog && apps.length === 0) {
+    if (showGrantDialog) {
       loadApps();
     }
-  }, [showGrantDialog]);
+  }, [showGrantDialog, appSearchQuery]);
 
   const loadUsers = async () => {
     setLoading(true);
@@ -78,7 +78,7 @@ export const UserManagement = () => {
 
   const loadApps = async () => {
     try {
-      const response = await appsApi.getAll({ limit: 1000 });
+      const response = await appsApi.getAll({ search: appSearchQuery || undefined, limit: 30 });
       setApps(response.data);
     } catch (error) {
       console.error("Failed to load apps:", error);
@@ -414,13 +414,13 @@ export const UserManagement = () => {
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-full p-0" align="start">
-                  <Command>
+                  <Command shouldFilter={false}>
                     <CommandInput placeholder="Search apps..." value={appSearchQuery} onValueChange={setAppSearchQuery} />
                     <CommandList>
                       <CommandEmpty>No apps found.</CommandEmpty>
                       <CommandGroup>
                         {apps.map((app) => (
-                          <CommandItem key={app.id} value={app.name} onSelect={() => { setSelectedAppId(app.id.toString()); setAppSearchOpen(false); }}>
+                          <CommandItem key={app.id} value={app.id.toString()} onSelect={() => { setSelectedAppId(app.id.toString()); setAppSearchOpen(false); }}>
                             <Check className={cn("mr-2 h-4 w-4", selectedAppId === app.id.toString() ? "opacity-100" : "opacity-0")} />
                             <span>{app.name}</span>
                             <span className="ml-auto text-xs text-muted-foreground">${typeof app.price === 'string' ? parseFloat(app.price).toFixed(2) : (app.price || 0).toFixed(2)}</span>
