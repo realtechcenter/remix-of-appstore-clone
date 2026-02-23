@@ -13,6 +13,7 @@ import {
   Calendar, DollarSign, CheckCircle, Clock, XCircle,
   Hash, FileText, Receipt, RefreshCw, Loader2, MessageCircle, AlertTriangle
 } from "lucide-react";
+import { PaymentHistoryTutorial } from "@/components/PaymentHistoryTutorial";
 
 const statusConfig: Record<string, { dotClass: string; label: string; labelKm: string }> = {
   paid:    { dotClass: "bg-green-500",           label: "Paid",    labelKm: "បានបង់ប្រាក់" },
@@ -273,6 +274,9 @@ const PaymentHistory = () => {
       </header>
 
       <main className="max-w-3xl mx-auto px-4 sm:px-8 py-10">
+        {/* Tutorial guide */}
+        <PaymentHistoryTutorial />
+
         {/* Page title */}
         <div className="mb-6">
           <h1 className="text-2xl font-semibold text-foreground">

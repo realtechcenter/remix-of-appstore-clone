@@ -8,6 +8,7 @@ import { AppGrid } from "@/components/AppGrid";
 import { GamesGrid } from "@/components/GamesGrid";
 import { PageTransition } from "@/components/PageTransition";
 import { AIChatBot } from "@/components/AIChatBot";
+import { OnboardingWalkthrough } from "@/components/OnboardingWalkthrough";
 import { useLanguage, useTranslations } from "@/contexts/LanguageContext";
 
 const Index = () => {
@@ -107,6 +108,9 @@ const Index = () => {
 
       {/* AI Chat Bot */}
       <AIChatBot />
+
+      {/* Onboarding walkthrough — first-time only */}
+      <OnboardingWalkthrough />
     </div>
   );
 };
