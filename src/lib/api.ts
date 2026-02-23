@@ -743,6 +743,8 @@ export interface BunnyConfig {
   storage_host: string;
   cdn_host: string;
   configured: boolean;
+  api_key_masked?: string | null;
+  token_auth_key_masked?: string | null;
 }
 
 export interface BunnyTestResult {
