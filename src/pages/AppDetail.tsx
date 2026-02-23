@@ -23,6 +23,50 @@ import { PaymentDialog } from "@/components/PaymentDialog";
 import { CouponSuggestion } from "@/components/CouponSuggestion";
 import { useHasPurchased } from "@/hooks/useOrders";
 import { RichContent } from "@/components/RichTextEditor";
+import { CoachMarks, type CoachStep } from "@/components/CoachMarks";
+
+const appDetailTourSteps: CoachStep[] = [
+  {
+    target: "ad-screenshots",
+    titleEn: "Screenshots",
+    titleKm: "រូបថតអេក្រង់",
+    descEn: "Click any screenshot to view it in fullscreen. Use arrows to browse through all images.",
+    descKm: "ចុចរូបថតណាមួយដើម្បីមើលពេញអេក្រង់។ ប្រើព្រួញដើម្បីរុករករូបភាពទាំងអស់។",
+    placement: "bottom",
+  },
+  {
+    target: "ad-metadata",
+    titleEn: "App Details",
+    titleKm: "ព័ត៌មានលម្អិតកម្មវិធី",
+    descEn: "Here you'll find the version, developer, compatibility, file size, and release date.",
+    descKm: "នៅទីនេះអ្នកនឹងឃើញកំណែ អ្នកអភិវឌ្ឍន៍ ភាពឆបគ្នា ទំហំឯកសារ និងកាលបរិច្ឆេទចេញផ្សាយ។",
+    placement: "left",
+  },
+  {
+    target: "ad-download-btn",
+    titleEn: "Download / Purchase",
+    titleKm: "ទាញយក / ទិញ",
+    descEn: "Free apps can be downloaded directly. Paid apps require purchase first — click the button to proceed.",
+    descKm: "កម្មវិធីឥតគិតថ្លៃអាចទាញយកបានផ្ទាល់។ កម្មវិធីបង់ប្រាក់ត្រូវទិញជាមុនសិន — ចុចប៊ូតុងដើម្បីបន្ត។",
+    placement: "left",
+  },
+  {
+    target: "ad-safety-badge",
+    titleEn: "Safety Verified",
+    titleKm: "សុវត្ថិភាពបានផ្ទៀងផ្ទាត់",
+    descEn: "All apps are scanned for safety. Click to verify on VirusTotal for extra peace of mind.",
+    descKm: "កម្មវិធីទាំងអស់ត្រូវបានស្កេនសុវត្ថិភាព។ ចុចដើម្បីផ្ទៀងផ្ទាត់នៅ VirusTotal។",
+    placement: "left",
+  },
+  {
+    target: "ad-versions",
+    titleEn: "Version History",
+    titleKm: "ប្រវត្តិកំណែ",
+    descEn: "Expand any version to see details, changelogs, and individual download links.",
+    descKm: "ពង្រីកកំណែណាមួយដើម្បីមើលព័ត៌មានលម្អិត កំណត់ហេតុផ្លាស់ប្ដូរ និងតំណទាញយកនីមួយៗ។",
+    placement: "top",
+  },
+];
 
 const getGradientFromName = (name: string | undefined): string => {
   const gradients = [
@@ -799,7 +843,7 @@ const AppDetail = () => {
                 {/* Main Content Grid */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                   {/* Left Side - Screenshot */}
-                  <div className="lg:col-span-2">
+                    <div className="lg:col-span-2" data-tour="ad-screenshots">
                     {appData.screenshots && appData.screenshots.length > 0 ? (
                       <ScreenshotGallery 
                         screenshots={appData.screenshots}
@@ -811,12 +855,12 @@ const AppDetail = () => {
                         <Package className="w-20 h-20 text-muted-foreground/30" />
                       </div>
                     )}
-                  </div>
+                    </div>
 
                   {/* Right Side - Metadata */}
                   <div className="space-y-4">
                     {/* Metadata Grid */}
-                    <div className="space-y-4 p-5 bg-muted/30 rounded-xl border border-border/50">
+                    <div className="space-y-4 p-5 bg-muted/30 rounded-xl border border-border/50" data-tour="ad-metadata">
                       <MetadataItem 
                         label={translations.version} 
                         value={appData.latest_version || latestVersion?.version}
@@ -851,7 +895,7 @@ const AppDetail = () => {
                     </div>
 
                     {/* Download/Purchase Button */}
-                    <div className="mt-3">
+                    <div className="mt-3" data-tour="ad-download-btn">
                     {(() => {
                       // Convert price to number (API may return string)
                       const priceNum = typeof appData.price === 'string' ? parseFloat(appData.price) : (appData.price || 0);
@@ -951,7 +995,7 @@ const AppDetail = () => {
                     </div>
 
                     {/* Security Badge - 100% Safe with VirusTotal */}
-                    <div className="space-y-2">
+                    <div className="space-y-2" data-tour="ad-safety-badge">
                       <a 
                         href="https://www.virustotal.com" 
                         target="_blank" 
@@ -1058,7 +1102,7 @@ const AppDetail = () => {
 
                 {/* All Versions Section */}
                 {versions && versions.length > 0 && (
-                  <div className="mt-10">
+                  <div className="mt-10" data-tour="ad-versions">
                     <Separator className="mb-8" />
                     <VersionsList 
                       versions={versions} 
@@ -1091,6 +1135,14 @@ const AppDetail = () => {
             // Refresh purchase status - dialog stays open to show success
             setSelectedCoupon(null);
           }}
+        />
+      )}
+
+      {/* App Detail Coach Marks */}
+      {!appLoading && appData && (
+        <CoachMarks
+          steps={appDetailTourSteps}
+          storageKey="app-detail-coach-dismissed"
         />
       )}
     </div>
