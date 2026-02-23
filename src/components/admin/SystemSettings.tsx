@@ -70,6 +70,26 @@ export function SystemSettingsPanel() {
     setSettings(prev => ({ ...prev, [key]: value }));
   };
 
+  const toggleAndSave = async (key: keyof SystemSettings, value: boolean) => {
+    const newSettings = { ...settings, [key]: value };
+    setSettings(newSettings);
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/admin/settings`, {
+        method: 'PUT',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(newSettings),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Failed to save');
+      }
+      toast.success(`${key.replace(/_/g, ' ')} updated`);
+    } catch (err: any) {
+      setSettings(prev => ({ ...prev, [key]: !value }));
+      toast.error(err.message || 'Failed to save setting');
+    }
+  };
+
   const handleSave = async () => {
     try {
       setSaving(true);
@@ -145,14 +165,14 @@ export function SystemSettingsPanel() {
               <p className="text-sm font-medium">Allow New Registrations</p>
               <p className="text-xs text-muted-foreground">Enable user sign-up for new accounts</p>
             </div>
-            <Switch checked={settings.allow_new_registrations} onCheckedChange={v => update('allow_new_registrations', v)} />
+            <Switch checked={settings.allow_new_registrations} onCheckedChange={v => toggleAndSave('allow_new_registrations', v)} />
           </div>
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium">Auto-Approve App Submissions</p>
               <p className="text-xs text-muted-foreground">Skip manual review for new submissions</p>
             </div>
-            <Switch checked={settings.auto_approve_apps} onCheckedChange={v => update('auto_approve_apps', v)} />
+            <Switch checked={settings.auto_approve_apps} onCheckedChange={v => toggleAndSave('auto_approve_apps', v)} />
           </div>
         </div>
       </div>
@@ -169,7 +189,7 @@ export function SystemSettingsPanel() {
               <p className="text-sm font-medium text-destructive">Maintenance Mode</p>
               <p className="text-xs text-muted-foreground">Users will see a maintenance page</p>
             </div>
-            <Switch checked={settings.maintenance_mode} onCheckedChange={v => update('maintenance_mode', v)} />
+            <Switch checked={settings.maintenance_mode} onCheckedChange={v => toggleAndSave('maintenance_mode', v)} />
           </div>
           {settings.maintenance_mode && (
             <div>
@@ -196,7 +216,7 @@ export function SystemSettingsPanel() {
               <p className="text-sm font-medium">Enable Analytics Tracking</p>
               <p className="text-xs text-muted-foreground">Collect usage and performance data</p>
             </div>
-            <Switch checked={settings.enable_analytics} onCheckedChange={v => update('enable_analytics', v)} />
+            <Switch checked={settings.enable_analytics} onCheckedChange={v => toggleAndSave('enable_analytics', v)} />
           </div>
         </div>
       </div>
