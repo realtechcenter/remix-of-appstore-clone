@@ -236,9 +236,6 @@ export const BunnyStorageSetup = () => {
         )}
       </div>
 
-      {/* Setup Instructions */}
-        </div>
-      )}
 
       {/* File Explorer */}
       {config?.configured && (
