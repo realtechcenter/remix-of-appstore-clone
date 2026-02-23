@@ -46,7 +46,9 @@ Route::get('/apps', [AppController::class, 'index']);
 Route::get('/apps/{id}', [AppController::class, 'show']);
 Route::get('/versions', [VersionController::class, 'index']);
 
-// AI Chat (public)
+// Public maintenance check
+Route::get('/admin/settings/maintenance', [SystemSettingController::class, 'maintenanceStatus']);
+
 Route::post('/ai/chat', [AIChatController::class, 'chat']);
 Route::post('/ai/chat/stream', [AIChatController::class, 'streamChat']);
 

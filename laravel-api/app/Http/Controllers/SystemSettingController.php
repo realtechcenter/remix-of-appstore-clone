@@ -38,6 +38,20 @@ class SystemSettingController extends Controller
     }
 
     /**
+     * Public: get maintenance status only.
+     */
+    public function maintenanceStatus()
+    {
+        $mode = SystemSetting::getValue('maintenance_mode', 'false');
+        $message = SystemSetting::getValue('maintenance_message', '');
+
+        return response()->json([
+            'maintenance_mode' => $mode === 'true',
+            'maintenance_message' => $message,
+        ]);
+    }
+
+    /**
      * Update system settings (bulk).
      */
     public function update(Request $request)
