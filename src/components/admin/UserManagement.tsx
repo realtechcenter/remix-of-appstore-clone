@@ -78,7 +78,7 @@ export const UserManagement = () => {
 
   const loadApps = async () => {
     try {
-      const response = await appsApi.getAll({ limit: 100 });
+      const response = await appsApi.getAll({ limit: 1000 });
       setApps(response.data);
     } catch (error) {
       console.error("Failed to load apps:", error);
