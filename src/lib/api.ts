@@ -732,3 +732,27 @@ export const couponsApi = {
     return userApiRequest('coupons/apply', { method: 'POST', body: { user_coupon_id: userCouponId, order_id: orderId, price } });
   },
 };
+
+// Bunny Storage Types
+export interface BunnyConfig {
+  zone_name: string;
+  storage_host: string;
+  cdn_host: string;
+  configured: boolean;
+}
+
+export interface BunnyTestResult {
+  success: boolean;
+  message?: string;
+  error?: string;
+  zone_name?: string;
+  storage_host?: string;
+  cdn_host?: string;
+  file_count?: number;
+}
+
+// Bunny Storage API
+export const bunnyApi = {
+  getConfig: () => apiRequest<BunnyConfig>('bunny/config'),
+  testConnection: () => apiRequest<BunnyTestResult>('bunny/test'),
+};
