@@ -113,6 +113,9 @@ export const BunnyFileExplorer = () => {
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadTotal, setUploadTotal] = useState(0);
+  const [uploadCompleted, setUploadCompleted] = useState(0);
+  const [uploadCurrentName, setUploadCurrentName] = useState("");
   const [deleteTarget, setDeleteTarget] = useState<BunnyFile | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [showNewFolder, setShowNewFolder] = useState(false);
@@ -214,11 +217,16 @@ export const BunnyFileExplorer = () => {
     if (filesToUpload.length === 0) return;
     setUploading(true);
     setUploadProgress(0);
+    setUploadTotal(filesToUpload.length);
+    setUploadCompleted(0);
+    setUploadCurrentName(filesToUpload[0].name);
     let completed = 0;
     try {
       for (const file of filesToUpload) {
+        setUploadCurrentName(file.name);
         await bunnyApi.uploadFile(file, currentPath);
         completed++;
+        setUploadCompleted(completed);
         setUploadProgress(Math.round((completed / filesToUpload.length) * 100));
       }
       toast.success(`${completed} file${completed !== 1 ? "s" : ""} uploaded`);
@@ -228,6 +236,9 @@ export const BunnyFileExplorer = () => {
     } finally {
       setUploading(false);
       setUploadProgress(0);
+      setUploadTotal(0);
+      setUploadCompleted(0);
+      setUploadCurrentName("");
       if (fileInputRef.current) fileInputRef.current.value = "";
     }
   }, [currentPath]);
@@ -820,6 +831,44 @@ export const BunnyFileExplorer = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Upload Progress Dialog */}
+      <Dialog open={uploading} onOpenChange={() => {}}>
+        <DialogContent className="sm:max-w-sm" onPointerDownOutside={e => e.preventDefault()}>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Upload className="w-5 h-5 text-primary" />
+              Uploading Files
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            {/* Current file */}
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">
+                  File {uploadCompleted + 1} of {uploadTotal}
+                </span>
+                <span className="font-semibold text-primary tabular-nums">{uploadProgress}%</span>
+              </div>
+              <div className="h-2.5 bg-muted rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-primary rounded-full transition-all duration-500 ease-out"
+                  style={{ width: `${uploadProgress}%` }}
+                />
+              </div>
+            </div>
+            {/* File name */}
+            <div className="flex items-center gap-2 p-2.5 bg-muted/40 rounded-lg">
+              <Loader2 className="w-4 h-4 animate-spin text-primary shrink-0" />
+              <p className="text-xs font-medium truncate">{uploadCurrentName}</p>
+            </div>
+            {/* Destination */}
+            <p className="text-[11px] text-muted-foreground text-center">
+              Uploading to: <span className="font-medium text-foreground">/{currentPath || "root"}</span>
+            </p>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={showNewFolder} onOpenChange={setShowNewFolder}>
         <DialogContent className="sm:max-w-md">
