@@ -127,6 +127,8 @@ export const BunnyFileExplorer = () => {
   const [previewFile, setPreviewFile] = useState<BunnyFile | null>(null);
   const [activeCategory, setActiveCategory] = useState<FileCategory>("all");
   const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set());
+  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
+  const [showUploadConfirm, setShowUploadConfirm] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dropRef = useRef<HTMLDivElement>(null);
 
@@ -248,7 +250,22 @@ export const BunnyFileExplorer = () => {
   }, [currentPath]);
 
   const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) processUpload(e.target.files);
+    if (e.target.files && e.target.files.length > 0) {
+      setPendingFiles(Array.from(e.target.files));
+      setShowUploadConfirm(true);
+    }
+  };
+
+  const confirmUpload = () => {
+    setShowUploadConfirm(false);
+    processUpload(pendingFiles);
+    setPendingFiles([]);
+  };
+
+  const cancelUpload = () => {
+    setShowUploadConfirm(false);
+    setPendingFiles([]);
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   // ─── Drag & Drop ──────────────────────────────────────────────────────────
@@ -264,8 +281,11 @@ export const BunnyFileExplorer = () => {
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault(); e.stopPropagation(); setIsDragging(false);
-    if (e.dataTransfer.files.length > 0) processUpload(e.dataTransfer.files);
-  }, [processUpload]);
+    if (e.dataTransfer.files.length > 0) {
+      setPendingFiles(Array.from(e.dataTransfer.files));
+      setShowUploadConfirm(true);
+    }
+  }, []);
 
   // ─── Actions ──────────────────────────────────────────────────────────────
 
@@ -873,6 +893,43 @@ export const BunnyFileExplorer = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Upload Confirmation Dialog */}
+      <AlertDialog open={showUploadConfirm} onOpenChange={setShowUploadConfirm}>
+        <AlertDialogContent className="sm:max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <Upload className="w-5 h-5 text-primary" />
+              Confirm Upload
+            </AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-3">
+                <p>
+                  Upload {pendingFiles.length} file{pendingFiles.length !== 1 ? "s" : ""} to{" "}
+                  <span className="font-medium text-foreground">/{currentPath || "root"}</span>?
+                </p>
+                <div className="max-h-[200px] overflow-y-auto space-y-1 border rounded-lg p-2 bg-muted/30">
+                  {pendingFiles.map((file, i) => (
+                    <div key={i} className="flex items-center justify-between text-xs py-1 px-2 rounded hover:bg-muted/50">
+                      <span className="truncate flex-1 mr-2">{file.name}</span>
+                      <span className="text-muted-foreground shrink-0">{formatBytes(file.size)}</span>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Total size: {formatBytes(pendingFiles.reduce((sum, f) => sum + f.size, 0))}
+                </p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={cancelUpload}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmUpload}>
+              <Upload className="w-4 h-4 mr-1.5" /> Upload
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <Dialog open={showNewFolder} onOpenChange={setShowNewFolder}>
         <DialogContent className="sm:max-w-md">
