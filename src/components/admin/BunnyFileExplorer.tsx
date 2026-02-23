@@ -397,7 +397,7 @@ export const BunnyFileExplorer = () => {
           <input ref={fileInputRef} type="file" multiple onChange={handleUpload} className="hidden" />
           <Button
             size="sm"
-            className="w-full gap-2 justify-start"
+            className="w-full gap-2 justify-start bg-emerald-500 hover:bg-emerald-600 text-white dark:bg-emerald-600 dark:hover:bg-emerald-500"
             onClick={() => fileInputRef.current?.click()}
             disabled={uploading}
           >
@@ -861,7 +861,7 @@ export const BunnyFileExplorer = () => {
         <DialogContent className="sm:max-w-sm" onPointerDownOutside={e => e.preventDefault()}>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Upload className="w-5 h-5 text-primary" />
+              <Upload className="w-5 h-5 text-emerald-500" />
               Uploading Files
             </DialogTitle>
           </DialogHeader>
@@ -872,18 +872,18 @@ export const BunnyFileExplorer = () => {
                 <span className="text-muted-foreground">
                   File {uploadCompleted + 1} of {uploadTotal}
                 </span>
-                <span className="font-semibold text-primary tabular-nums">{uploadProgress}%</span>
+                <span className="font-semibold text-emerald-600 dark:text-emerald-400 tabular-nums">{uploadProgress}%</span>
               </div>
               <div className="h-2.5 bg-muted rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-primary rounded-full transition-all duration-500 ease-out"
+                  className="h-full bg-emerald-500 rounded-full transition-all duration-500 ease-out"
                   style={{ width: `${uploadProgress}%` }}
                 />
               </div>
             </div>
             {/* File name */}
-            <div className="flex items-center gap-2 p-2.5 bg-muted/40 rounded-lg">
-              <Loader2 className="w-4 h-4 animate-spin text-primary shrink-0" />
+            <div className="flex items-center gap-2 p-2.5 bg-emerald-500/10 rounded-lg">
+              <Loader2 className="w-4 h-4 animate-spin text-emerald-500 shrink-0" />
               <p className="text-xs font-medium truncate">{uploadCurrentName}</p>
             </div>
             {/* Destination */}
@@ -899,7 +899,7 @@ export const BunnyFileExplorer = () => {
         <AlertDialogContent className="sm:max-w-md">
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
-              <Upload className="w-5 h-5 text-primary" />
+              <Upload className="w-5 h-5 text-emerald-500" />
               Confirm Upload
             </AlertDialogTitle>
             <AlertDialogDescription asChild>
@@ -908,23 +908,23 @@ export const BunnyFileExplorer = () => {
                   Upload {pendingFiles.length} file{pendingFiles.length !== 1 ? "s" : ""} to{" "}
                   <span className="font-medium text-foreground">/{currentPath || "root"}</span>?
                 </p>
-                <div className="max-h-[200px] overflow-y-auto space-y-1 border rounded-lg p-2 bg-muted/30">
+                <div className="max-h-[200px] overflow-y-auto space-y-1 border border-emerald-500/20 rounded-lg p-2 bg-emerald-500/5">
                   {pendingFiles.map((file, i) => (
-                    <div key={i} className="flex items-center justify-between text-xs py-1 px-2 rounded hover:bg-muted/50">
+                    <div key={i} className="flex items-center justify-between text-xs py-1.5 px-2.5 rounded-md hover:bg-emerald-500/10 transition-colors">
                       <span className="truncate flex-1 mr-2">{file.name}</span>
                       <span className="text-muted-foreground shrink-0">{formatBytes(file.size)}</span>
                     </div>
                   ))}
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Total size: {formatBytes(pendingFiles.reduce((sum, f) => sum + f.size, 0))}
+                  Total size: <span className="font-medium text-emerald-600 dark:text-emerald-400">{formatBytes(pendingFiles.reduce((sum, f) => sum + f.size, 0))}</span>
                 </p>
               </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={cancelUpload}>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmUpload}>
+            <AlertDialogAction onClick={confirmUpload} className="bg-emerald-500 text-white hover:bg-emerald-600 dark:bg-emerald-600 dark:hover:bg-emerald-500">
               <Upload className="w-4 h-4 mr-1.5" /> Upload
             </AlertDialogAction>
           </AlertDialogFooter>
