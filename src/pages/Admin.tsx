@@ -388,7 +388,7 @@ const VersionForm = ({ appId, version, onSave, onCancel }: VersionFormProps) => 
 };
 
 // ─── Sidebar Nav ──────────────────────────────────────────────────────────────
-type AdminTab = "analytics" | "apps" | "users" | "payments" | "roles" | "notifications" | "activity" | "status" | "coupons" | "reviews" | "storage" | "explorer" | "settings";
+type AdminTab = "analytics" | "apps" | "users" | "payments" | "roles" | "notifications" | "activity" | "status" | "coupons" | "reviews" | "explorer" | "settings";
 
 interface NavItem {
   id: AdminTab;
@@ -409,7 +409,6 @@ const navItems: NavItem[] = [
   { id: "activity", label: "Activity", icon: Activity, permission: "activity.view" },
   { id: "status", label: "Ban / Suspend", icon: UserX, permission: "user_status.manage" },
   { id: "coupons", label: "Coupons", icon: Tag, permission: "coupons.manage" },
-  { id: "storage", label: "File Storage", icon: HardDrive, permission: "settings.manage" },
   { id: "explorer", label: "File Explorer", icon: FolderOpen, permission: "settings.manage" },
   { id: "settings", label: "Settings", icon: Settings2, permission: "settings.manage" },
 ];
@@ -872,7 +871,6 @@ const AdminDashboard = () => {
           {activeTab === "activity" && <ActivityLogs />}
           {activeTab === "status" && <UserStatusManagement />}
           {activeTab === "coupons" && <CouponManagement />}
-          {activeTab === "storage" && <BunnyStorageSetup />}
           {activeTab === "explorer" && <BunnyFileExplorer />}
           {activeTab === "settings" && <SystemSettingsPanel />}
         </main>
