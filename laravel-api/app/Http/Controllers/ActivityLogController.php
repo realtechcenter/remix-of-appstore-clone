@@ -11,8 +11,7 @@ class ActivityLogController extends Controller
     {
         $days = $request->input('days', 7);
         $action = $request->input('action');
-        $limit = $request->input('limit', 100);
-
+        $perPage = min($request->input('per_page', 50), 200);
         $userId = $request->input('user_id');
 
         $query = UserActivityLog::with('user:id,email,full_name')
@@ -27,26 +26,39 @@ class ActivityLogController extends Controller
             $query->where('user_id', $userId);
         }
 
-        $logs = $query->limit($limit)->get();
+        // Stats from date+user scoped query
+        $statsQuery = UserActivityLog::where('created_at', '>=', now()->subDays($days));
+        if ($userId) {
+            $statsQuery->where('user_id', $userId);
+        }
+        $allForStats = $statsQuery->get();
+
+        $stats = [
+            'total' => $allForStats->count(),
+            'logins' => $allForStats->where('action', 'login')->count(),
+            'purchases' => $allForStats->where('action', 'purchase')->count(),
+            'downloads' => $allForStats->where('action', 'download')->count(),
+        ];
 
         // Get unique actions for filter
         $uniqueActions = UserActivityLog::where('created_at', '>=', now()->subDays($days))
             ->distinct()
             ->pluck('action');
 
-        // Get stats
-        $stats = [
-            'total' => $logs->count(),
-            'logins' => $logs->where('action', 'login')->count(),
-            'purchases' => $logs->where('action', 'purchase')->count(),
-            'downloads' => $logs->where('action', 'download')->count(),
-        ];
+        // Paginate
+        $paginated = $query->paginate($perPage);
 
         return response()->json([
             'success' => true,
-            'logs' => $logs,
+            'logs' => $paginated->items(),
             'actions' => $uniqueActions,
             'stats' => $stats,
+            'pagination' => [
+                'current_page' => $paginated->currentPage(),
+                'last_page' => $paginated->lastPage(),
+                'per_page' => $paginated->perPage(),
+                'total' => $paginated->total(),
+            ],
         ]);
     }
 
