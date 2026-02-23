@@ -129,6 +129,10 @@ export const BunnyFileExplorer = () => {
   const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set());
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const [showUploadConfirm, setShowUploadConfirm] = useState(false);
+  const [uploadFileStatuses, setUploadFileStatuses] = useState<Record<number, 'pending' | 'uploading' | 'done' | 'cancelled' | 'error'>>({});
+  const [uploadFileProgress, setUploadFileProgress] = useState<Record<number, number>>({});
+  const [uploadingFiles, setUploadingFiles] = useState<File[]>([]);
+  const uploadAbortControllers = useRef<Record<number, AbortController>>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dropRef = useRef<HTMLDivElement>(null);
 
@@ -218,24 +222,64 @@ export const BunnyFileExplorer = () => {
     const filesToUpload = Array.from(fileList);
     if (filesToUpload.length === 0) return;
     setUploading(true);
+    setUploadingFiles(filesToUpload);
     setUploadProgress(0);
     setUploadTotal(filesToUpload.length);
     setUploadCompleted(0);
     setUploadCurrentName(filesToUpload[0].name);
+
+    // Init statuses
+    const initStatuses: Record<number, 'pending' | 'uploading' | 'done' | 'cancelled' | 'error'> = {};
+    const initProgress: Record<number, number> = {};
+    filesToUpload.forEach((_, i) => { initStatuses[i] = 'pending'; initProgress[i] = 0; });
+    setUploadFileStatuses(initStatuses);
+    setUploadFileProgress(initProgress);
+    uploadAbortControllers.current = {};
+
     let completed = 0;
+    let cancelled = 0;
     try {
-      for (const file of filesToUpload) {
+      for (let i = 0; i < filesToUpload.length; i++) {
+        const file = filesToUpload[i];
+        // Check if cancelled before starting
+        if (uploadAbortControllers.current[i]?.signal?.aborted) {
+          cancelled++;
+          continue;
+        }
+        
+        const controller = new AbortController();
+        uploadAbortControllers.current[i] = controller;
+
+        setUploadFileStatuses(prev => ({ ...prev, [i]: 'uploading' }));
         setUploadCurrentName(file.name);
-        await bunnyApi.uploadFile(file, currentPath, (percent) => {
-          // Per-file progress blended with overall progress
-          const overallPercent = Math.round(((completed + percent / 100) / filesToUpload.length) * 100);
-          setUploadProgress(overallPercent);
-        });
-        completed++;
-        setUploadCompleted(completed);
-        setUploadProgress(Math.round((completed / filesToUpload.length) * 100));
+
+        try {
+          await bunnyApi.uploadFile(file, currentPath, (percent) => {
+            setUploadFileProgress(prev => ({ ...prev, [i]: percent }));
+            const overallPercent = Math.round(((completed + percent / 100) / filesToUpload.length) * 100);
+            setUploadProgress(overallPercent);
+          });
+          completed++;
+          setUploadFileStatuses(prev => ({ ...prev, [i]: 'done' }));
+          setUploadFileProgress(prev => ({ ...prev, [i]: 100 }));
+          setUploadCompleted(completed);
+          setUploadProgress(Math.round((completed / filesToUpload.length) * 100));
+        } catch (err) {
+          if (uploadAbortControllers.current[i]?.signal?.aborted) {
+            cancelled++;
+            setUploadFileStatuses(prev => ({ ...prev, [i]: 'cancelled' }));
+          } else {
+            setUploadFileStatuses(prev => ({ ...prev, [i]: 'error' }));
+            throw err;
+          }
+        }
       }
-      toast.success(`${completed} file${completed !== 1 ? "s" : ""} uploaded`);
+      const uploaded = completed;
+      if (uploaded > 0) {
+        toast.success(`${uploaded} file${uploaded !== 1 ? "s" : ""} uploaded${cancelled > 0 ? `, ${cancelled} cancelled` : ""}`);
+      } else if (cancelled > 0) {
+        toast.info(`Upload cancelled`);
+      }
       loadFiles(currentPath);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Upload failed");
@@ -245,9 +289,20 @@ export const BunnyFileExplorer = () => {
       setUploadTotal(0);
       setUploadCompleted(0);
       setUploadCurrentName("");
+      setUploadingFiles([]);
+      setUploadFileStatuses({});
+      setUploadFileProgress({});
+      uploadAbortControllers.current = {};
       if (fileInputRef.current) fileInputRef.current.value = "";
     }
   }, [currentPath]);
+
+  const cancelFileUpload = (index: number) => {
+    if (uploadAbortControllers.current[index]) {
+      uploadAbortControllers.current[index].abort();
+    }
+    setUploadFileStatuses(prev => ({ ...prev, [index]: 'cancelled' }));
+  };
 
   const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -854,7 +909,7 @@ export const BunnyFileExplorer = () => {
 
       {/* Upload Progress Dialog */}
       <Dialog open={uploading} onOpenChange={() => {}}>
-        <DialogContent className="sm:max-w-sm" onPointerDownOutside={e => e.preventDefault()}>
+        <DialogContent className="sm:max-w-md" onPointerDownOutside={e => e.preventDefault()}>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Upload className="w-5 h-5 text-emerald-500" />
@@ -862,11 +917,11 @@ export const BunnyFileExplorer = () => {
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2">
-            {/* Current file */}
+            {/* Overall progress */}
             <div className="space-y-1.5">
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">
-                  File {uploadCompleted + 1} of {uploadTotal}
+                  {uploadCompleted} of {uploadTotal} completed
                 </span>
                 <span className="font-semibold text-emerald-600 dark:text-emerald-400 tabular-nums">{uploadProgress}%</span>
               </div>
@@ -877,10 +932,51 @@ export const BunnyFileExplorer = () => {
                 />
               </div>
             </div>
-            {/* File name */}
-            <div className="flex items-center gap-2 p-2.5 bg-emerald-500/10 rounded-lg">
-              <Loader2 className="w-4 h-4 animate-spin text-emerald-500 shrink-0" />
-              <p className="text-xs font-medium truncate">{uploadCurrentName}</p>
+            {/* Per-file list */}
+            <div className="max-h-[250px] overflow-y-auto space-y-1 border border-emerald-500/20 rounded-lg p-2 bg-emerald-500/5">
+              {uploadingFiles.map((file, i) => {
+                const status = uploadFileStatuses[i] || 'pending';
+                const progress = uploadFileProgress[i] || 0;
+                return (
+                  <div key={i} className="flex items-center gap-2 text-xs py-1.5 px-2.5 rounded-md hover:bg-emerald-500/10 transition-colors">
+                    {status === 'done' ? (
+                      <CheckSquare className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                    ) : status === 'uploading' ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin text-emerald-500 shrink-0" />
+                    ) : status === 'cancelled' ? (
+                      <X className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                    ) : status === 'error' ? (
+                      <X className="w-3.5 h-3.5 text-destructive shrink-0" />
+                    ) : (
+                      <Clock className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                    )}
+                    <span className={cn(
+                      "truncate flex-1",
+                      status === 'cancelled' && "line-through text-muted-foreground",
+                      status === 'error' && "text-destructive"
+                    )}>{file.name}</span>
+                    {status === 'uploading' && (
+                      <span className="text-emerald-600 dark:text-emerald-400 tabular-nums shrink-0">{progress}%</span>
+                    )}
+                    {status === 'done' && (
+                      <span className="text-emerald-500 shrink-0">Done</span>
+                    )}
+                    {status === 'cancelled' && (
+                      <span className="text-muted-foreground shrink-0">Cancelled</span>
+                    )}
+                    {(status === 'pending' || status === 'uploading') && (
+                      <button
+                        type="button"
+                        onClick={() => cancelFileUpload(i)}
+                        className="w-5 h-5 rounded-full flex items-center justify-center hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors shrink-0"
+                        title="Cancel upload"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
             </div>
             {/* Destination */}
             <p className="text-[11px] text-muted-foreground text-center">
