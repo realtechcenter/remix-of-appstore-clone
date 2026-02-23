@@ -232,7 +232,7 @@ export function SystemSettingsPanel() {
 // ─── Bunny Storage Connection Section ─────────────────────────────────────────
 
 function BunnyStorageSection() {
-  const [config, setConfig] = useState<BunnyConfig | null>(null);
+  const [config, setConfig] = useState<BunnyConfig & { token_auth_configured?: boolean; token_expiry?: number } | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
@@ -241,6 +241,8 @@ function BunnyStorageSection() {
   const [storageHost, setStorageHost] = useState('');
   const [cdnHost, setCdnHost] = useState('');
   const [apiKey, setApiKey] = useState('');
+  const [tokenAuthKey, setTokenAuthKey] = useState('');
+  const [tokenExpiry, setTokenExpiry] = useState('3600');
 
   useEffect(() => { loadConfig(); }, []);
 
@@ -248,10 +250,11 @@ function BunnyStorageSection() {
     setLoading(true);
     try {
       const c = await bunnyApi.getConfig();
-      setConfig(c);
+      setConfig(c as any);
       setZoneName(c.zone_name || '');
       setStorageHost(c.storage_host || '');
       setCdnHost(c.cdn_host || '');
+      setTokenExpiry(String((c as any).token_expiry || '3600'));
     } catch { setConfig(null); }
     finally { setLoading(false); }
   };
@@ -261,9 +264,12 @@ function BunnyStorageSection() {
     try {
       const data: Record<string, string> = { zone_name: zoneName, storage_host: storageHost, cdn_host: cdnHost };
       if (apiKey) data.api_key = apiKey;
+      if (tokenAuthKey) data.token_auth_key = tokenAuthKey;
+      data.token_expiry = tokenExpiry;
       await bunnyApi.updateConfig(data);
       toast.success('Bunny Storage settings saved!');
       setApiKey('');
+      setTokenAuthKey('');
       await loadConfig();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to save settings');
@@ -326,6 +332,33 @@ function BunnyStorageSection() {
           <div>
             <Label className="text-xs">API Key</Label>
             <Input type="password" value={apiKey} onChange={e => setApiKey(e.target.value)} placeholder={config?.configured ? '••••••••  (leave empty to keep)' : 'Enter API key'} className="mt-1" />
+          </div>
+        </div>
+
+        {/* Token Authentication */}
+        <div className="border-t border-border/50 pt-4">
+          <div className="flex items-center gap-2 mb-3">
+            <Shield className="w-4 h-4 text-muted-foreground" />
+            <h4 className="text-sm font-medium">Token Authentication</h4>
+            {config?.token_auth_configured && (
+              <Badge variant="default" className="text-[10px] gap-1">
+                <CheckCircle2 className="w-3 h-3" /> Enabled
+              </Badge>
+            )}
+          </div>
+          <p className="text-xs text-muted-foreground mb-3">
+            Enable token authentication to generate time-limited signed download URLs. This prevents direct URL sharing.
+          </p>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label className="text-xs">Security Key</Label>
+              <Input type="password" value={tokenAuthKey} onChange={e => setTokenAuthKey(e.target.value)} placeholder={config?.token_auth_configured ? '••••••••  (leave empty to keep)' : 'From Pull Zone → Security'} className="mt-1" />
+            </div>
+            <div>
+              <Label className="text-xs">Link Expiry (seconds)</Label>
+              <Input type="number" value={tokenExpiry} onChange={e => setTokenExpiry(e.target.value)} placeholder="3600" className="mt-1" />
+              <p className="text-[10px] text-muted-foreground mt-1">{Math.round(parseInt(tokenExpiry || '3600') / 60)} minutes</p>
+            </div>
           </div>
         </div>
         <div className="flex items-center justify-between pt-1">
