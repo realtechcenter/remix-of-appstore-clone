@@ -253,11 +253,13 @@ class VersionController extends Controller
             return response()->json(['error' => 'Version not found'], 404);
         }
 
-        $version->update(['is_visible' => !$version->is_visible]);
+        $newValue = !$version->is_visible;
+        $version->is_visible = $newValue;
+        $version->save();
 
         return response()->json([
             'success' => true,
-            'is_visible' => $version->is_visible,
+            'is_visible' => $newValue,
             'message' => $version->is_visible ? 'Version is now visible' : 'Version is now hidden',
         ]);
     }
