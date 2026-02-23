@@ -164,7 +164,7 @@ export const BunnyStorageSetup = () => {
               type="password"
               value={apiKey}
               onChange={(e) => setApiKey(e.target.value)}
-              placeholder={config?.configured ? '••••••••••••  (leave empty to keep current)' : 'Enter your Bunny Storage API key'}
+              placeholder={(config as any)?.api_key_masked ? `Saved: ${(config as any).api_key_masked}` : 'Enter your Bunny Storage API key'}
             />
           </div>
         </div>

@@ -28,18 +28,28 @@ class BunnyStorageController extends Controller
         ];
     }
 
+    private function maskKey(?string $key): ?string
+    {
+        if (empty($key)) return null;
+        $len = strlen($key);
+        if ($len <= 8) return str_repeat('•', $len);
+        return str_repeat('•', $len - 4) . substr($key, -4);
+    }
+
     public function config(): JsonResponse
     {
         $c = $this->getCredentials();
-        $tokenAuthConfigured = !empty(SystemSetting::getValue('bunny_token_auth_key'));
+        $tokenAuthKey = SystemSetting::getValue('bunny_token_auth_key');
         $tokenExpiry = SystemSetting::getValue('bunny_token_expiry', '3600');
         return response()->json([
             'zone_name' => $c['zone_name'],
             'storage_host' => $c['storage_host'],
             'cdn_host' => $c['cdn_host'],
             'configured' => !empty($c['api_key']) && !empty($c['zone_name']) && !empty($c['storage_host']),
-            'token_auth_configured' => $tokenAuthConfigured,
+            'token_auth_configured' => !empty($tokenAuthKey),
             'token_expiry' => (int) $tokenExpiry,
+            'api_key_masked' => $this->maskKey($c['api_key']),
+            'token_auth_key_masked' => $this->maskKey($tokenAuthKey),
         ]);
     }
 

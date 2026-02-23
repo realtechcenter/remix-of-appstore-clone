@@ -232,7 +232,7 @@ export function SystemSettingsPanel() {
 // ─── Bunny Storage Connection Section ─────────────────────────────────────────
 
 function BunnyStorageSection() {
-  const [config, setConfig] = useState<BunnyConfig & { token_auth_configured?: boolean; token_expiry?: number } | null>(null);
+  const [config, setConfig] = useState<BunnyConfig & { token_auth_configured?: boolean; token_expiry?: number; api_key_masked?: string | null; token_auth_key_masked?: string | null } | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
@@ -331,7 +331,7 @@ function BunnyStorageSection() {
           </div>
           <div>
             <Label className="text-xs">API Key</Label>
-            <Input type="password" value={apiKey} onChange={e => setApiKey(e.target.value)} placeholder={config?.configured ? '••••••••  (leave empty to keep)' : 'Enter API key'} className="mt-1" />
+            <Input type="password" value={apiKey} onChange={e => setApiKey(e.target.value)} placeholder={config?.api_key_masked ? `Saved: ${config.api_key_masked}` : 'Enter API key'} className="mt-1" />
           </div>
         </div>
 
@@ -352,7 +352,7 @@ function BunnyStorageSection() {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label className="text-xs">Security Key</Label>
-              <Input type="password" value={tokenAuthKey} onChange={e => setTokenAuthKey(e.target.value)} placeholder={config?.token_auth_configured ? '••••••••  (leave empty to keep)' : 'From Pull Zone → Security'} className="mt-1" />
+              <Input type="password" value={tokenAuthKey} onChange={e => setTokenAuthKey(e.target.value)} placeholder={config?.token_auth_key_masked ? `Saved: ${config.token_auth_key_masked}` : 'From Pull Zone → Security'} className="mt-1" />
             </div>
             <div>
               <Label className="text-xs">Link Expiry (seconds)</Label>
