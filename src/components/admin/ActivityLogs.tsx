@@ -1,17 +1,20 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   Activity, Search, Filter, Calendar, User, Clock, RefreshCw,
   LogIn, ShoppingCart, Download, Shield, Trash2, Edit, Plus,
-  Bell, Settings, Eye, MoreHorizontal
+  Bell, Settings, Eye, MoreHorizontal, ChevronsUpDown, Check, X
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useQuery } from "@tanstack/react-query";
 import { activityLogsApi, adminUsersApi } from "@/lib/api";
+import { cn } from "@/lib/utils";
 
 const actionConfig: Record<string, { icon: typeof Activity; label: string; color: string; bg: string }> = {
   login: { icon: LogIn, label: "Login", color: "text-emerald-600 dark:text-emerald-400", bg: "bg-emerald-500/10 dark:bg-emerald-500/15" },
@@ -88,11 +91,18 @@ export const ActivityLogs = () => {
   const [actionFilter, setActionFilter] = useState<string>("all");
   const [dateFilter, setDateFilter] = useState<string>("7");
   const [userFilter, setUserFilter] = useState<string>("all");
+  const [userPopoverOpen, setUserPopoverOpen] = useState(false);
 
   const { data: usersData } = useQuery({
     queryKey: ["admin-users-list"],
     queryFn: () => adminUsersApi.getAll({ limit: 500 }),
   });
+
+  const selectedUserLabel = useMemo(() => {
+    if (userFilter === "all") return "All Users";
+    const u = usersData?.users?.find((u) => String(u.id) === userFilter);
+    return u ? (u.full_name || u.email) : "All Users";
+  }, [userFilter, usersData]);
 
   const { data, isLoading, refetch, isFetching } = useQuery({
     queryKey: ["admin-activity-logs", actionFilter, dateFilter, userFilter],
@@ -158,20 +168,64 @@ export const ActivityLogs = () => {
                 className="pl-8 h-8 text-xs bg-muted/40 border-border/50 focus-visible:bg-card"
               />
             </div>
-            <Select value={userFilter} onValueChange={setUserFilter}>
-              <SelectTrigger className="w-full sm:w-[180px] h-8 text-xs">
-                <User className="w-3.5 h-3.5 mr-1.5 text-muted-foreground" />
-                <SelectValue placeholder="All Users" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Users</SelectItem>
-                {usersData?.users?.map((u) => (
-                  <SelectItem key={u.id} value={String(u.id)}>
-                    {u.full_name || u.email}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Popover open={userPopoverOpen} onOpenChange={setUserPopoverOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={userPopoverOpen}
+                  className="w-full sm:w-[200px] h-8 text-xs justify-between font-normal"
+                >
+                  <div className="flex items-center gap-1.5 truncate">
+                    <User className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                    <span className="truncate">{selectedUserLabel}</span>
+                  </div>
+                  <div className="flex items-center gap-0.5 shrink-0">
+                    {userFilter !== "all" && (
+                      <X
+                        className="w-3 h-3 text-muted-foreground hover:text-foreground"
+                        onClick={(e) => { e.stopPropagation(); setUserFilter("all"); }}
+                      />
+                    )}
+                    <ChevronsUpDown className="w-3 h-3 text-muted-foreground" />
+                  </div>
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[240px] p-0 z-50 bg-popover border border-border shadow-lg" align="start">
+                <Command>
+                  <CommandInput placeholder="Search user..." className="h-8 text-xs" />
+                  <CommandList className="max-h-[200px]">
+                    <CommandEmpty className="py-3 text-xs text-center text-muted-foreground">No user found</CommandEmpty>
+                    <CommandGroup>
+                      <CommandItem
+                        value="all"
+                        onSelect={() => { setUserFilter("all"); setUserPopoverOpen(false); }}
+                        className="text-xs"
+                      >
+                        <Check className={cn("w-3 h-3 mr-2", userFilter === "all" ? "opacity-100" : "opacity-0")} />
+                        All Users
+                      </CommandItem>
+                      {usersData?.users?.map((u) => (
+                        <CommandItem
+                          key={u.id}
+                          value={`${u.full_name || ""} ${u.email}`}
+                          onSelect={() => { setUserFilter(String(u.id)); setUserPopoverOpen(false); }}
+                          className="text-xs"
+                        >
+                          <Check className={cn("w-3 h-3 mr-2 shrink-0", userFilter === String(u.id) ? "opacity-100" : "opacity-0")} />
+                          <div className="min-w-0">
+                            <div className="truncate">{u.full_name || u.email}</div>
+                            {u.full_name && (
+                              <div className="text-[10px] text-muted-foreground truncate">{u.email}</div>
+                            )}
+                          </div>
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
             <Select value={actionFilter} onValueChange={setActionFilter}>
               <SelectTrigger className="w-full sm:w-[150px] h-8 text-xs">
                 <Filter className="w-3.5 h-3.5 mr-1.5 text-muted-foreground" />
