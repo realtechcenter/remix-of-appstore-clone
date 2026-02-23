@@ -66,9 +66,10 @@ class AuthenticateAdmin
             $userPermissions = RolePermission::getPermissionsForRoles($userRoles);
 
             $isAdmin = in_array('admin', $userRoles);
+            $isSuperAdmin = in_array('super_admin', $userRoles);
 
-            // For admin_only level, require admin role or roles.manage permission
-            if ($level === 'admin_only' && !$isAdmin && !in_array('roles.manage', $userPermissions)) {
+            // For admin_only level, require admin/super_admin role or specific permissions
+            if ($level === 'admin_only' && !$isAdmin && !$isSuperAdmin && !in_array('roles.manage', $userPermissions)) {
                 // Check if user has ANY of the required admin-only permissions
                 $adminOnlyPerms = ['users.manage', 'orders.manage', 'roles.manage', 'user_status.manage', 'coupons.manage', 'settings.manage', 'analytics.view', 'receipts.view'];
                 $hasAdminPerm = !empty(array_intersect($adminOnlyPerms, $userPermissions));
@@ -79,15 +80,16 @@ class AuthenticateAdmin
             }
 
             // For default level, user needs at least one permission
-            if (!$isAdmin && empty($userPermissions)) {
+            if (!$isAdmin && !$isSuperAdmin && empty($userPermissions)) {
                 return response()->json(['error' => 'You do not have permission to access this resource'], 403);
             }
 
             $request->setUserResolver(function () use ($user) {
                 return $user;
             });
-            $request->attributes->set('admin_role', $isAdmin ? 'admin' : 'custom');
-            $request->attributes->set('user_permissions', $isAdmin ? ['*'] : $userPermissions);
+            $effectiveRole = $isSuperAdmin ? 'super_admin' : ($isAdmin ? 'admin' : 'custom');
+            $request->attributes->set('admin_role', $effectiveRole);
+            $request->attributes->set('user_permissions', ($isAdmin || $isSuperAdmin) ? ['*'] : $userPermissions);
 
             return $next($request);
 

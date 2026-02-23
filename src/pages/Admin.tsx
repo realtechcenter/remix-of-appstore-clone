@@ -726,7 +726,7 @@ const AppsTab = () => {
 // ─── Main Dashboard ───────────────────────────────────────────────────────────
 const AdminDashboard = () => {
   const navigate = useNavigate();
-  const { user, signOut, isAdmin: isAuthAdmin, hasPermission } = useAuth();
+  const { user, signOut, isAdmin: isAuthAdmin, isSuperAdmin, hasPermission } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Legacy admin gets full admin access
@@ -763,7 +763,7 @@ const AdminDashboard = () => {
           <div className="min-w-0">
             <p className="font-semibold text-sm leading-none">Admin Panel</p>
             <p className="text-xs text-muted-foreground mt-0.5">
-              {isAdmin ? "Administrator" : "Moderator"}
+              {isSuperAdmin ? "Super Admin" : isAdmin ? "Administrator" : "Moderator"}
             </p>
           </div>
           <button onClick={() => setSidebarOpen(false)} className="ml-auto lg:hidden p-1 rounded hover:bg-muted">
@@ -809,7 +809,7 @@ const AdminDashboard = () => {
               <p className="text-sm font-medium truncate">{user.full_name || user.email}</p>
               <div className="flex items-center gap-1 mt-0.5">
                 <Badge variant="outline" className="text-xs px-1.5 py-0">
-                  {isAdmin ? "Admin" : "Moderator"}
+                  {isSuperAdmin ? "Super Admin" : isAdmin ? "Admin" : "Moderator"}
                 </Badge>
               </div>
             </div>
