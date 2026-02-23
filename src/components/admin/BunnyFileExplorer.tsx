@@ -909,79 +909,131 @@ export const BunnyFileExplorer = () => {
 
       {/* Upload Progress Dialog */}
       <Dialog open={uploading} onOpenChange={() => {}}>
-        <DialogContent className="sm:max-w-md" onPointerDownOutside={e => e.preventDefault()}>
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Upload className="w-5 h-5 text-emerald-500" />
-              Uploading Files
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-2">
+        <DialogContent className="sm:max-w-md p-0 overflow-hidden" onPointerDownOutside={e => e.preventDefault()}>
+          {/* Header with gradient */}
+          <div className="bg-gradient-to-r from-emerald-500 to-emerald-600 dark:from-emerald-600 dark:to-emerald-700 px-6 py-5 text-white">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                <Upload className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-base">Uploading Files</h3>
+                <p className="text-emerald-100 text-xs">/{currentPath || "root"}</p>
+              </div>
+            </div>
             {/* Overall progress */}
-            <div className="space-y-1.5">
+            <div className="space-y-2">
               <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">
+                <span className="text-emerald-100">
                   {uploadCompleted} of {uploadTotal} completed
                 </span>
-                <span className="font-semibold text-emerald-600 dark:text-emerald-400 tabular-nums">{uploadProgress}%</span>
+                <span className="font-bold tabular-nums">{uploadProgress}%</span>
               </div>
-              <div className="h-2.5 bg-muted rounded-full overflow-hidden">
+              <div className="h-2 bg-white/20 rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-emerald-500 rounded-full transition-all duration-500 ease-out"
+                  className="h-full bg-white rounded-full transition-all duration-500 ease-out"
                   style={{ width: `${uploadProgress}%` }}
                 />
               </div>
+              {/* Total size info */}
+              <div className="flex items-center justify-between text-xs text-emerald-100">
+                <span>
+                  {formatBytes(uploadingFiles.reduce((sum, f, i) => {
+                    const status = uploadFileStatuses[i];
+                    const progress = uploadFileProgress[i] || 0;
+                    if (status === 'done') return sum + f.size;
+                    if (status === 'uploading') return sum + Math.round(f.size * progress / 100);
+                    return sum;
+                  }, 0))} uploaded
+                </span>
+                <span>
+                  {formatBytes(uploadingFiles.reduce((sum, f) => sum + f.size, 0))} total
+                </span>
+              </div>
             </div>
-            {/* Per-file list */}
-            <div className="max-h-[250px] overflow-y-auto space-y-1 border border-emerald-500/20 rounded-lg p-2 bg-emerald-500/5">
+          </div>
+
+          {/* File list */}
+          <div className="px-4 py-3">
+            <div className="max-h-[260px] overflow-y-auto space-y-1.5 pr-1">
               {uploadingFiles.map((file, i) => {
                 const status = uploadFileStatuses[i] || 'pending';
                 const progress = uploadFileProgress[i] || 0;
+                const uploadedBytes = status === 'done' ? file.size : Math.round(file.size * progress / 100);
                 return (
-                  <div key={i} className="flex items-center gap-2 text-xs py-1.5 px-2.5 rounded-md hover:bg-emerald-500/10 transition-colors">
-                    {status === 'done' ? (
-                      <CheckSquare className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-                    ) : status === 'uploading' ? (
-                      <Loader2 className="w-3.5 h-3.5 animate-spin text-emerald-500 shrink-0" />
-                    ) : status === 'cancelled' ? (
-                      <X className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-                    ) : status === 'error' ? (
-                      <X className="w-3.5 h-3.5 text-destructive shrink-0" />
-                    ) : (
-                      <Clock className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-                    )}
-                    <span className={cn(
-                      "truncate flex-1",
-                      status === 'cancelled' && "line-through text-muted-foreground",
-                      status === 'error' && "text-destructive"
-                    )}>{file.name}</span>
+                  <div key={i} className={cn(
+                    "rounded-lg p-2.5 transition-all",
+                    status === 'uploading' && "bg-emerald-500/5 ring-1 ring-emerald-500/20",
+                    status === 'done' && "bg-emerald-500/5",
+                    status === 'cancelled' && "bg-muted/50 opacity-60",
+                    status === 'error' && "bg-destructive/5 ring-1 ring-destructive/20",
+                    status === 'pending' && "bg-muted/30"
+                  )}>
+                    <div className="flex items-center gap-2.5">
+                      {/* Status icon */}
+                      <div className={cn(
+                        "w-7 h-7 rounded-lg flex items-center justify-center shrink-0",
+                        status === 'done' && "bg-emerald-500/10",
+                        status === 'uploading' && "bg-emerald-500/10",
+                        status === 'cancelled' && "bg-muted",
+                        status === 'error' && "bg-destructive/10",
+                        status === 'pending' && "bg-muted"
+                      )}>
+                        {status === 'done' ? (
+                          <CheckSquare className="w-3.5 h-3.5 text-emerald-500" />
+                        ) : status === 'uploading' ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin text-emerald-500" />
+                        ) : status === 'cancelled' ? (
+                          <X className="w-3.5 h-3.5 text-muted-foreground" />
+                        ) : status === 'error' ? (
+                          <X className="w-3.5 h-3.5 text-destructive" />
+                        ) : (
+                          <Clock className="w-3.5 h-3.5 text-muted-foreground" />
+                        )}
+                      </div>
+                      {/* File info */}
+                      <div className="flex-1 min-w-0">
+                        <p className={cn(
+                          "text-xs font-medium truncate",
+                          status === 'cancelled' && "line-through text-muted-foreground",
+                          status === 'error' && "text-destructive"
+                        )}>{file.name}</p>
+                        <p className="text-[10px] text-muted-foreground tabular-nums">
+                          {status === 'uploading' && `${formatBytes(uploadedBytes)} / ${formatBytes(file.size)}`}
+                          {status === 'done' && formatBytes(file.size)}
+                          {status === 'pending' && formatBytes(file.size)}
+                          {status === 'cancelled' && 'Cancelled'}
+                          {status === 'error' && 'Failed'}
+                        </p>
+                      </div>
+                      {/* Right side: progress or cancel */}
+                      {status === 'uploading' && (
+                        <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 tabular-nums shrink-0">{progress}%</span>
+                      )}
+                      {(status === 'pending' || status === 'uploading') && (
+                        <button
+                          type="button"
+                          onClick={() => cancelFileUpload(i)}
+                          className="w-6 h-6 rounded-full flex items-center justify-center hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors shrink-0"
+                          title="Cancel"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+                    {/* Per-file progress bar */}
                     {status === 'uploading' && (
-                      <span className="text-emerald-600 dark:text-emerald-400 tabular-nums shrink-0">{progress}%</span>
-                    )}
-                    {status === 'done' && (
-                      <span className="text-emerald-500 shrink-0">Done</span>
-                    )}
-                    {status === 'cancelled' && (
-                      <span className="text-muted-foreground shrink-0">Cancelled</span>
-                    )}
-                    {(status === 'pending' || status === 'uploading') && (
-                      <button
-                        type="button"
-                        onClick={() => cancelFileUpload(i)}
-                        className="w-5 h-5 rounded-full flex items-center justify-center hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors shrink-0"
-                        title="Cancel upload"
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
+                      <div className="h-1 bg-emerald-500/10 rounded-full overflow-hidden mt-2">
+                        <div
+                          className="h-full bg-emerald-500 rounded-full transition-all duration-300 ease-out"
+                          style={{ width: `${progress}%` }}
+                        />
+                      </div>
                     )}
                   </div>
                 );
               })}
             </div>
-            {/* Destination */}
-            <p className="text-[11px] text-muted-foreground text-center">
-              Uploading to: <span className="font-medium text-foreground">/{currentPath || "root"}</span>
-            </p>
           </div>
         </DialogContent>
       </Dialog>
