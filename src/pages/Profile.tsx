@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, Camera, User, Lock, Loader2, ChevronRight, Mail, Phone, Shield, Palette, Bell, Info } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -64,6 +65,8 @@ export default function Profile() {
   const { user, token, updateUser } = useAuth();
   const { language } = useLanguage();
   const t = useTranslations();
+
+  const isMobile = useIsMobile();
 
   const [activeSection, setActiveSection] = useState<SettingsSection>('profile');
   const [fullName, setFullName] = useState(user?.full_name || '');
@@ -270,41 +273,82 @@ export default function Profile() {
       </header>
 
       <div className="max-w-5xl mx-auto px-4 py-6">
-        <div className="flex gap-0 min-h-[calc(100vh-80px)] bg-card rounded-xl overflow-hidden border border-border/60" style={{ boxShadow: 'var(--shadow-window)' }}>
-          {/* Sidebar */}
-          <aside className="w-[220px] flex-shrink-0 bg-sidebar-background/60 border-r border-border/50 p-3 space-y-1 overflow-y-auto">
-            {/* User profile at top */}
-            <button
-              onClick={() => setActiveSection('profile')}
-              className="w-full flex items-center gap-2.5 px-2 py-2 rounded-lg mb-2 hover:bg-accent/50 transition-colors"
-            >
-              <Avatar className="w-8 h-8">
-                <AvatarImage src={avatarUrl} alt={fullName} />
-                <AvatarFallback className="text-xs bg-muted text-foreground font-medium">
-                  {fullName?.charAt(0) || user.email.charAt(0).toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-              <div className="text-left min-w-0">
-                <p className="text-[13px] font-medium text-foreground truncate leading-tight">{fullName || user.email?.split('@')[0]}</p>
-                <p className="text-[11px] text-muted-foreground truncate leading-tight">{language === 'km' ? 'គណនី' : 'Account'}</p>
-              </div>
-            </button>
+        <div className={`${isMobile ? 'flex flex-col' : 'flex gap-0'} min-h-[calc(100vh-80px)] bg-card rounded-xl overflow-hidden border border-border/60`} style={{ boxShadow: 'var(--shadow-window)' }}>
+          {/* Sidebar - horizontal on mobile */}
+          {isMobile ? (
+            <nav className="flex items-center gap-1 px-3 py-2 border-b border-border/50 overflow-x-auto bg-sidebar-background/60 scrollbar-none">
+              <button
+                onClick={() => setActiveSection('profile')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs whitespace-nowrap transition-colors ${activeSection === 'profile' ? 'bg-sidebar-accent text-sidebar-accent-foreground font-medium' : 'text-sidebar-foreground hover:bg-accent/50'}`}
+              >
+                <User className="w-3.5 h-3.5" /> {t.personalInfo}
+              </button>
+              <button
+                onClick={() => setActiveSection('password')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs whitespace-nowrap transition-colors ${activeSection === 'password' ? 'bg-sidebar-accent text-sidebar-accent-foreground font-medium' : 'text-sidebar-foreground hover:bg-accent/50'}`}
+              >
+                <Lock className="w-3.5 h-3.5" /> {t.changePassword}
+              </button>
+              <button
+                onClick={() => setActiveSection('notifications')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs whitespace-nowrap transition-colors ${activeSection === 'notifications' ? 'bg-sidebar-accent text-sidebar-accent-foreground font-medium' : 'text-sidebar-foreground hover:bg-accent/50'}`}
+              >
+                <Bell className="w-3.5 h-3.5" /> {language === 'km' ? 'ការជូនដំណឹង' : 'Notifications'}
+              </button>
+              <button
+                onClick={() => setActiveSection('appearance')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs whitespace-nowrap transition-colors ${activeSection === 'appearance' ? 'bg-sidebar-accent text-sidebar-accent-foreground font-medium' : 'text-sidebar-foreground hover:bg-accent/50'}`}
+              >
+                <Palette className="w-3.5 h-3.5" /> {language === 'km' ? 'រូបរាង' : 'Appearance'}
+              </button>
+              <button
+                onClick={() => setActiveSection('privacy')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs whitespace-nowrap transition-colors ${activeSection === 'privacy' ? 'bg-sidebar-accent text-sidebar-accent-foreground font-medium' : 'text-sidebar-foreground hover:bg-accent/50'}`}
+              >
+                <Shield className="w-3.5 h-3.5" /> {language === 'km' ? 'ឯកជនភាព' : 'Privacy'}
+              </button>
+              <button
+                onClick={() => setActiveSection('about')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs whitespace-nowrap transition-colors ${activeSection === 'about' ? 'bg-sidebar-accent text-sidebar-accent-foreground font-medium' : 'text-sidebar-foreground hover:bg-accent/50'}`}
+              >
+                <Info className="w-3.5 h-3.5" /> {language === 'km' ? 'អំពី' : 'About'}
+              </button>
+            </nav>
+          ) : (
+            <aside className="w-[220px] flex-shrink-0 bg-sidebar-background/60 border-r border-border/50 p-3 space-y-1 overflow-y-auto">
+              {/* User profile at top */}
+              <button
+                onClick={() => setActiveSection('profile')}
+                className="w-full flex items-center gap-2.5 px-2 py-2 rounded-lg mb-2 hover:bg-accent/50 transition-colors"
+              >
+                <Avatar className="w-8 h-8">
+                  <AvatarImage src={avatarUrl} alt={fullName} />
+                  <AvatarFallback className="text-xs bg-muted text-foreground font-medium">
+                    {fullName?.charAt(0) || user.email.charAt(0).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="text-left min-w-0">
+                  <p className="text-[13px] font-medium text-foreground truncate leading-tight">{fullName || user.email?.split('@')[0]}</p>
+                  <p className="text-[11px] text-muted-foreground truncate leading-tight">{language === 'km' ? 'គណនី' : 'Account'}</p>
+                </div>
+              </button>
 
-            <div className="border-t border-border/50 my-2" />
+              <div className="border-t border-border/50 my-2" />
 
-            <SidebarItem icon={User} label={t.personalInfo} active={activeSection === 'profile'} onClick={() => setActiveSection('profile')} color="bg-blue-500" />
-            <SidebarItem icon={Lock} label={t.changePassword} active={activeSection === 'password'} onClick={() => setActiveSection('password')} color="bg-gray-500" />
+              <SidebarItem icon={User} label={t.personalInfo} active={activeSection === 'profile'} onClick={() => setActiveSection('profile')} color="bg-blue-500" />
+              <SidebarItem icon={Lock} label={t.changePassword} active={activeSection === 'password'} onClick={() => setActiveSection('password')} color="bg-gray-500" />
 
-            <div className="border-t border-border/50 my-2" />
+              <div className="border-t border-border/50 my-2" />
 
-            <SidebarItem icon={Bell} label={language === 'km' ? 'ការជូនដំណឹង' : 'Notifications'} active={activeSection === 'notifications'} onClick={() => setActiveSection('notifications')} color="bg-red-500" />
-            <SidebarItem icon={Palette} label={language === 'km' ? 'រូបរាង' : 'Appearance'} active={activeSection === 'appearance'} onClick={() => setActiveSection('appearance')} color="bg-purple-500" />
-            <SidebarItem icon={Shield} label={language === 'km' ? 'ឯកជនភាព' : 'Privacy & Security'} active={activeSection === 'privacy'} onClick={() => setActiveSection('privacy')} color="bg-blue-600" />
-            <SidebarItem icon={Info} label={language === 'km' ? 'អំពី' : 'About'} active={activeSection === 'about'} onClick={() => setActiveSection('about')} color="bg-gray-400" />
-          </aside>
+              <SidebarItem icon={Bell} label={language === 'km' ? 'ការជូនដំណឹង' : 'Notifications'} active={activeSection === 'notifications'} onClick={() => setActiveSection('notifications')} color="bg-red-500" />
+              <SidebarItem icon={Palette} label={language === 'km' ? 'រូបរាង' : 'Appearance'} active={activeSection === 'appearance'} onClick={() => setActiveSection('appearance')} color="bg-purple-500" />
+              <SidebarItem icon={Shield} label={language === 'km' ? 'ឯកជនភាព' : 'Privacy & Security'} active={activeSection === 'privacy'} onClick={() => setActiveSection('privacy')} color="bg-blue-600" />
+              <SidebarItem icon={Info} label={language === 'km' ? 'អំពី' : 'About'} active={activeSection === 'about'} onClick={() => setActiveSection('about')} color="bg-gray-400" />
+            </aside>
+          )}
 
           {/* Content */}
-          <main className="flex-1 p-8 overflow-y-auto bg-secondary/30">
+          <main className={`flex-1 overflow-y-auto bg-secondary/30 ${isMobile ? 'p-4' : 'p-8'}`}>
             {activeSection === 'profile' && renderProfileContent()}
             {activeSection === 'password' && renderPasswordContent()}
             {activeSection === 'notifications' && <NotificationsPanel />}
