@@ -67,7 +67,7 @@ export const Header = ({ searchQuery, onSearchChange, onMenuToggle, isSidebarOpe
         )}
 
         {/* Search — macOS Spotlight style */}
-        <div className="flex-1 relative">
+        <div className="flex-1 relative" data-tour="search-bar">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground/60 pointer-events-none" />
           <input
             type="text"
@@ -142,7 +142,7 @@ export const Header = ({ searchQuery, onSearchChange, onMenuToggle, isSidebarOpe
         {user ? (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="flex items-center gap-1.5 px-2 py-1.5 rounded-md hover:bg-accent transition-colors text-[13px] text-muted-foreground hover:text-foreground">
+              <button data-tour="profile-menu" className="flex items-center gap-1.5 px-2 py-1.5 rounded-md hover:bg-accent transition-colors text-[13px] text-muted-foreground hover:text-foreground">
                 <Avatar className="w-5 h-5">
                   <AvatarImage src={user.avatar_url || ""} alt={user.full_name || user.email} />
                   <AvatarFallback className="text-[10px] bg-primary text-primary-foreground">

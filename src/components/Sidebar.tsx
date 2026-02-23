@@ -67,7 +67,7 @@ export const Sidebar = ({ activeCategory, onCategoryChange, isOpen = false, onTo
 
       {/* Categories */}
       <nav className="flex-1 overflow-y-auto scrollbar-macos px-2 py-3 space-y-4">
-        <div className="space-y-0.5">
+        <div className="space-y-0.5" data-tour="categories">
           <p className="px-2.5 py-1 text-[11px] font-semibold text-muted-foreground/70 uppercase tracking-wider select-none">
             {language === "km" ? "ប្រភេទ" : "Categories"}
           </p>

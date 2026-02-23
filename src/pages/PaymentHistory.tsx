@@ -13,7 +13,7 @@ import {
   Calendar, DollarSign, CheckCircle, Clock, XCircle,
   Hash, FileText, Receipt, RefreshCw, Loader2, MessageCircle, AlertTriangle
 } from "lucide-react";
-import { PaymentHistoryTutorial } from "@/components/PaymentHistoryTutorial";
+import { CoachMarks, type CoachStep } from "@/components/CoachMarks";
 
 const statusConfig: Record<string, { dotClass: string; label: string; labelKm: string }> = {
   paid:    { dotClass: "bg-green-500",           label: "Paid",    labelKm: "បានបង់ប្រាក់" },
@@ -116,7 +116,7 @@ const PaymentCard = ({ order, language, onVerify, isVerifying }: PaymentCardProp
         </div>
       )}
       {order.status === 'pending' && order.payment_md5 && onVerify && (
-        <div className="px-4 py-2.5 border-t border-border">
+        <div className="px-4 py-2.5 border-t border-border" data-tour="verify-btn">
           <button
             onClick={() => onVerify(order)}
             disabled={isVerifying}
@@ -139,6 +139,33 @@ const filterTabs: { value: StatusFilter; label: string; labelKm: string }[] = [
   { value: 'paid',    label: 'Paid',     labelKm: 'បានបង់ប្រាក់' },
   { value: 'failed',  label: 'Failed',   labelKm: 'បរាជ័យ' },
   { value: 'expired', label: 'Expired',  labelKm: 'ផុតកំណត់' },
+];
+
+const paymentTourSteps: CoachStep[] = [
+  {
+    target: "ph-filters",
+    titleEn: "Filter Orders",
+    titleKm: "ត្រងការបញ្ជាទិញ",
+    descEn: "Tap a tab to filter by status — Pending, Paid, Failed, or Expired.",
+    descKm: "ចុចផ្ទាំងដើម្បីត្រងតាមស្ថានភាព — រង់ចាំ បានបង់ បរាជ័យ ឬផុតកំណត់។",
+    placement: "bottom",
+  },
+  {
+    target: "verify-btn",
+    titleEn: "Verify Payment",
+    titleKm: "ផ្ទៀងផ្ទាត់ការបង់ប្រាក់",
+    descEn: "Already paid? Click this button to re-check the payment status with the server.",
+    descKm: "បានបង់រួចហើយ? ចុចប៊ូតុងនេះដើម្បីពិនិត្យស្ថានភាពការបង់ប្រាក់ឡើងវិញ។",
+    placement: "top",
+  },
+  {
+    target: "ph-support-alert",
+    titleEn: "Need Help?",
+    titleKm: "ត្រូវការជំនួយ?",
+    descEn: "If it still shows Pending after verifying, contact our Facebook Page for support.",
+    descKm: "ប្រសិនបើវានៅតែ Pending សូមទាក់ទង Facebook Page សម្រាប់ជំនួយ។",
+    placement: "top",
+  },
 ];
 
 const PaymentHistory = () => {
@@ -245,6 +272,9 @@ const PaymentHistory = () => {
     ?.filter(o => filter === 'all' || o.status === filter)
     .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
+  // Only show tour if there are pending orders with verify buttons
+  const hasPendingWithVerify = orders?.some(o => o.status === 'pending' && o.payment_md5);
+
   return (
     <div className="min-h-screen bg-background">
       {/* Notion-style top bar */}
@@ -274,9 +304,6 @@ const PaymentHistory = () => {
       </header>
 
       <main className="max-w-3xl mx-auto px-4 sm:px-8 py-10">
-        {/* Tutorial guide */}
-        <PaymentHistoryTutorial />
-
         {/* Page title */}
         <div className="mb-6">
           <h1 className="text-2xl font-semibold text-foreground">
@@ -288,7 +315,7 @@ const PaymentHistory = () => {
         </div>
 
         {/* Filter tabs */}
-        <div className="flex gap-1.5 mb-4 overflow-x-auto pb-1">
+        <div className="flex gap-1.5 mb-4 overflow-x-auto pb-1" data-tour="ph-filters">
           {filterTabs.map(tab => {
             const count = tab.value === 'all' 
               ? orders?.length || 0
@@ -339,7 +366,7 @@ const PaymentHistory = () => {
 
         {/* Alert for pending orders — contact support */}
         {!isLoading && pendingCount > 0 && (
-          <div className="flex items-start gap-3 border border-amber-200 dark:border-amber-500/20 rounded-md bg-amber-50/80 dark:bg-amber-500/5 p-4 mb-6">
+          <div data-tour="ph-support-alert" className="flex items-start gap-3 border border-amber-200 dark:border-amber-500/20 rounded-md bg-amber-50/80 dark:bg-amber-500/5 p-4 mb-6">
             <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-amber-800 dark:text-amber-300">
@@ -408,6 +435,14 @@ const PaymentHistory = () => {
           </div>
         )}
       </main>
+
+      {/* Coach marks tour — only when pending orders with verify exist */}
+      {!isLoading && hasPendingWithVerify && pendingCount > 0 && (
+        <CoachMarks
+          steps={paymentTourSteps}
+          storageKey="payment-history-coach-dismissed"
+        />
+      )}
     </div>
   );
 };
