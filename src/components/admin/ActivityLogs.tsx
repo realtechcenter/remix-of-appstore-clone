@@ -2,7 +2,8 @@ import { useState, useMemo } from "react";
 import {
   Activity, Search, Filter, Calendar, User, Clock, RefreshCw,
   LogIn, ShoppingCart, Download, Shield, Trash2, Edit, Plus,
-  Bell, Settings, Eye, MoreHorizontal, ChevronsUpDown, Check, X
+  Bell, Settings, Eye, MoreHorizontal, ChevronsUpDown, Check, X,
+  ChevronLeft, ChevronRight
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -92,6 +93,8 @@ export const ActivityLogs = () => {
   const [dateFilter, setDateFilter] = useState<string>("7");
   const [userFilter, setUserFilter] = useState<string>("all");
   const [userPopoverOpen, setUserPopoverOpen] = useState(false);
+  const [page, setPage] = useState(1);
+  const perPage = 50;
 
   const { data: usersData } = useQuery({
     queryKey: ["admin-users-list"],
@@ -105,17 +108,26 @@ export const ActivityLogs = () => {
   }, [userFilter, usersData]);
 
   const { data, isLoading, refetch, isFetching } = useQuery({
-    queryKey: ["admin-activity-logs", actionFilter, dateFilter, userFilter],
+    queryKey: ["admin-activity-logs", actionFilter, dateFilter, userFilter, page],
     queryFn: () => activityLogsApi.getAll({
       days: parseInt(dateFilter),
       action: actionFilter === "all" ? undefined : actionFilter,
       user_id: userFilter !== "all" ? parseInt(userFilter) : undefined,
+      page,
+      per_page: perPage,
     }),
   });
+
+  // Reset page when filters change
+  const handleFilterChange = (setter: (v: string) => void) => (value: string) => {
+    setter(value);
+    setPage(1);
+  };
 
   const logs = data?.logs || [];
   const uniqueActions = data?.actions || [];
   const stats = data?.stats || { total: 0, logins: 0, purchases: 0, downloads: 0 };
+  const pagination = data?.pagination || { current_page: 1, last_page: 1, per_page: perPage, total: 0 };
 
   const filteredLogs = logs.filter((log) =>
     log.action.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -184,7 +196,7 @@ export const ActivityLogs = () => {
                     {userFilter !== "all" && (
                       <X
                         className="w-3 h-3 text-muted-foreground hover:text-foreground"
-                        onClick={(e) => { e.stopPropagation(); setUserFilter("all"); }}
+                        onClick={(e) => { e.stopPropagation(); setUserFilter("all"); setPage(1); }}
                       />
                     )}
                     <ChevronsUpDown className="w-3 h-3 text-muted-foreground" />
@@ -199,7 +211,7 @@ export const ActivityLogs = () => {
                     <CommandGroup>
                       <CommandItem
                         value="all"
-                        onSelect={() => { setUserFilter("all"); setUserPopoverOpen(false); }}
+                        onSelect={() => { setUserFilter("all"); setUserPopoverOpen(false); setPage(1); }}
                         className="text-xs"
                       >
                         <Check className={cn("w-3 h-3 mr-2", userFilter === "all" ? "opacity-100" : "opacity-0")} />
@@ -209,7 +221,7 @@ export const ActivityLogs = () => {
                         <CommandItem
                           key={u.id}
                           value={`${u.full_name || ""} ${u.email}`}
-                          onSelect={() => { setUserFilter(String(u.id)); setUserPopoverOpen(false); }}
+                          onSelect={() => { setUserFilter(String(u.id)); setUserPopoverOpen(false); setPage(1); }}
                           className="text-xs"
                         >
                           <Check className={cn("w-3 h-3 mr-2 shrink-0", userFilter === String(u.id) ? "opacity-100" : "opacity-0")} />
@@ -226,7 +238,7 @@ export const ActivityLogs = () => {
                 </Command>
               </PopoverContent>
             </Popover>
-            <Select value={actionFilter} onValueChange={setActionFilter}>
+            <Select value={actionFilter} onValueChange={handleFilterChange(setActionFilter)}>
               <SelectTrigger className="w-full sm:w-[150px] h-8 text-xs">
                 <Filter className="w-3.5 h-3.5 mr-1.5 text-muted-foreground" />
                 <SelectValue />
@@ -240,7 +252,7 @@ export const ActivityLogs = () => {
                 ))}
               </SelectContent>
             </Select>
-            <Select value={dateFilter} onValueChange={setDateFilter}>
+            <Select value={dateFilter} onValueChange={handleFilterChange(setDateFilter)}>
               <SelectTrigger className="w-full sm:w-[130px] h-8 text-xs">
                 <Calendar className="w-3.5 h-3.5 mr-1.5 text-muted-foreground" />
                 <SelectValue />
@@ -317,12 +329,39 @@ export const ActivityLogs = () => {
           )}
         </div>
 
-        {/* Footer count */}
-        {!isLoading && filteredLogs.length > 0 && (
-          <div className="px-4 py-2.5 bg-muted/30 border-t border-border/60">
+        {/* Pagination Footer */}
+        {!isLoading && (
+          <div className="px-4 py-2.5 bg-muted/30 border-t border-border/60 flex items-center justify-between">
             <p className="text-[11px] text-muted-foreground">
-              Showing {filteredLogs.length} of {logs.length} events
+              {pagination.total > 0
+                ? `Showing ${(pagination.current_page - 1) * pagination.per_page + 1}–${Math.min(pagination.current_page * pagination.per_page, pagination.total)} of ${pagination.total.toLocaleString()}`
+                : "No events"}
             </p>
+            {pagination.last_page > 1 && (
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 w-7 p-0"
+                  disabled={page <= 1 || isFetching}
+                  onClick={() => setPage(p => p - 1)}
+                >
+                  <ChevronLeft className="w-3.5 h-3.5" />
+                </Button>
+                <span className="text-xs text-muted-foreground px-2">
+                  {pagination.current_page} / {pagination.last_page}
+                </span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 w-7 p-0"
+                  disabled={page >= pagination.last_page || isFetching}
+                  onClick={() => setPage(p => p + 1)}
+                >
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </Button>
+              </div>
+            )}
           </div>
         )}
       </Card>
