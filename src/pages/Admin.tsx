@@ -278,7 +278,7 @@ const VersionForm = ({ appId, version, onSave, onCancel }: VersionFormProps) => 
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
+    <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
           <Label htmlFor="version">Version *</Label>
