@@ -96,7 +96,6 @@ const getWindowStyles = (mode: WindowMode): React.CSSProperties => {
       };
     default:
       return {
-        maxWidth: '32rem',
         maxHeight: '85vh',
         borderRadius: '0.75rem',
         boxShadow: 'var(--shadow-window)',
