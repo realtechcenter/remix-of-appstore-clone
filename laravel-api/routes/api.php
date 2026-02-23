@@ -20,6 +20,7 @@ use App\Http\Controllers\AIChatController;
 use App\Http\Controllers\ReceiptController;
 use App\Http\Controllers\MailTestController;
 use App\Http\Controllers\CouponController;
+use App\Http\Controllers\SystemSettingController;
 
 /*
 |--------------------------------------------------------------------------
@@ -125,6 +126,10 @@ Route::middleware('auth.admin:admin_only')->group(function () {
     // Mail test routes (admin-protected)
     Route::post('/test/send-receipt-email', [MailTestController::class, 'testReceiptEmail']);
     Route::get('/test/mail-config', [MailTestController::class, 'testMailConfig']);
+
+    // System settings
+    Route::get('/admin/settings', [SystemSettingController::class, 'index']);
+    Route::put('/admin/settings', [SystemSettingController::class, 'update']);
 });
 
 // Protected user routes
