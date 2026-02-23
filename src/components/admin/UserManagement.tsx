@@ -79,7 +79,7 @@ export const UserManagement = () => {
   const loadApps = async () => {
     try {
       const response = await appsApi.getAll({ limit: 100 });
-      setApps(response.data.filter(app => app.price && (typeof app.price === 'string' ? parseFloat(app.price) : app.price) > 0));
+      setApps(response.data);
     } catch (error) {
       console.error("Failed to load apps:", error);
     }
