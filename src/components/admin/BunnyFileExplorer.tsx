@@ -20,6 +20,7 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import { bunnyApi, type BunnyFile } from "@/lib/api";
 import { cn } from "@/lib/utils";
@@ -306,8 +307,26 @@ export const BunnyFileExplorer = () => {
 
   const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-      processUpload(Array.from(e.target.files));
+      setPendingFiles(Array.from(e.target.files));
+      setShowUploadConfirm(true);
     }
+  };
+
+  const removePendingFile = (index: number) => {
+    setPendingFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const confirmUpload = () => {
+    if (pendingFiles.length === 0) return;
+    setShowUploadConfirm(false);
+    processUpload(pendingFiles);
+    setPendingFiles([]);
+  };
+
+  const cancelUpload = () => {
+    setShowUploadConfirm(false);
+    setPendingFiles([]);
+    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   // ─── Drag & Drop ──────────────────────────────────────────────────────────
@@ -324,9 +343,10 @@ export const BunnyFileExplorer = () => {
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault(); e.stopPropagation(); setIsDragging(false);
     if (e.dataTransfer.files.length > 0) {
-      processUpload(Array.from(e.dataTransfer.files));
+      setPendingFiles(Array.from(e.dataTransfer.files));
+      setShowUploadConfirm(true);
     }
-  }, [processUpload]);
+  }, []);
 
   // ─── Actions ──────────────────────────────────────────────────────────────
 
@@ -871,6 +891,61 @@ export const BunnyFileExplorer = () => {
           <span>{formatBytes(totalSize)}</span>
         </div>
       </div>
+
+      {/* ─── Upload Confirm Dialog ─────────────────────────────────── */}
+
+      <Dialog open={showUploadConfirm} onOpenChange={(open) => { if (!open) cancelUpload(); }}>
+        <DialogContent className="sm:max-w-md p-0 overflow-hidden">
+          <div className="bg-gradient-to-r from-blue-500 to-blue-600 dark:from-blue-600 dark:to-blue-700 px-6 py-5 text-white">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                <Upload className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-base">Confirm Upload</h3>
+                <p className="text-blue-100 text-xs">
+                  {pendingFiles.length} file{pendingFiles.length !== 1 ? 's' : ''} · {formatBytes(pendingFiles.reduce((s, f) => s + f.size, 0))} total
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="px-4 py-3">
+            <p className="text-xs text-muted-foreground mb-2">Remove files you don't want to upload:</p>
+            <ScrollArea className="max-h-[260px]">
+              <div className="space-y-1.5 pr-1">
+                {pendingFiles.map((file, i) => (
+                  <div key={i} className="flex items-center gap-2.5 rounded-lg bg-muted/30 p-2.5 group">
+                    <div className="w-7 h-7 rounded-lg bg-blue-500/10 flex items-center justify-center shrink-0">
+                      <File className="w-3.5 h-3.5 text-blue-500" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-medium truncate">{file.name}</p>
+                      <p className="text-[10px] text-muted-foreground">{formatBytes(file.size)}</p>
+                    </div>
+                    <button
+                      onClick={() => removePendingFile(i)}
+                      className="w-6 h-6 rounded-md flex items-center justify-center opacity-50 hover:opacity-100 hover:bg-destructive/10 hover:text-destructive transition-all"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ))}
+                {pendingFiles.length === 0 && (
+                  <p className="text-xs text-muted-foreground text-center py-4">No files selected</p>
+                )}
+              </div>
+            </ScrollArea>
+          </div>
+
+          <div className="px-4 pb-4 flex gap-2 justify-end">
+            <Button variant="outline" size="sm" onClick={cancelUpload}>Cancel</Button>
+            <Button size="sm" onClick={confirmUpload} disabled={pendingFiles.length === 0} className="bg-blue-600 hover:bg-blue-700 text-white">
+              <Upload className="w-3.5 h-3.5 mr-1.5" /> Upload {pendingFiles.length} file{pendingFiles.length !== 1 ? 's' : ''}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* ─── Dialogs ───────────────────────────────────────────────────── */}
 
