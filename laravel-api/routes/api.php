@@ -79,6 +79,7 @@ Route::middleware('auth.admin')->group(function () {
 
     // Bunny Storage
     Route::get('/bunny/config', [BunnyStorageController::class, 'config']);
+    Route::put('/bunny/config', [BunnyStorageController::class, 'updateConfig']);
     Route::get('/bunny/test', [BunnyStorageController::class, 'test']);
 });
 

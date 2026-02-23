@@ -754,5 +754,7 @@ export interface BunnyTestResult {
 // Bunny Storage API
 export const bunnyApi = {
   getConfig: () => apiRequest<BunnyConfig>('bunny/config'),
+  updateConfig: (data: { zone_name?: string; storage_host?: string; cdn_host?: string; api_key?: string }) =>
+    apiRequest<{ message: string }>('bunny/config', { method: 'PUT', body: data }),
   testConnection: () => apiRequest<BunnyTestResult>('bunny/test'),
 };
