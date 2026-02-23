@@ -28,6 +28,7 @@ import { UserStatusManagement } from "@/components/admin/UserStatusManagement";
 import { CouponManagement } from "@/components/admin/CouponManagement";
 import { PaymentHistoryAdmin } from "@/components/admin/PaymentHistoryAdmin";
 import { cn } from "@/lib/utils";
+import { BunnyFilePicker } from "@/components/admin/BunnyFilePicker";
 import { SystemSettingsPanel } from "@/components/admin/SystemSettings";
 import { BunnyStorageSetup } from "@/components/admin/BunnyStorageSetup";
 import { BunnyFileExplorer } from "@/components/admin/BunnyFileExplorer";
@@ -261,7 +262,8 @@ const VersionForm = ({ appId, version, onSave, onCancel }: VersionFormProps) => 
     version?.download_links?.map(link => ({ id: link.id, title: link.title, url: link.url, link_type: link.link_type || 'direct', sort_order: link.sort_order })) || []
   );
   const [saving, setSaving] = useState(false);
-
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [pickerTarget, setPickerTarget] = useState<{ type: 'legacy' } | { type: 'link'; index: number } | null>(null);
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault(); setSaving(true);
     try { await onSave({ ...formData, download_links: downloadLinks }); } finally { setSaving(false); }
@@ -317,8 +319,11 @@ const VersionForm = ({ appId, version, onSave, onCancel }: VersionFormProps) => 
         <Label>Legacy Download URL (optional)</Label>
         <div className="flex items-start gap-4">
           <FileUpload type="versions" currentUrl={formData.download_url} onUpload={(url) => setFormData({ ...formData, download_url: url })} label="" />
-          <div className="flex-1">
-            <Input type="url" value={formData.download_url} onChange={(e) => setFormData({ ...formData, download_url: e.target.value })} placeholder="Or paste download URL..." className="text-sm" />
+          <div className="flex-1 flex gap-2">
+            <Input type="url" value={formData.download_url} onChange={(e) => setFormData({ ...formData, download_url: e.target.value })} placeholder="Or paste download URL..." className="text-sm flex-1" />
+            <Button type="button" variant="outline" size="sm" className="shrink-0 gap-1 h-9" onClick={() => { setPickerTarget({ type: 'legacy' }); setPickerOpen(true); }}>
+              <HardDrive className="w-3.5 h-3.5" /> Browse
+            </Button>
           </div>
         </div>
       </div>
@@ -349,7 +354,12 @@ const VersionForm = ({ appId, version, onSave, onCancel }: VersionFormProps) => 
                 <div className="flex-1 space-y-2">
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
                     <Input value={link.title} onChange={(e) => updateDownloadLink(index, 'title', e.target.value)} placeholder="Link title" className="text-sm" />
-                    <Input type="url" value={link.url} onChange={(e) => updateDownloadLink(index, 'url', e.target.value)} placeholder="https://..." className="text-sm" />
+                    <div className="flex gap-1.5">
+                      <Input type="url" value={link.url} onChange={(e) => updateDownloadLink(index, 'url', e.target.value)} placeholder="https://..." className="text-sm flex-1" />
+                      <Button type="button" variant="outline" size="icon" className="shrink-0 h-9 w-9" title="Browse storage" onClick={() => { setPickerTarget({ type: 'link', index }); setPickerOpen(true); }}>
+                        <HardDrive className="w-3.5 h-3.5" />
+                      </Button>
+                    </div>
                     <select value={link.link_type} onChange={(e) => updateDownloadLink(index, 'link_type', e.target.value)} className="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring">
                       <option value="direct">Direct Download</option>
                       <option value="page">Download Page</option>
@@ -383,6 +393,23 @@ const VersionForm = ({ appId, version, onSave, onCancel }: VersionFormProps) => 
           {saving ? "Saving..." : "Save Version"}
         </Button>
       </div>
+      <BunnyFilePicker
+        open={pickerOpen}
+        onOpenChange={setPickerOpen}
+        onSelect={(url, fileName) => {
+          if (pickerTarget?.type === 'legacy') {
+            setFormData({ ...formData, download_url: url });
+          } else if (pickerTarget?.type === 'link') {
+            updateDownloadLink(pickerTarget.index, 'url', url);
+            // Auto-fill title if empty
+            const link = downloadLinks[pickerTarget.index];
+            if (!link.title) {
+              updateDownloadLink(pickerTarget.index, 'title', fileName);
+            }
+          }
+          setPickerTarget(null);
+        }}
+      />
     </form>
   );
 };
