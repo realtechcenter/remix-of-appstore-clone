@@ -158,6 +158,7 @@ export interface AppVersion {
   file_size?: string;
   download_url?: string;
   is_latest: boolean;
+  is_visible: boolean;
   min_os_version?: string;
   architecture?: string;
   compatibility?: string;
@@ -262,6 +263,9 @@ export const versionsApi = {
   
   delete: (id: number) => 
     apiRequest<{ success: boolean; message: string }>(`versions/${id}`, { method: 'DELETE' }),
+  
+  toggleVisibility: (id: number) =>
+    apiRequest<{ success: boolean; is_visible: boolean; message: string }>(`versions/${id}/toggle-visibility`, { method: 'PATCH' }),
 };
 
 // Auth API - Laravel endpoints (admin)

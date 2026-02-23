@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { 
   Plus, Edit, Trash2, LogOut, Package, Layers, Search, X, Save, ArrowLeft, 
   ChevronLeft, ChevronRight, Users, BarChart3, Bell, Shield, Activity, 
-  UserX, Link, Tag, Play, Home, Menu, Download, Star, TrendingUp, Settings2, Loader2, ClipboardPaste, ShieldAlert, HardDrive, FolderOpen
+  UserX, Link, Tag, Play, Home, Menu, Download, Star, TrendingUp, Settings2, Loader2, ClipboardPaste, ShieldAlert, HardDrive, FolderOpen, Eye, EyeOff
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -522,6 +522,17 @@ const AppsTab = () => {
     finally { setDeletingVersionId(null); }
   };
 
+  const [togglingVisibilityId, setTogglingVisibilityId] = useState<number | null>(null);
+  const handleToggleVisibility = async (version: AppVersion) => {
+    setTogglingVisibilityId(version.id);
+    try {
+      const res = await versionsApi.toggleVisibility(version.id);
+      toast.success(res.message);
+      if (selectedApp) loadAppVersions(selectedApp.id);
+    } catch { toast.error("Failed to toggle visibility"); }
+    finally { setTogglingVisibilityId(null); }
+  };
+
   return (
     <>
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 h-full">
@@ -668,18 +679,33 @@ const AppsTab = () => {
                     ) : (
                       <div className="space-y-2">
                         {appVersions.map((version) => (
-                          <div key={version.id} className="p-3 bg-muted/40 rounded-lg flex items-center justify-between border border-border/50">
+                          <div key={version.id} className={`p-3 rounded-lg flex items-center justify-between border border-border/50 ${version.is_visible === false ? 'bg-muted/20 opacity-60' : 'bg-muted/40'}`}>
                             <div>
                               <div className="flex items-center gap-2">
                                 <span className="font-mono font-semibold text-sm">{version.version}</span>
                                 {version.is_latest && <Badge variant="outline" className="text-xs border-primary/30 text-primary">Latest</Badge>}
                                 {version.architecture && <Badge variant="secondary" className="text-xs">{version.architecture}</Badge>}
+                                {version.is_visible === false && <Badge variant="secondary" className="text-xs bg-muted text-muted-foreground">Hidden</Badge>}
                               </div>
                               <p className="text-xs text-muted-foreground mt-0.5">
                                 {version.release_date}{version.file_size ? ` • ${version.file_size}` : ""}
                               </p>
                             </div>
                             <div className="flex gap-1">
+                              <Button
+                                variant="ghost" size="sm" className="h-8 w-8 p-0"
+                                onClick={() => handleToggleVisibility(version)}
+                                disabled={togglingVisibilityId === version.id}
+                                title={version.is_visible === false ? "Show to users" : "Hide from users"}
+                              >
+                                {togglingVisibilityId === version.id ? (
+                                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                ) : version.is_visible === false ? (
+                                  <EyeOff className="w-3.5 h-3.5 text-muted-foreground" />
+                                ) : (
+                                  <Eye className="w-3.5 h-3.5" />
+                                )}
+                              </Button>
                               <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => { setEditingVersion(version); setShowVersionForm(true); }}>
                                 <Edit className="w-3.5 h-3.5" />
                               </Button>

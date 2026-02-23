@@ -62,9 +62,15 @@ class VersionController extends Controller
             }
         }
 
-        $versions = AppVersion::with('download_links')
-            ->where('app_id', $appId)
-            ->orderByDesc('is_latest')
+        $query = AppVersion::with('download_links')
+            ->where('app_id', $appId);
+
+        // Non-admin users only see visible versions
+        if (!$isAdmin) {
+            $query->where('is_visible', true);
+        }
+
+        $versions = $query->orderByDesc('is_latest')
             ->orderByDesc('id')
             ->get();
 
@@ -107,6 +113,7 @@ class VersionController extends Controller
                 'file_size' => $request->file_size,
                 'download_url' => $request->download_url,
                 'is_latest' => $request->is_latest ?? false,
+                'is_visible' => $request->is_visible ?? true,
                 'min_os_version' => $request->min_os_version,
                 'architecture' => $request->architecture,
             ]);
@@ -164,6 +171,7 @@ class VersionController extends Controller
                 'file_size' => $request->file_size ?? $version->file_size,
                 'download_url' => $request->download_url ?? $version->download_url,
                 'is_latest' => $request->is_latest ?? $version->is_latest,
+                'is_visible' => $request->has('is_visible') ? $request->is_visible : $version->is_visible,
                 'min_os_version' => $request->min_os_version ?? $version->min_os_version,
                 'architecture' => $request->architecture ?? $version->architecture,
             ]);
@@ -234,6 +242,23 @@ class VersionController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Version deleted successfully',
+        ]);
+    }
+
+    public function toggleVisibility($id)
+    {
+        $version = AppVersion::find($id);
+
+        if (!$version) {
+            return response()->json(['error' => 'Version not found'], 404);
+        }
+
+        $version->update(['is_visible' => !$version->is_visible]);
+
+        return response()->json([
+            'success' => true,
+            'is_visible' => $version->is_visible,
+            'message' => $version->is_visible ? 'Version is now visible' : 'Version is now hidden',
         ]);
     }
 }
