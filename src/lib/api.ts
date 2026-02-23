@@ -751,10 +751,49 @@ export interface BunnyTestResult {
   file_count?: number;
 }
 
+export interface BunnyFile {
+  name: string;
+  path: string;
+  is_directory: boolean;
+  size: number;
+  last_changed: string | null;
+  cdn_url: string | null;
+}
+
 // Bunny Storage API
 export const bunnyApi = {
   getConfig: () => apiRequest<BunnyConfig>('bunny/config'),
   updateConfig: (data: { zone_name?: string; storage_host?: string; cdn_host?: string; api_key?: string }) =>
     apiRequest<{ message: string }>('bunny/config', { method: 'PUT', body: data }),
   testConnection: () => apiRequest<BunnyTestResult>('bunny/test'),
+
+  listFiles: (path: string = '') =>
+    apiRequest<{ files: BunnyFile[]; current_path: string }>(`bunny/files?path=${encodeURIComponent(path)}`),
+
+  uploadFile: async (file: File, path: string = '') => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('path', path);
+
+    const response = await fetch(`${API_BASE_URL}/api/bunny/files/upload`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${getApiKey()}` },
+      body: formData,
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || 'Upload failed');
+    return data as { success: boolean; message: string; path: string; cdn_url: string | null };
+  },
+
+  createFolder: (path: string) =>
+    apiRequest<{ success: boolean; message: string; path: string }>('bunny/files/folder', {
+      method: 'POST',
+      body: { path },
+    }),
+
+  deleteFile: (path: string, isDirectory: boolean) =>
+    apiRequest<{ success: boolean; message: string }>('bunny/files', {
+      method: 'DELETE',
+      body: { path, is_directory: isDirectory },
+    }),
 };

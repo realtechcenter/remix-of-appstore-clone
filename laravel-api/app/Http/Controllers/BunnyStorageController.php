@@ -9,9 +9,6 @@ use Illuminate\Support\Facades\Http;
 
 class BunnyStorageController extends Controller
 {
-    /**
-     * Get the effective value: system_settings first, then .env fallback.
-     */
     private function getSetting(string $key, string $envKey, string $default = ''): string
     {
         $dbValue = SystemSetting::getValue($key);
@@ -21,27 +18,27 @@ class BunnyStorageController extends Controller
         return env($envKey, $default);
     }
 
-    /**
-     * Return Bunny Storage configuration (non-sensitive).
-     */
+    private function getCredentials(): array
+    {
+        return [
+            'api_key' => $this->getSetting('bunny_api_key', 'BUNNY_STORAGE_API_KEY'),
+            'zone_name' => $this->getSetting('bunny_zone_name', 'BUNNY_STORAGE_ZONE_NAME'),
+            'storage_host' => $this->getSetting('bunny_storage_host', 'BUNNY_STORAGE_HOSTNAME'),
+            'cdn_host' => $this->getSetting('bunny_cdn_host', 'BUNNY_CDN_HOSTNAME'),
+        ];
+    }
+
     public function config(): JsonResponse
     {
-        $zoneName = $this->getSetting('bunny_zone_name', 'BUNNY_STORAGE_ZONE_NAME');
-        $storageHost = $this->getSetting('bunny_storage_host', 'BUNNY_STORAGE_HOSTNAME');
-        $cdnHost = $this->getSetting('bunny_cdn_host', 'BUNNY_CDN_HOSTNAME');
-        $apiKey = $this->getSetting('bunny_api_key', 'BUNNY_STORAGE_API_KEY');
-
+        $c = $this->getCredentials();
         return response()->json([
-            'zone_name' => $zoneName,
-            'storage_host' => $storageHost,
-            'cdn_host' => $cdnHost,
-            'configured' => !empty($apiKey) && !empty($zoneName) && !empty($storageHost),
+            'zone_name' => $c['zone_name'],
+            'storage_host' => $c['storage_host'],
+            'cdn_host' => $c['cdn_host'],
+            'configured' => !empty($c['api_key']) && !empty($c['zone_name']) && !empty($c['storage_host']),
         ]);
     }
 
-    /**
-     * Update Bunny Storage settings (saved to system_settings table).
-     */
     public function updateConfig(Request $request): JsonResponse
     {
         $request->validate([
@@ -67,36 +64,29 @@ class BunnyStorageController extends Controller
         return response()->json(['message' => 'Bunny Storage settings updated successfully']);
     }
 
-    /**
-     * Test connection by listing root directory.
-     */
     public function test(): JsonResponse
     {
-        $apiKey = $this->getSetting('bunny_api_key', 'BUNNY_STORAGE_API_KEY');
-        $zoneName = $this->getSetting('bunny_zone_name', 'BUNNY_STORAGE_ZONE_NAME');
-        $storageHost = $this->getSetting('bunny_storage_host', 'BUNNY_STORAGE_HOSTNAME');
-        $cdnHost = $this->getSetting('bunny_cdn_host', 'BUNNY_CDN_HOSTNAME');
+        $c = $this->getCredentials();
 
-        if (empty($apiKey) || empty($zoneName) || empty($storageHost)) {
+        if (empty($c['api_key']) || empty($c['zone_name']) || empty($c['storage_host'])) {
             return response()->json([
                 'success' => false,
-                'error' => 'Bunny Storage not configured. Please set the API Key, Zone Name, and Storage Host.',
+                'error' => 'Bunny Storage not configured.',
             ], 400);
         }
 
         try {
-            $response = Http::withHeaders(['AccessKey' => $apiKey])
-                ->get("https://{$storageHost}/{$zoneName}/");
+            $response = Http::withHeaders(['AccessKey' => $c['api_key']])
+                ->get("https://{$c['storage_host']}/{$c['zone_name']}/");
 
             if ($response->successful()) {
                 $files = $response->json();
-
                 return response()->json([
                     'success' => true,
                     'message' => 'Connection successful!',
-                    'zone_name' => $zoneName,
-                    'storage_host' => $storageHost,
-                    'cdn_host' => $cdnHost ?: 'Not configured',
+                    'zone_name' => $c['zone_name'],
+                    'storage_host' => $c['storage_host'],
+                    'cdn_host' => $c['cdn_host'] ?: 'Not configured',
                     'file_count' => is_array($files) ? count($files) : 0,
                 ]);
             }
@@ -110,6 +100,170 @@ class BunnyStorageController extends Controller
                 'success' => false,
                 'error' => 'Connection test failed: ' . $e->getMessage(),
             ], 500);
+        }
+    }
+
+    /**
+     * List files/folders in a given path.
+     */
+    public function listFiles(Request $request): JsonResponse
+    {
+        $c = $this->getCredentials();
+        if (empty($c['api_key']) || empty($c['zone_name']) || empty($c['storage_host'])) {
+            return response()->json(['error' => 'Bunny Storage not configured.'], 400);
+        }
+
+        $path = trim($request->query('path', ''), '/');
+        $url = "https://{$c['storage_host']}/{$c['zone_name']}/{$path}/";
+
+        try {
+            $response = Http::withHeaders(['AccessKey' => $c['api_key']])->get($url);
+
+            if (!$response->successful()) {
+                return response()->json(['error' => 'Failed to list files: ' . $response->body()], $response->status());
+            }
+
+            $items = $response->json() ?? [];
+            $cdnBase = $c['cdn_host'] ? "https://{$c['cdn_host']}" : null;
+
+            $files = array_map(function ($item) use ($cdnBase) {
+                $isDir = $item['IsDirectory'] ?? false;
+                $objectName = $item['ObjectName'] ?? '';
+                $fullPath = $item['Path'] ?? '';
+                // Build relative path inside storage zone
+                $parts = explode('/', trim($fullPath, '/'));
+                // Remove zone name (first segment)
+                array_shift($parts);
+                $relativePath = implode('/', $parts);
+
+                return [
+                    'name' => $objectName,
+                    'path' => $relativePath ? "{$relativePath}/{$objectName}" : $objectName,
+                    'is_directory' => $isDir,
+                    'size' => $item['Length'] ?? 0,
+                    'last_changed' => $item['LastChanged'] ?? null,
+                    'cdn_url' => (!$isDir && $cdnBase) ? "{$cdnBase}/{$relativePath}/{$objectName}" : null,
+                ];
+            }, $items);
+
+            return response()->json(['files' => $files, 'current_path' => $path]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Failed to list files: ' . $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Upload a file to a given path.
+     */
+    public function uploadFile(Request $request): JsonResponse
+    {
+        $request->validate([
+            'file' => 'required|file|max:102400', // 100MB
+            'path' => 'nullable|string',
+        ]);
+
+        $c = $this->getCredentials();
+        if (empty($c['api_key']) || empty($c['zone_name']) || empty($c['storage_host'])) {
+            return response()->json(['error' => 'Bunny Storage not configured.'], 400);
+        }
+
+        $file = $request->file('file');
+        $path = trim($request->input('path', ''), '/');
+        $fileName = $file->getClientOriginalName();
+        $fullPath = $path ? "{$path}/{$fileName}" : $fileName;
+
+        try {
+            $response = Http::withHeaders([
+                'AccessKey' => $c['api_key'],
+                'Content-Type' => 'application/octet-stream',
+            ])->withBody(
+                file_get_contents($file->getRealPath()),
+                'application/octet-stream'
+            )->put("https://{$c['storage_host']}/{$c['zone_name']}/{$fullPath}");
+
+            if ($response->successful()) {
+                $cdnUrl = $c['cdn_host'] ? "https://{$c['cdn_host']}/{$fullPath}" : null;
+                return response()->json([
+                    'success' => true,
+                    'message' => 'File uploaded successfully',
+                    'path' => $fullPath,
+                    'cdn_url' => $cdnUrl,
+                ]);
+            }
+
+            return response()->json(['error' => 'Upload failed: ' . $response->body()], 400);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Upload failed: ' . $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Create a folder.
+     */
+    public function createFolder(Request $request): JsonResponse
+    {
+        $request->validate([
+            'path' => 'required|string|max:500',
+        ]);
+
+        $c = $this->getCredentials();
+        if (empty($c['api_key']) || empty($c['zone_name']) || empty($c['storage_host'])) {
+            return response()->json(['error' => 'Bunny Storage not configured.'], 400);
+        }
+
+        $path = trim($request->input('path'), '/');
+
+        // Bunny creates folders implicitly by uploading a 0-byte placeholder
+        // But we can also just PUT to a path ending with /
+        try {
+            $response = Http::withHeaders([
+                'AccessKey' => $c['api_key'],
+                'Content-Type' => 'application/octet-stream',
+            ])->withBody('', 'application/octet-stream')
+              ->put("https://{$c['storage_host']}/{$c['zone_name']}/{$path}/.folder_placeholder");
+
+            if ($response->successful()) {
+                return response()->json(['success' => true, 'message' => 'Folder created', 'path' => $path]);
+            }
+
+            return response()->json(['error' => 'Failed to create folder: ' . $response->body()], 400);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Failed to create folder: ' . $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Delete a file or folder.
+     */
+    public function deleteFile(Request $request): JsonResponse
+    {
+        $request->validate([
+            'path' => 'required|string',
+            'is_directory' => 'boolean',
+        ]);
+
+        $c = $this->getCredentials();
+        if (empty($c['api_key']) || empty($c['zone_name']) || empty($c['storage_host'])) {
+            return response()->json(['error' => 'Bunny Storage not configured.'], 400);
+        }
+
+        $path = trim($request->input('path'), '/');
+        $isDir = $request->input('is_directory', false);
+
+        // For directories, append trailing slash
+        $deletePath = $isDir ? "{$path}/" : $path;
+
+        try {
+            $response = Http::withHeaders(['AccessKey' => $c['api_key']])
+                ->delete("https://{$c['storage_host']}/{$c['zone_name']}/{$deletePath}");
+
+            if ($response->successful()) {
+                return response()->json(['success' => true, 'message' => $isDir ? 'Folder deleted' : 'File deleted']);
+            }
+
+            return response()->json(['error' => 'Delete failed: ' . $response->body()], 400);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Delete failed: ' . $e->getMessage()], 500);
         }
     }
 }
