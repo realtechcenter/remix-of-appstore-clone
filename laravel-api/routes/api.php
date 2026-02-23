@@ -21,6 +21,7 @@ use App\Http\Controllers\ReceiptController;
 use App\Http\Controllers\MailTestController;
 use App\Http\Controllers\CouponController;
 use App\Http\Controllers\SystemSettingController;
+use App\Http\Controllers\BunnyStorageController;
 
 /*
 |--------------------------------------------------------------------------
@@ -75,6 +76,10 @@ Route::middleware('auth.admin')->group(function () {
     
     // Activity logs (moderators can view)
     Route::get('/admin/activity-logs', [ActivityLogController::class, 'index']);
+
+    // Bunny Storage
+    Route::get('/bunny/config', [BunnyStorageController::class, 'config']);
+    Route::get('/bunny/test', [BunnyStorageController::class, 'test']);
 });
 
 // Admin-only routes (no moderator access)

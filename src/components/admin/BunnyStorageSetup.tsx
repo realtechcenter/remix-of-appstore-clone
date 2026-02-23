@@ -3,30 +3,13 @@ import { CheckCircle2, XCircle, Loader2, ServerCog, HardDrive, Globe, Shield, Re
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
-
-interface BunnyConfig {
-  zone_name: string;
-  storage_host: string;
-  cdn_host: string;
-  configured: boolean;
-}
-
-interface TestResult {
-  success: boolean;
-  message?: string;
-  error?: string;
-  zone_name?: string;
-  storage_host?: string;
-  cdn_host?: string;
-  file_count?: number;
-}
+import { bunnyApi, type BunnyConfig, type BunnyTestResult } from "@/lib/api";
 
 export const BunnyStorageSetup = () => {
   const [config, setConfig] = useState<BunnyConfig | null>(null);
   const [loading, setLoading] = useState(true);
   const [testing, setTesting] = useState(false);
-  const [testResult, setTestResult] = useState<TestResult | null>(null);
+  const [testResult, setTestResult] = useState<BunnyTestResult | null>(null);
 
   useEffect(() => {
     loadConfig();
@@ -35,22 +18,8 @@ export const BunnyStorageSetup = () => {
   const loadConfig = async () => {
     setLoading(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      const res = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/bunny-storage?action=config`,
-        {
-          headers: {
-            'Authorization': `Bearer ${session?.access_token}`,
-            'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-          },
-        }
-      );
-      if (res.ok) {
-        const configData = await res.json();
-        setConfig(configData);
-      } else {
-        setConfig(null);
-      }
+      const configData = await bunnyApi.getConfig();
+      setConfig(configData);
     } catch {
       setConfig(null);
     } finally {
@@ -62,17 +31,7 @@ export const BunnyStorageSetup = () => {
     setTesting(true);
     setTestResult(null);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      const res = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/bunny-storage?action=test`,
-        {
-          headers: {
-            'Authorization': `Bearer ${session?.access_token}`,
-            'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-          },
-        }
-      );
-      const result = await res.json();
+      const result = await bunnyApi.testConnection();
       setTestResult(result);
       if (result.success) {
         toast.success('Bunny Storage connection successful!');
@@ -211,7 +170,7 @@ export const BunnyStorageSetup = () => {
             <li>Go to your <span className="font-medium text-foreground">Bunny.net Dashboard</span></li>
             <li>Navigate to <span className="font-medium text-foreground">Storage → Storage Zones</span></li>
             <li>Copy your <span className="font-medium text-foreground">Password (API Key)</span>, <span className="font-medium text-foreground">Zone Name</span>, and <span className="font-medium text-foreground">Hostname</span></li>
-            <li>Add them as secrets in the project settings</li>
+            <li>Add them to your Laravel <span className="font-medium text-foreground">.env</span> file</li>
             <li>Come back here and click <span className="font-medium text-foreground">Test Connection</span></li>
           </ol>
         </div>
