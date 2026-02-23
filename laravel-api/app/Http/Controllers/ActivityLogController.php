@@ -13,12 +13,18 @@ class ActivityLogController extends Controller
         $action = $request->input('action');
         $limit = $request->input('limit', 100);
 
+        $userId = $request->input('user_id');
+
         $query = UserActivityLog::with('user:id,email,full_name')
             ->where('created_at', '>=', now()->subDays($days))
             ->orderBy('created_at', 'desc');
 
         if ($action && $action !== 'all') {
             $query->where('action', $action);
+        }
+
+        if ($userId) {
+            $query->where('user_id', $userId);
         }
 
         $logs = $query->limit($limit)->get();

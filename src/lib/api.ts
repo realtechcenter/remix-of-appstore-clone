@@ -530,7 +530,7 @@ export interface ActivityLog {
 
 // Activity Logs API
 export const activityLogsApi = {
-  getAll: async (params?: { days?: number; action?: string; limit?: number }): Promise<{
+  getAll: async (params?: { days?: number; action?: string; limit?: number; user_id?: number }): Promise<{
     logs: ActivityLog[];
     actions: string[];
     stats: { total: number; logins: number; purchases: number; downloads: number };
@@ -539,6 +539,7 @@ export const activityLogsApi = {
     if (params?.days) query.set('days', params.days.toString());
     if (params?.action) query.set('action', params.action);
     if (params?.limit) query.set('limit', params.limit.toString());
+    if (params?.user_id) query.set('user_id', params.user_id.toString());
     
     const queryString = query.toString();
     return apiRequest(`admin/activity-logs${queryString ? `?${queryString}` : ''}`);

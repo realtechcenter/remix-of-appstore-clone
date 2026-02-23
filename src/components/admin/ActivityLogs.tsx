@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useQuery } from "@tanstack/react-query";
-import { activityLogsApi } from "@/lib/api";
+import { activityLogsApi, adminUsersApi } from "@/lib/api";
 
 const actionConfig: Record<string, { icon: typeof Activity; label: string; color: string; bg: string }> = {
   login: { icon: LogIn, label: "Login", color: "text-emerald-600 dark:text-emerald-400", bg: "bg-emerald-500/10 dark:bg-emerald-500/15" },
@@ -87,10 +87,20 @@ export const ActivityLogs = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [actionFilter, setActionFilter] = useState<string>("all");
   const [dateFilter, setDateFilter] = useState<string>("7");
+  const [userFilter, setUserFilter] = useState<string>("all");
+
+  const { data: usersData } = useQuery({
+    queryKey: ["admin-users-list"],
+    queryFn: () => adminUsersApi.getAll({ limit: 500 }),
+  });
 
   const { data, isLoading, refetch, isFetching } = useQuery({
-    queryKey: ["admin-activity-logs", actionFilter, dateFilter],
-    queryFn: () => activityLogsApi.getAll({ days: parseInt(dateFilter), action: actionFilter === "all" ? undefined : actionFilter }),
+    queryKey: ["admin-activity-logs", actionFilter, dateFilter, userFilter],
+    queryFn: () => activityLogsApi.getAll({
+      days: parseInt(dateFilter),
+      action: actionFilter === "all" ? undefined : actionFilter,
+      user_id: userFilter !== "all" ? parseInt(userFilter) : undefined,
+    }),
   });
 
   const logs = data?.logs || [];
@@ -148,6 +158,20 @@ export const ActivityLogs = () => {
                 className="pl-8 h-8 text-xs bg-muted/40 border-border/50 focus-visible:bg-card"
               />
             </div>
+            <Select value={userFilter} onValueChange={setUserFilter}>
+              <SelectTrigger className="w-full sm:w-[180px] h-8 text-xs">
+                <User className="w-3.5 h-3.5 mr-1.5 text-muted-foreground" />
+                <SelectValue placeholder="All Users" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Users</SelectItem>
+                {usersData?.users?.map((u) => (
+                  <SelectItem key={u.id} value={String(u.id)}>
+                    {u.full_name || u.email}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <Select value={actionFilter} onValueChange={setActionFilter}>
               <SelectTrigger className="w-full sm:w-[150px] h-8 text-xs">
                 <Filter className="w-3.5 h-3.5 mr-1.5 text-muted-foreground" />
