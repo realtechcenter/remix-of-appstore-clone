@@ -94,6 +94,7 @@ Route::middleware('auth.admin:admin_only')->group(function () {
     Route::get('/admin/orders', [AdminUserController::class, 'allOrders']);
     Route::post('/admin/orders/{orderId}/approve', [AdminUserController::class, 'approveOrder']);
     Route::delete('/admin/orders/{orderId}', [AdminUserController::class, 'deleteOrder']);
+    Route::post('/admin/orders/bulk-delete', [AdminUserController::class, 'bulkDeleteOrders']);
     
     // Analytics
     Route::get('/admin/analytics', [AnalyticsController::class, 'dashboard']);
