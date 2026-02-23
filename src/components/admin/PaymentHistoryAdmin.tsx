@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -189,30 +190,62 @@ export const PaymentHistoryAdmin = () => {
       {/* Summary */}
       {pagination && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <div className="border border-blue-200 dark:border-blue-500/20 rounded-lg bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-500/10 dark:to-blue-600/5 p-3">
-            <div className="flex items-center gap-2 text-xs text-blue-600 dark:text-blue-400 mb-1">
-              <CreditCard className="w-3.5 h-3.5" /> Total Orders
-            </div>
-            <p className="text-lg font-semibold text-blue-700 dark:text-blue-300">{pagination.total}</p>
-          </div>
-          <div className="border border-emerald-200 dark:border-emerald-500/20 rounded-lg bg-gradient-to-br from-emerald-50 to-emerald-100/50 dark:from-emerald-500/10 dark:to-emerald-600/5 p-3">
-            <div className="flex items-center gap-2 text-xs text-emerald-600 dark:text-emerald-400 mb-1">
-              <DollarSign className="w-3.5 h-3.5" /> Page Revenue
-            </div>
-            <p className="text-lg font-semibold text-emerald-700 dark:text-emerald-300">${totalRevenue.toFixed(2)}</p>
-          </div>
-          <div className="border border-violet-200 dark:border-violet-500/20 rounded-lg bg-gradient-to-br from-violet-50 to-violet-100/50 dark:from-violet-500/10 dark:to-violet-600/5 p-3">
-            <div className="flex items-center gap-2 text-xs text-violet-600 dark:text-violet-400 mb-1">
-              <CheckCircle className="w-3.5 h-3.5" /> Paid (page)
-            </div>
-            <p className="text-lg font-semibold text-violet-700 dark:text-violet-300">{filtered.filter(o => o.status === "paid").length}</p>
-          </div>
-          <div className="border border-amber-200 dark:border-amber-500/20 rounded-lg bg-gradient-to-br from-amber-50 to-amber-100/50 dark:from-amber-500/10 dark:to-amber-600/5 p-3">
-            <div className="flex items-center gap-2 text-xs text-amber-600 dark:text-amber-400 mb-1">
-              <Clock className="w-3.5 h-3.5" /> Pending (page)
-            </div>
-            <p className="text-lg font-semibold text-amber-700 dark:text-amber-300">{filtered.filter(o => o.status === "pending").length}</p>
-          </div>
+          <Card className="overflow-hidden">
+            <CardContent className="p-5">
+              <div className="flex items-start justify-between">
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs text-muted-foreground mb-1">Total Orders</p>
+                  <p className="text-2xl font-bold text-foreground">{pagination.total}</p>
+                  <p className="text-xs text-muted-foreground mt-1">All transactions</p>
+                </div>
+                <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                  <CreditCard className="w-4.5 h-4.5 text-primary" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="overflow-hidden">
+            <CardContent className="p-5">
+              <div className="flex items-start justify-between">
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs text-muted-foreground mb-1">Page Revenue</p>
+                  <p className="text-2xl font-bold text-foreground">${totalRevenue.toFixed(2)}</p>
+                  <p className="text-xs text-muted-foreground mt-1">USD collected</p>
+                </div>
+                <div className="w-9 h-9 rounded-lg bg-emerald-500/10 flex items-center justify-center flex-shrink-0">
+                  <DollarSign className="w-4.5 h-4.5 text-emerald-600 dark:text-emerald-400" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="overflow-hidden">
+            <CardContent className="p-5">
+              <div className="flex items-start justify-between">
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs text-muted-foreground mb-1">Paid (page)</p>
+                  <p className="text-2xl font-bold text-foreground">{filtered.filter(o => o.status === "paid").length}</p>
+                  <p className="text-xs text-muted-foreground mt-1">Completed</p>
+                </div>
+                <div className="w-9 h-9 rounded-lg bg-violet-500/10 flex items-center justify-center flex-shrink-0">
+                  <CheckCircle className="w-4.5 h-4.5 text-violet-600 dark:text-violet-400" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="overflow-hidden">
+            <CardContent className="p-5">
+              <div className="flex items-start justify-between">
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs text-muted-foreground mb-1">Pending (page)</p>
+                  <p className="text-2xl font-bold text-foreground">{filtered.filter(o => o.status === "pending").length}</p>
+                  <p className="text-xs text-muted-foreground mt-1">Awaiting payment</p>
+                </div>
+                <div className="w-9 h-9 rounded-lg bg-amber-500/10 flex items-center justify-center flex-shrink-0">
+                  <Clock className="w-4.5 h-4.5 text-amber-600 dark:text-amber-400" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       )}
 
