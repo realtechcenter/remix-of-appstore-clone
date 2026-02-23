@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { toast } from "sonner";
 import macsofyLogo from "@/assets/macsofy-logo.png";
 import { useParams, useNavigate, Link, useLocation } from "react-router-dom";
 import {
@@ -131,11 +132,7 @@ const VersionItem = ({
         }
       } catch (error) {
         console.error('Failed to get download URL:', error);
-        // Fallback to direct URL if signed URL fails
-        const fallbackUrl = linkId 
-          ? downloadLinks.find(l => l.id === linkId)?.url 
-          : version.download_url;
-        if (fallbackUrl) window.open(fallbackUrl, '_blank');
+        toast.error(language === 'km' ? 'មិនអាចទាញយកបានទេ។ សូមព្យាយាមម្ដងទៀត។' : 'Download failed. Please try again.');
       }
     }
   };
@@ -991,20 +988,26 @@ const AppDetail = () => {
                       
                       // Free app or purchased - show download
                       return (
-                        <a href={latestVersion.download_url} target="_blank" rel="noopener noreferrer">
-                          <Button 
-                            className="w-full h-14 text-base font-semibold gap-2 bg-green-600 hover:bg-green-700 text-white shadow-lg"
-                          >
-                            <Download className="w-5 h-5" />
-                            {isPaidApp && hasPurchased 
-                              ? (language === 'km' ? 'ទាញយក' : 'Download')
-                              : translations.downloadForFree
+                        <Button 
+                          className="w-full h-14 text-base font-semibold gap-2 bg-green-600 hover:bg-green-700 text-white shadow-lg"
+                          onClick={async () => {
+                            try {
+                              const result = await downloadApi.getSignedUrl(latestVersion.id);
+                              if (result.url) window.open(result.url, '_blank');
+                            } catch {
+                              toast.error(language === 'km' ? 'មិនអាចទាញយកបានទេ។' : 'Download failed. Please try again.');
                             }
-                            {latestVersion.file_size && (
-                              <span className="text-white/80">({latestVersion.file_size})</span>
-                            )}
-                          </Button>
-                        </a>
+                          }}
+                        >
+                          <Download className="w-5 h-5" />
+                          {isPaidApp && hasPurchased 
+                            ? (language === 'km' ? 'ទាញយក' : 'Download')
+                            : translations.downloadForFree
+                          }
+                          {latestVersion.file_size && (
+                            <span className="text-white/80">({latestVersion.file_size})</span>
+                          )}
+                        </Button>
                       );
                     })()}
                     </div>

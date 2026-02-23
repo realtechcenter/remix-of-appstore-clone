@@ -4,7 +4,8 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useOrders, Order } from "@/hooks/useOrders";
 import { useQuery } from "@tanstack/react-query";
-import { versionsApi, AppVersion } from "@/lib/api";
+import { versionsApi, downloadApi, AppVersion } from "@/lib/api";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -190,20 +191,30 @@ const VersionItem = ({ version, language }: VersionItemProps) => {
       {hasAnyDownloads ? (
         <div className="flex flex-wrap gap-2">
           {hasDownloadUrl && (
-            <a href={version.download_url!} target="_blank" rel="noopener noreferrer">
-              <Button size="sm" className="h-7 text-xs gap-1.5">
-                <Download className="w-3 h-3" />
-                {language === 'km' ? 'ទាញយក' : 'Download'}
-              </Button>
-            </a>
+            <Button size="sm" className="h-7 text-xs gap-1.5" onClick={async () => {
+              try {
+                const result = await downloadApi.getSignedUrl(version.id);
+                if (result.url) window.open(result.url, '_blank');
+              } catch {
+                toast.error(language === 'km' ? 'មិនអាចទាញយកបានទេ។' : 'Download failed.');
+              }
+            }}>
+              <Download className="w-3 h-3" />
+              {language === 'km' ? 'ទាញយក' : 'Download'}
+            </Button>
           )}
           {downloadLinks.map((link) => (
-            <a key={link.id} href={link.url} target="_blank" rel="noopener noreferrer">
-              <Button size="sm" variant="outline" className="h-7 text-xs gap-1.5">
-                {link.link_type === 'page' ? <ExternalLink className="w-3 h-3" /> : <Download className="w-3 h-3" />}
-                {link.title}
-              </Button>
-            </a>
+            <Button key={link.id} size="sm" variant="outline" className="h-7 text-xs gap-1.5" onClick={async () => {
+              try {
+                const result = await downloadApi.getSignedUrl(version.id, link.id);
+                if (result.url) window.open(result.url, '_blank');
+              } catch {
+                toast.error(language === 'km' ? 'មិនអាចទាញយកបានទេ។' : 'Download failed.');
+              }
+            }}>
+              {link.link_type === 'page' ? <ExternalLink className="w-3 h-3" /> : <Download className="w-3 h-3" />}
+              {link.title}
+            </Button>
           ))}
         </div>
       ) : (
