@@ -65,10 +65,7 @@ class VersionController extends Controller
         $query = AppVersion::with('download_links')
             ->where('app_id', $appId);
 
-        // Non-admin users only see visible versions
-        if (!$isAdmin) {
-            $query->where('is_visible', true);
-        }
+        // All versions are returned, but hidden ones will be marked for frontend display
 
         $versions = $query->orderByDesc('is_latest')
             ->orderByDesc('id')
