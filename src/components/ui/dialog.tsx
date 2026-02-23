@@ -27,100 +27,38 @@ const DialogOverlay = React.forwardRef<
 ));
 DialogOverlay.displayName = DialogPrimitive.Overlay.displayName;
 
-type WindowMode = 'normal' | 'fullscreen' | 'left' | 'right';
+type WindowMode = 'normal' | 'fullscreen';
 
-// Green button dropdown menu
-const GreenButtonMenu = ({
+// Green button - toggles fullscreen directly
+const GreenButton = ({
   mode,
-  onSelect,
+  onToggle,
 }: {
   mode: WindowMode;
-  onSelect: (mode: WindowMode) => void;
+  onToggle: () => void;
 }) => {
-  const [open, setOpen] = React.useState(false);
-  const menuRef = React.useRef<HTMLDivElement>(null);
-
-  React.useEffect(() => {
-    if (!open) return;
-    const handleClick = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClick);
-    return () => document.removeEventListener('mousedown', handleClick);
-  }, [open]);
-
-  const isFullscreen = mode === 'fullscreen' || mode === 'left' || mode === 'right';
+  const isFullscreen = mode === 'fullscreen';
 
   return (
-    <div className="relative" ref={menuRef}>
-      <button
-        onClick={() => setOpen(o => !o)}
-        className="w-3 h-3 rounded-full bg-[#28C840] hover:brightness-90 transition-all group relative focus:outline-none"
-        aria-label="Window options"
-      >
-        <svg className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity text-[#006500]" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5">
-          {isFullscreen ? (
-            <>
-              <path d="M4 8L2 10M8 4l2-2" />
-              <path d="M2 7v3h3M10 5V2H7" />
-            </>
-          ) : (
-            <>
-              <path d="M3.5 2v3.5H2M8.5 10V6.5H10" />
-              <path d="M2 5.5L5.5 2M10 6.5L6.5 10" />
-            </>
-          )}
-        </svg>
-      </button>
-
-      {open && (
-        <div className="absolute top-full left-0 mt-2 w-56 bg-popover/95 backdrop-blur-xl border border-border/50 rounded-lg shadow-lg py-1 z-[60] animate-fade-in">
-          {isFullscreen ? (
-            <button
-              onClick={() => { onSelect('normal'); setOpen(false); }}
-              className="flex items-center gap-3 w-full px-3 py-2 text-sm text-popover-foreground hover:bg-accent transition-colors"
-            >
-              <Minimize2 className="w-4 h-4 text-muted-foreground" />
-              Exit Full Screen
-            </button>
-          ) : (
-            <button
-              onClick={() => { onSelect('fullscreen'); setOpen(false); }}
-              className="flex items-center gap-3 w-full px-3 py-2 text-sm text-popover-foreground hover:bg-accent transition-colors"
-            >
-              <Maximize className="w-4 h-4 text-muted-foreground" />
-              Enter Full Screen
-            </button>
-          )}
-
-          <div className="border-t border-border/50 my-1" />
-
-          <button
-            onClick={() => { onSelect(mode === 'left' ? 'normal' : 'left'); setOpen(false); }}
-            className={cn(
-              "flex items-center gap-3 w-full px-3 py-2 text-sm transition-colors",
-              mode === 'left' ? "text-primary bg-accent" : "text-popover-foreground hover:bg-accent"
-            )}
-          >
-            <PanelLeft className="w-4 h-4 text-muted-foreground" />
-            Tile Window to Left of Screen
-          </button>
-
-          <button
-            onClick={() => { onSelect(mode === 'right' ? 'normal' : 'right'); setOpen(false); }}
-            className={cn(
-              "flex items-center gap-3 w-full px-3 py-2 text-sm transition-colors",
-              mode === 'right' ? "text-primary bg-accent" : "text-popover-foreground hover:bg-accent"
-            )}
-          >
-            <PanelRight className="w-4 h-4 text-muted-foreground" />
-            Tile Window to Right of Screen
-          </button>
-        </div>
-      )}
-    </div>
+    <button
+      onClick={onToggle}
+      className="w-3 h-3 rounded-full bg-[#28C840] hover:brightness-90 transition-all group relative focus:outline-none"
+      aria-label={isFullscreen ? "Exit full screen" : "Enter full screen"}
+    >
+      <svg className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity text-[#006500]" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5">
+        {isFullscreen ? (
+          <>
+            <path d="M4 8L2 10M8 4l2-2" />
+            <path d="M2 7v3h3M10 5V2H7" />
+          </>
+        ) : (
+          <>
+            <path d="M3.5 2v3.5H2M8.5 10V6.5H10" />
+            <path d="M2 5.5L5.5 2M10 6.5L6.5 10" />
+          </>
+        )}
+      </svg>
+    </button>
   );
 };
 
@@ -137,7 +75,7 @@ const TrafficLights = ({ mode, onModeChange }: { mode: WindowMode; onModeChange:
         </svg>
       </button>
     </DialogPrimitive.Close>
-    <GreenButtonMenu mode={mode} onSelect={onModeChange} />
+    <GreenButton mode={mode} onToggle={() => onModeChange(mode === 'fullscreen' ? 'normal' : 'fullscreen')} />
   </div>
 );
 
@@ -153,32 +91,6 @@ const getWindowStyles = (mode: WindowMode): React.CSSProperties => {
         maxHeight: '100vh',
         borderRadius: 0,
         boxShadow: 'none',
-        transform: 'translate(-50%, -50%)',
-        transition,
-      };
-    case 'left':
-      return {
-        width: '50vw',
-        height: '100vh',
-        maxWidth: '50vw',
-        maxHeight: '100vh',
-        borderRadius: 0,
-        boxShadow: 'none',
-        left: '25%',
-        top: '50%',
-        transform: 'translate(-50%, -50%)',
-        transition,
-      };
-    case 'right':
-      return {
-        width: '50vw',
-        height: '100vh',
-        maxWidth: '50vw',
-        maxHeight: '100vh',
-        borderRadius: 0,
-        boxShadow: 'none',
-        left: '75%',
-        top: '50%',
         transform: 'translate(-50%, -50%)',
         transition,
       };
