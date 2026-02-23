@@ -11,7 +11,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import {
   CreditCard, ArrowLeft,
   Calendar, DollarSign, CheckCircle, Clock, XCircle,
-  Hash, FileText, Receipt, RefreshCw, Loader2
+  Hash, FileText, Receipt, RefreshCw, Loader2, MessageCircle, AlertTriangle
 } from "lucide-react";
 
 const statusConfig: Record<string, { dotClass: string; label: string; labelKm: string }> = {
@@ -313,6 +313,34 @@ const PaymentHistory = () => {
                 {language === 'km' ? 'រង់ចាំ' : 'Pending'}
               </span>
               <span className="font-medium">{pendingCount}</span>
+            </div>
+          </div>
+        )}
+
+        {/* Alert for pending orders — contact support */}
+        {!isLoading && pendingCount > 0 && (
+          <div className="flex items-start gap-3 border border-amber-200 dark:border-amber-500/20 rounded-md bg-amber-50/80 dark:bg-amber-500/5 p-4 mb-6">
+            <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-amber-800 dark:text-amber-300">
+                {language === 'km'
+                  ? 'បានបង់ប្រាក់រួចហើយ តែនៅតែ Pending មែនទេ?'
+                  : 'Already paid but still showing Pending?'}
+              </p>
+              <p className="text-xs text-amber-700/80 dark:text-amber-400/70 mt-1">
+                {language === 'km'
+                  ? 'សូមទាក់ទងមកយើងតាម Facebook Page សម្រាប់ជំនួយ។'
+                  : 'Please contact us via our Facebook Page for support.'}
+              </p>
+              <a
+                href="https://www.facebook.com/macsofy"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 mt-2.5 text-xs font-medium text-amber-700 dark:text-amber-300 hover:underline"
+              >
+                <MessageCircle className="w-3.5 h-3.5" />
+                {language === 'km' ? 'ទាក់ទង Facebook Page' : 'Contact Facebook Page'}
+              </a>
             </div>
           </div>
         )}
