@@ -286,7 +286,12 @@ class RoleController extends Controller
         }
 
         $user = $request->user();
-        if (!$user || !method_exists($user, 'roles')) {
+        if (!$user) {
+            return false;
+        }
+
+        // Check if user model has roles relationship (Admin model doesn't)
+        if (!($user instanceof \App\Models\User)) {
             return false;
         }
 
