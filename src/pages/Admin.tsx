@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { 
   Plus, Edit, Trash2, LogOut, Package, Layers, Search, X, Save, ArrowLeft, 
   ChevronLeft, ChevronRight, Users, BarChart3, Bell, Shield, Activity, 
-  UserX, Link, Tag, Play, Home, Menu, Download, Star, TrendingUp, Settings2, Loader2, ClipboardPaste, ShieldAlert
+  UserX, Link, Tag, Play, Home, Menu, Download, Star, TrendingUp, Settings2, Loader2, ClipboardPaste, ShieldAlert, HardDrive
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,6 +29,7 @@ import { CouponManagement } from "@/components/admin/CouponManagement";
 import { PaymentHistoryAdmin } from "@/components/admin/PaymentHistoryAdmin";
 import { cn } from "@/lib/utils";
 import { SystemSettingsPanel } from "@/components/admin/SystemSettings";
+import { BunnyStorageSetup } from "@/components/admin/BunnyStorageSetup";
 import { useAuth } from "@/contexts/AuthContext";
 
 
@@ -386,7 +387,7 @@ const VersionForm = ({ appId, version, onSave, onCancel }: VersionFormProps) => 
 };
 
 // ─── Sidebar Nav ──────────────────────────────────────────────────────────────
-type AdminTab = "analytics" | "apps" | "users" | "payments" | "roles" | "notifications" | "activity" | "status" | "coupons" | "reviews" | "settings";
+type AdminTab = "analytics" | "apps" | "users" | "payments" | "roles" | "notifications" | "activity" | "status" | "coupons" | "reviews" | "storage" | "settings";
 
 interface NavItem {
   id: AdminTab;
@@ -407,6 +408,7 @@ const navItems: NavItem[] = [
   { id: "activity", label: "Activity", icon: Activity, permission: "activity.view" },
   { id: "status", label: "Ban / Suspend", icon: UserX, permission: "user_status.manage" },
   { id: "coupons", label: "Coupons", icon: Tag, permission: "coupons.manage" },
+  { id: "storage", label: "File Storage", icon: HardDrive, permission: "settings.manage" },
   { id: "settings", label: "Settings", icon: Settings2, permission: "settings.manage" },
 ];
 
@@ -868,6 +870,7 @@ const AdminDashboard = () => {
           {activeTab === "activity" && <ActivityLogs />}
           {activeTab === "status" && <UserStatusManagement />}
           {activeTab === "coupons" && <CouponManagement />}
+          {activeTab === "storage" && <BunnyStorageSetup />}
           {activeTab === "settings" && <SystemSettingsPanel />}
         </main>
       </div>
