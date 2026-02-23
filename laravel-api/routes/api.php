@@ -61,6 +61,7 @@ Route::middleware('auth.admin')->group(function () {
     
     Route::post('/versions', [VersionController::class, 'store']);
     Route::put('/versions/{id}', [VersionController::class, 'update']);
+    Route::patch('/versions/{id}/toggle-visibility', [VersionController::class, 'toggleVisibility']);
     
     Route::post('/upload', [UploadController::class, 'store']);
     

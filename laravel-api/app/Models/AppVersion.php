@@ -17,12 +17,14 @@ class AppVersion extends Model
         'file_size',
         'download_url',
         'is_latest',
+        'is_visible',
         'min_os_version',
         'architecture',
     ];
 
     protected $casts = [
         'is_latest' => 'boolean',
+        'is_visible' => 'boolean',
         'release_date' => 'date',
     ];
 
