@@ -5,12 +5,14 @@ namespace App\Http\Controllers;
 use App\Models\Coupon;
 use App\Models\UserCoupon;
 use App\Models\User;
+use App\Traits\LogsAdminActivity;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
 class CouponController extends Controller
 {
-    // Admin: Get all coupons
+    use LogsAdminActivity;
+
     public function index(Request $request)
     {
         $coupons = Coupon::withCount(['userCoupons', 'userCoupons as used_count' => function ($q) {
@@ -20,7 +22,6 @@ class CouponController extends Controller
         return response()->json(['coupons' => $coupons]);
     }
 
-    // Admin: Create coupon
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -35,17 +36,21 @@ class CouponController extends Controller
             'is_active' => 'boolean',
         ]);
 
-        // Generate code if not provided
         if (empty($validated['code'])) {
             $validated['code'] = strtoupper(Str::random(8));
         }
 
         $coupon = Coupon::create($validated);
 
+        $this->logActivity($request, 'coupon_create', [
+            'coupon_id' => $coupon->id,
+            'coupon_code' => $coupon->code,
+            'coupon_name' => $coupon->name,
+        ]);
+
         return response()->json(['coupon' => $coupon, 'message' => 'Coupon created successfully']);
     }
 
-    // Admin: Update coupon
     public function update(Request $request, $id)
     {
         $coupon = Coupon::findOrFail($id);
@@ -64,19 +69,26 @@ class CouponController extends Controller
 
         $coupon->update($validated);
 
+        $this->logActivity($request, 'coupon_update', [
+            'coupon_id' => $coupon->id,
+            'coupon_code' => $coupon->code,
+            'coupon_name' => $coupon->name,
+        ]);
+
         return response()->json(['coupon' => $coupon, 'message' => 'Coupon updated successfully']);
     }
 
-    // Admin: Delete coupon
-    public function destroy($id)
+    public function destroy(Request $request, $id)
     {
         $coupon = Coupon::findOrFail($id);
+        $couponData = ['coupon_id' => $id, 'coupon_code' => $coupon->code, 'coupon_name' => $coupon->name];
         $coupon->delete();
+
+        $this->logActivity($request, 'coupon_delete', $couponData);
 
         return response()->json(['message' => 'Coupon deleted successfully']);
     }
 
-    // Admin: Assign coupon to users
     public function assignToUsers(Request $request, $id)
     {
         $coupon = Coupon::findOrFail($id);
@@ -88,7 +100,6 @@ class CouponController extends Controller
 
         $assigned = 0;
         foreach ($validated['user_ids'] as $userId) {
-            // Check if user already has this coupon
             $exists = UserCoupon::where('user_id', $userId)
                 ->where('coupon_id', $coupon->id)
                 ->exists();
@@ -102,13 +113,19 @@ class CouponController extends Controller
             }
         }
 
+        $this->logActivity($request, 'coupon_assign', [
+            'coupon_id' => $id,
+            'coupon_code' => $coupon->code,
+            'assigned_count' => $assigned,
+            'user_ids' => $validated['user_ids'],
+        ]);
+
         return response()->json([
             'message' => "Coupon assigned to {$assigned} user(s)",
             'assigned_count' => $assigned,
         ]);
     }
 
-    // Admin: Get users with specific coupon
     public function getCouponUsers($id)
     {
         $coupon = Coupon::findOrFail($id);
@@ -120,12 +137,16 @@ class CouponController extends Controller
         return response()->json(['user_coupons' => $userCoupons]);
     }
 
-    // Admin: Remove coupon from user
     public function removeFromUser(Request $request, $couponId, $userId)
     {
         UserCoupon::where('coupon_id', $couponId)
             ->where('user_id', $userId)
             ->delete();
+
+        $this->logActivity($request, 'coupon_remove_user', [
+            'coupon_id' => $couponId,
+            'target_user_id' => $userId,
+        ]);
 
         return response()->json(['message' => 'Coupon removed from user']);
     }
@@ -154,7 +175,6 @@ class CouponController extends Controller
         return response()->json(['coupons' => $coupons->values()]);
     }
 
-    // User: Get coupons applicable for a specific app price
     public function getApplicableCoupons(Request $request)
     {
         $user = $request->user();
@@ -181,7 +201,6 @@ class CouponController extends Controller
         return response()->json(['coupons' => $coupons->values()]);
     }
 
-    // User: Apply coupon to order
     public function applyCoupon(Request $request)
     {
         $user = $request->user();
@@ -205,7 +224,6 @@ class CouponController extends Controller
             return response()->json(['error' => 'Coupon is expired or inactive'], 400);
         }
 
-        // Mark coupon as used
         $userCoupon->update([
             'is_used' => true,
             'used_on_order_id' => $validated['order_id'],

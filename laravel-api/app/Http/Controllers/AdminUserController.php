@@ -4,11 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Models\Order;
+use App\Traits\LogsAdminActivity;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
 class AdminUserController extends Controller
 {
+    use LogsAdminActivity;
+
     /**
      * List all users with pagination
      */
@@ -92,7 +95,6 @@ class AdminUserController extends Controller
         
         $user = User::findOrFail($userId);
         
-        // Check if already has access
         $existingPaid = Order::where('user_id', $userId)
             ->where('app_id', $request->app_id)
             ->where('status', 'paid')
@@ -104,7 +106,6 @@ class AdminUserController extends Controller
             ], 400);
         }
         
-        // Create a paid order (granted by admin)
         $order = Order::create([
             'id' => (string) Str::uuid(),
             'user_id' => $userId,
@@ -115,6 +116,13 @@ class AdminUserController extends Controller
             'status' => 'paid',
             'paid_at' => now(),
             'bakong_transaction_id' => 'ADMIN_GRANTED_' . time(),
+        ]);
+
+        $this->logActivity($request, 'admin_grant_app', [
+            'target_user_id' => $userId,
+            'target_email' => $user->email,
+            'app_id' => $request->app_id,
+            'app_name' => $request->app_name,
         ]);
         
         return response()->json([
@@ -142,8 +150,15 @@ class AdminUserController extends Controller
             ], 404);
         }
         
-        // Delete the order to revoke access
+        $appName = $order->app_name;
         $order->delete();
+
+        $this->logActivity($request, 'admin_revoke_app', [
+            'target_user_id' => $userId,
+            'target_email' => $user->email,
+            'app_id' => $appId,
+            'app_name' => $appName,
+        ]);
         
         return response()->json([
             'success' => true,
@@ -169,6 +184,13 @@ class AdminUserController extends Controller
             'paid_at' => now(),
             'bakong_transaction_id' => 'ADMIN_APPROVED_' . time(),
         ]);
+
+        $this->logActivity($request, 'admin_approve_order', [
+            'order_id' => $orderId,
+            'user_id' => $order->user_id,
+            'app_name' => $order->app_name,
+            'amount' => $order->amount,
+        ]);
         
         return response()->json([
             'success' => true,
@@ -184,7 +206,17 @@ class AdminUserController extends Controller
     {
         $order = Order::findOrFail($orderId);
         
+        $orderData = [
+            'order_id' => $orderId,
+            'user_id' => $order->user_id,
+            'app_name' => $order->app_name,
+            'amount' => $order->amount,
+            'status' => $order->status,
+        ];
+        
         $order->delete();
+
+        $this->logActivity($request, 'admin_delete_order', $orderData);
         
         return response()->json([
             'success' => true,

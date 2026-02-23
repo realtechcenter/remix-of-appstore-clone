@@ -4,16 +4,18 @@ namespace App\Http\Controllers;
 
 use App\Models\UserStatus;
 use App\Models\User;
+use App\Traits\LogsAdminActivity;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
 class UserStatusController extends Controller
 {
+    use LogsAdminActivity;
+
     public function index(Request $request)
     {
         $status = $request->input('status');
 
-        // Get all users with their status
         $users = User::select('id', 'email', 'full_name', 'created_at')
             ->with('status')
             ->orderBy('created_at', 'desc')
@@ -34,7 +36,6 @@ class UserStatusController extends Controller
                 ];
             });
 
-        // Filter by status if specified
         if ($status && $status !== 'all') {
             $users = $users->filter(function ($user) use ($status) {
                 if ($status === 'active') {
@@ -44,7 +45,6 @@ class UserStatusController extends Controller
             })->values();
         }
 
-        // Get counts
         $allUsers = User::with('status')->get();
         $stats = [
             'active' => $allUsers->filter(fn($u) => !$u->status || $u->status->status === 'active')->count(),
@@ -83,6 +83,14 @@ class UserStatusController extends Controller
                 'updated_by' => $adminId,
             ]
         );
+
+        $targetUser = User::find($request->user_id);
+        $this->logActivity($request, 'user_status_update', [
+            'target_user_id' => $request->user_id,
+            'target_email' => $targetUser->email ?? null,
+            'new_status' => $request->status,
+            'reason' => $request->reason,
+        ]);
 
         return response()->json([
             'success' => true,
