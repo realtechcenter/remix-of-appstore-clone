@@ -7,6 +7,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogAction, AlertDialogCancel,
+} from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import {
   Search, ChevronLeft, ChevronRight, DollarSign, CheckCircle, Clock,
@@ -26,6 +30,8 @@ export const PaymentHistoryAdmin = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false);
+  const [singleDeleteId, setSingleDeleteId] = useState<string | null>(null);
   const perPage = 20;
 
   const { data, isLoading } = useQuery({
@@ -113,10 +119,20 @@ export const PaymentHistoryAdmin = () => {
   };
 
   const handleBulkDelete = () => {
-    const ids = Array.from(selectedIds);
-    if (ids.length === 0) return;
-    if (!confirm(`Delete ${ids.length} selected order(s)? This cannot be undone.`)) return;
-    bulkDeleteMutation.mutate(ids);
+    if (selectedIds.size === 0) return;
+    setShowBulkDeleteDialog(true);
+  };
+
+  const confirmBulkDelete = () => {
+    bulkDeleteMutation.mutate(Array.from(selectedIds));
+    setShowBulkDeleteDialog(false);
+  };
+
+  const confirmSingleDelete = () => {
+    if (singleDeleteId) {
+      deleteMutation.mutate(singleDeleteId);
+      setSingleDeleteId(null);
+    }
   };
 
   return (
@@ -288,9 +304,7 @@ export const PaymentHistoryAdmin = () => {
                             variant="ghost"
                             size="icon"
                             className="h-7 w-7"
-                            onClick={() => {
-                              if (confirm("Delete this order?")) deleteMutation.mutate(order.id);
-                            }}
+                            onClick={() => setSingleDeleteId(order.id)}
                             disabled={deleteMutation.isPending}
                             title="Delete"
                           >
@@ -333,6 +347,48 @@ export const PaymentHistoryAdmin = () => {
           </div>
         </div>
       )}
+
+      {/* Bulk Delete Confirmation */}
+      <AlertDialog open={showBulkDeleteDialog} onOpenChange={setShowBulkDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete {selectedIds.size} order(s)?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete the selected orders. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmBulkDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Single Delete Confirmation */}
+      <AlertDialog open={!!singleDeleteId} onOpenChange={(open) => { if (!open) setSingleDeleteId(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this order?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete this order. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmSingleDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
