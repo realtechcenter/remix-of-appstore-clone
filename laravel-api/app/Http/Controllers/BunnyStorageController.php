@@ -39,6 +39,23 @@ class BunnyStorageController extends Controller
         ]);
     }
 
+    /**
+     * Return full Bunny credentials including API key (admin-only, for direct uploads).
+     */
+    public function credentials(): JsonResponse
+    {
+        $c = $this->getCredentials();
+        if (empty($c['api_key']) || empty($c['zone_name']) || empty($c['storage_host'])) {
+            return response()->json(['error' => 'Bunny Storage not configured.'], 400);
+        }
+        return response()->json([
+            'api_key' => $c['api_key'],
+            'zone_name' => $c['zone_name'],
+            'storage_host' => $c['storage_host'],
+            'cdn_host' => $c['cdn_host'],
+        ]);
+    }
+
     public function updateConfig(Request $request): JsonResponse
     {
         $request->validate([
