@@ -971,7 +971,15 @@ export const BunnyFileExplorer = () => {
       </AlertDialog>
 
       {/* Upload Progress Dialog */}
-      <Dialog open={uploading} onOpenChange={() => {}}>
+      <Dialog open={uploading} onOpenChange={(open) => {
+        if (!open) {
+          // Cancel all remaining uploads
+          Object.entries(uploadAbortControllers.current).forEach(([i, ctrl]) => {
+            ctrl.abort();
+            setUploadFileStatuses(prev => ({ ...prev, [Number(i)]: prev[Number(i)] === 'done' ? 'done' : 'cancelled' }));
+          });
+        }
+      }}>
         <DialogContent className="sm:max-w-md p-0 overflow-hidden" onPointerDownOutside={e => e.preventDefault()}>
           {/* Header with gradient */}
           <div className="bg-gradient-to-r from-emerald-500 to-emerald-600 dark:from-emerald-600 dark:to-emerald-700 px-6 py-5 text-white">
