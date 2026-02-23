@@ -895,7 +895,9 @@ export const BunnyFileExplorer = () => {
       {/* ─── Upload Confirm Dialog ─────────────────────────────────── */}
 
       <Dialog open={showUploadConfirm} onOpenChange={(open) => { if (!open) cancelUpload(); }}>
-        <DialogContent className="sm:max-w-md p-0 overflow-hidden">
+        <DialogContent className="sm:max-w-md" aria-describedby="upload-confirm-desc">
+          <DialogTitle className="sr-only">Confirm Upload</DialogTitle>
+          <p id="upload-confirm-desc" className="sr-only">Select files to upload</p>
           <div className="bg-gradient-to-r from-blue-500 to-blue-600 dark:from-blue-600 dark:to-blue-700 px-6 py-5 text-white">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
