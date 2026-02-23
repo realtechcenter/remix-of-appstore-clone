@@ -8,8 +8,35 @@ import { AppGrid } from "@/components/AppGrid";
 import { GamesGrid } from "@/components/GamesGrid";
 import { PageTransition } from "@/components/PageTransition";
 import { AIChatBot } from "@/components/AIChatBot";
-import { OnboardingWalkthrough } from "@/components/OnboardingWalkthrough";
+import { CoachMarks, type CoachStep } from "@/components/CoachMarks";
 import { useLanguage, useTranslations } from "@/contexts/LanguageContext";
+
+const homeTourSteps: CoachStep[] = [
+  {
+    target: "search-bar",
+    titleEn: "Search Apps",
+    titleKm: "ស្វែងរកកម្មវិធី",
+    descEn: "Type here to quickly find any app, game, or extension.",
+    descKm: "វាយនៅទីនេះដើម្បីរកកម្មវិធី ហ្គេម ឬផ្នែកបន្ថែមបានរហ័ស។",
+    placement: "bottom",
+  },
+  {
+    target: "categories",
+    titleEn: "Browse Categories",
+    titleKm: "រុករកប្រភេទ",
+    descEn: "Click a category to filter — Programs, Games, Extensions, and more.",
+    descKm: "ចុចប្រភេទដើម្បីត្រង — កម្មវិធី ហ្គេម ផ្នែកបន្ថែម និងច្រើនទៀត។",
+    placement: "right",
+  },
+  {
+    target: "profile-menu",
+    titleEn: "Your Account",
+    titleKm: "គណនីរបស់អ្នក",
+    descEn: "Click here to access Payment History, Purchases, and Profile Settings.",
+    descKm: "ចុចនេះដើម្បីចូលប្រវត្តិបង់ប្រាក់ ការទិញ និងការកំណត់គណនី។",
+    placement: "bottom",
+  },
+];
 
 const Index = () => {
   const [activeCategory, setActiveCategory] = useState("all");
@@ -109,8 +136,8 @@ const Index = () => {
       {/* AI Chat Bot */}
       <AIChatBot />
 
-      {/* Onboarding walkthrough — first-time only */}
-      <OnboardingWalkthrough />
+      {/* Coach marks walkthrough — first-time only */}
+      <CoachMarks steps={homeTourSteps} storageKey="home-coach-dismissed" />
     </div>
   );
 };
