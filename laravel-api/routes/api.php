@@ -22,6 +22,7 @@ use App\Http\Controllers\MailTestController;
 use App\Http\Controllers\CouponController;
 use App\Http\Controllers\SystemSettingController;
 use App\Http\Controllers\BunnyStorageController;
+use App\Http\Controllers\DownloadController;
 
 /*
 |--------------------------------------------------------------------------
@@ -173,6 +174,9 @@ Route::middleware('auth.user')->group(function () {
     
     // Activity tracking (download)
     Route::post('/track-download', [ActivityLogController::class, 'trackDownload']);
+    
+    // Secure download with signed URLs
+    Route::post('/download/signed-url', [DownloadController::class, 'generateSignedUrl']);
     
     // User coupons
     Route::get('/coupons/my', [CouponController::class, 'myAvailableCoupons']);

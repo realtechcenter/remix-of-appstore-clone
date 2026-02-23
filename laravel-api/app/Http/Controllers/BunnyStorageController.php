@@ -31,11 +31,15 @@ class BunnyStorageController extends Controller
     public function config(): JsonResponse
     {
         $c = $this->getCredentials();
+        $tokenAuthConfigured = !empty(SystemSetting::getValue('bunny_token_auth_key'));
+        $tokenExpiry = SystemSetting::getValue('bunny_token_expiry', '3600');
         return response()->json([
             'zone_name' => $c['zone_name'],
             'storage_host' => $c['storage_host'],
             'cdn_host' => $c['cdn_host'],
             'configured' => !empty($c['api_key']) && !empty($c['zone_name']) && !empty($c['storage_host']),
+            'token_auth_configured' => $tokenAuthConfigured,
+            'token_expiry' => (int) $tokenExpiry,
         ]);
     }
 
@@ -63,6 +67,8 @@ class BunnyStorageController extends Controller
             'storage_host' => 'nullable|string|max:255',
             'cdn_host' => 'nullable|string|max:255',
             'api_key' => 'nullable|string|max:500',
+            'token_auth_key' => 'nullable|string|max:500',
+            'token_expiry' => 'nullable|string|max:10',
         ]);
 
         $mappings = [
@@ -70,6 +76,8 @@ class BunnyStorageController extends Controller
             'storage_host' => 'bunny_storage_host',
             'cdn_host' => 'bunny_cdn_host',
             'api_key' => 'bunny_api_key',
+            'token_auth_key' => 'bunny_token_auth_key',
+            'token_expiry' => 'bunny_token_expiry',
         ];
 
         foreach ($mappings as $inputKey => $settingKey) {

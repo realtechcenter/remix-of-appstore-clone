@@ -767,7 +767,7 @@ export interface BunnyFile {
 // Bunny Storage API
 export const bunnyApi = {
   getConfig: () => apiRequest<BunnyConfig>('bunny/config'),
-  updateConfig: (data: { zone_name?: string; storage_host?: string; cdn_host?: string; api_key?: string }) =>
+  updateConfig: (data: { zone_name?: string; storage_host?: string; cdn_host?: string; api_key?: string; token_auth_key?: string; token_expiry?: string }) =>
     apiRequest<{ message: string }>('bunny/config', { method: 'PUT', body: data }),
   testConnection: () => apiRequest<BunnyTestResult>('bunny/test'),
 
@@ -829,5 +829,14 @@ export const bunnyApi = {
     apiRequest<{ success: boolean; message: string }>('bunny/files', {
       method: 'DELETE',
       body: { path, is_directory: isDirectory },
+    }),
+};
+
+// Secure Download API
+export const downloadApi = {
+  getSignedUrl: (versionId: number, linkId?: number) =>
+    apiRequest<{ success: boolean; url: string; expires_in: number | null }>('download/signed-url', {
+      method: 'POST',
+      body: { version_id: versionId, link_id: linkId },
     }),
 };

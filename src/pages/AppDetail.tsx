@@ -16,7 +16,7 @@ import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { appsApi, versionsApi, activityLogsApi, type AppVersion, type ApplicableCoupon } from "@/lib/api";
+import { appsApi, versionsApi, activityLogsApi, downloadApi, type AppVersion, type ApplicableCoupon } from "@/lib/api";
 import { useQuery } from "@tanstack/react-query";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { PaymentDialog } from "@/components/PaymentDialog";
@@ -118,12 +118,24 @@ const VersionItem = ({
   const downloadLinks = (version.download_links || []).filter(link => link.url !== null);
   const hasDownloadLinks = downloadLinks.length > 0;
   
-  const handleDownloadClick = async () => {
+  const handleDownloadClick = async (e: React.MouseEvent, linkId?: number) => {
     if (canDownload) {
+      e.preventDefault();
       try {
-        await activityLogsApi.trackDownload(appId, appName, version.version);
+        // Track download
+        activityLogsApi.trackDownload(appId, appName, version.version).catch(() => {});
+        // Get signed URL
+        const result = await downloadApi.getSignedUrl(version.id, linkId);
+        if (result.url) {
+          window.open(result.url, '_blank');
+        }
       } catch (error) {
-        console.error('Failed to track download:', error);
+        console.error('Failed to get download URL:', error);
+        // Fallback to direct URL if signed URL fails
+        const fallbackUrl = linkId 
+          ? downloadLinks.find(l => l.id === linkId)?.url 
+          : version.download_url;
+        if (fallbackUrl) window.open(fallbackUrl, '_blank');
       }
     }
   };
@@ -235,14 +247,11 @@ const VersionItem = ({
               {downloadLinks.map((link) => (
                 <a
                   key={link.id}
-                  href={canDownload ? link.url : '#'}
-                  target={canDownload ? '_blank' : undefined}
-                  rel="noopener noreferrer"
+                  href="#"
                   onClick={(e) => {
-                    if (!canDownload) {
-                      e.preventDefault();
-                    } else {
-                      handleDownloadClick();
+                    e.preventDefault();
+                    if (canDownload) {
+                      handleDownloadClick(e, link.id);
                     }
                   }}
                   className={`flex items-center justify-between p-3 rounded-lg border transition-colors ${
@@ -273,14 +282,11 @@ const VersionItem = ({
             </div>
           ) : version.download_url ? (
             <a
-              href={canDownload ? version.download_url : '#'}
-              target={canDownload ? '_blank' : undefined}
-              rel="noopener noreferrer"
+              href="#"
               onClick={(e) => {
-                if (!canDownload) {
-                  e.preventDefault();
-                } else {
-                  handleDownloadClick();
+                e.preventDefault();
+                if (canDownload) {
+                  handleDownloadClick(e);
                 }
               }}
               className={`flex items-center justify-between p-3 rounded-lg border transition-colors ${
