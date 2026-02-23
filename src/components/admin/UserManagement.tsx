@@ -220,9 +220,13 @@ export const UserManagement = () => {
                 }`}
               >
                 <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                    <Mail className="w-5 h-5 text-primary" />
-                  </div>
+                  {user.avatar_url ? (
+                    <img src={user.avatar_url} alt="" className="w-10 h-10 rounded-full object-cover shrink-0" />
+                  ) : (
+                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0 text-sm font-semibold text-primary">
+                      {(user.full_name || user.email).charAt(0).toUpperCase()}
+                    </div>
+                  )}
                   <div className="flex-1 min-w-0">
                     <h3 className="font-medium truncate text-sm sm:text-base">{user.email}</h3>
                     {user.full_name && (
@@ -258,11 +262,15 @@ export const UserManagement = () => {
       <div className="lg:col-span-2">
         {selectedUser ? (
           <div className="bg-card rounded-xl border border-border p-4 sm:p-6 space-y-6">
-            <div className="flex items-start justify-between">
+              <div className="flex items-start justify-between">
               <div className="flex items-center gap-4">
-                <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center">
-                  <Mail className="w-7 h-7 text-primary" />
-                </div>
+                {selectedUser.avatar_url ? (
+                  <img src={selectedUser.avatar_url} alt="" className="w-14 h-14 rounded-full object-cover" />
+                ) : (
+                  <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center text-lg font-semibold text-primary">
+                    {(selectedUser.full_name || selectedUser.email).charAt(0).toUpperCase()}
+                  </div>
+                )}
                 <div>
                   <h2 className="text-xl font-semibold">{selectedUser.email}</h2>
                   {selectedUser.full_name && <p className="text-muted-foreground">{selectedUser.full_name}</p>}
