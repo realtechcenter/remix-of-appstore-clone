@@ -775,9 +775,10 @@ export const bunnyApi = {
     formData.append('file', file);
     formData.append('path', path);
 
+    const token = getApiKey() || getUserAuthToken();
     const response = await fetch(`${API_BASE_URL}/api/bunny/files/upload`, {
       method: 'POST',
-      headers: { 'Authorization': `Bearer ${getApiKey()}` },
+      headers: { 'Authorization': `Bearer ${token}` },
       body: formData,
     });
     const data = await response.json();
