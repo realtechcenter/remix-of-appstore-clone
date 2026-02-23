@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react";
-import { CheckCircle2, XCircle, Loader2, ServerCog, HardDrive, Globe, Shield, RefreshCw } from "lucide-react";
+import { CheckCircle2, XCircle, Loader2, ServerCog, HardDrive, Globe, Shield, RefreshCw, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { bunnyApi, type BunnyConfig, type BunnyTestResult } from "@/lib/api";
 
@@ -9,7 +11,14 @@ export const BunnyStorageSetup = () => {
   const [config, setConfig] = useState<BunnyConfig | null>(null);
   const [loading, setLoading] = useState(true);
   const [testing, setTesting] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [testResult, setTestResult] = useState<BunnyTestResult | null>(null);
+
+  // Editable form fields
+  const [zoneName, setZoneName] = useState('');
+  const [storageHost, setStorageHost] = useState('');
+  const [cdnHost, setCdnHost] = useState('');
+  const [apiKey, setApiKey] = useState('');
 
   useEffect(() => {
     loadConfig();
@@ -20,10 +29,37 @@ export const BunnyStorageSetup = () => {
     try {
       const configData = await bunnyApi.getConfig();
       setConfig(configData);
+      setZoneName(configData.zone_name || '');
+      setStorageHost(configData.storage_host || '');
+      setCdnHost(configData.cdn_host || '');
+      // Don't populate apiKey from server (it's not returned for security)
     } catch {
       setConfig(null);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const saveSettings = async () => {
+    setSaving(true);
+    try {
+      const data: Record<string, string> = {
+        zone_name: zoneName,
+        storage_host: storageHost,
+        cdn_host: cdnHost,
+      };
+      if (apiKey) {
+        data.api_key = apiKey;
+      }
+      await bunnyApi.updateConfig(data);
+      toast.success('Bunny Storage settings saved!');
+      setApiKey(''); // Clear after save
+      await loadConfig(); // Reload config
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : 'Failed to save settings';
+      toast.error(errorMsg);
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -77,32 +113,69 @@ export const BunnyStorageSetup = () => {
         </Badge>
       </div>
 
-      {/* Configuration Details */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <ConfigCard
-          icon={ServerCog}
-          label="Storage Zone"
-          value={config?.zone_name || 'Not set'}
-          configured={!!config?.zone_name}
-        />
-        <ConfigCard
-          icon={HardDrive}
-          label="Storage Host"
-          value={config?.storage_host || 'Not set'}
-          configured={!!config?.storage_host}
-        />
-        <ConfigCard
-          icon={Globe}
-          label="CDN Hostname"
-          value={config?.cdn_host || 'Not set'}
-          configured={!!config?.cdn_host}
-        />
-        <ConfigCard
-          icon={Shield}
-          label="API Key"
-          value={config?.configured ? '••••••••••••' : 'Not set'}
-          configured={!!config?.configured}
-        />
+      {/* Editable Settings Form */}
+      <div className="border border-border rounded-xl p-5 bg-card space-y-4">
+        <h3 className="font-medium">Storage Configuration</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="zone-name" className="flex items-center gap-2 text-sm">
+              <ServerCog className="w-4 h-4 text-muted-foreground" />
+              Storage Zone Name
+            </Label>
+            <Input
+              id="zone-name"
+              value={zoneName}
+              onChange={(e) => setZoneName(e.target.value)}
+              placeholder="my-storage-zone"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="storage-host" className="flex items-center gap-2 text-sm">
+              <HardDrive className="w-4 h-4 text-muted-foreground" />
+              Storage Hostname
+            </Label>
+            <Input
+              id="storage-host"
+              value={storageHost}
+              onChange={(e) => setStorageHost(e.target.value)}
+              placeholder="storage.bunnycdn.com"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="cdn-host" className="flex items-center gap-2 text-sm">
+              <Globe className="w-4 h-4 text-muted-foreground" />
+              CDN Hostname
+            </Label>
+            <Input
+              id="cdn-host"
+              value={cdnHost}
+              onChange={(e) => setCdnHost(e.target.value)}
+              placeholder="my-zone.b-cdn.net"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="api-key" className="flex items-center gap-2 text-sm">
+              <Shield className="w-4 h-4 text-muted-foreground" />
+              API Key
+            </Label>
+            <Input
+              id="api-key"
+              type="password"
+              value={apiKey}
+              onChange={(e) => setApiKey(e.target.value)}
+              placeholder={config?.configured ? '••••••••••••  (leave empty to keep current)' : 'Enter your Bunny Storage API key'}
+            />
+          </div>
+        </div>
+        <div className="flex justify-end">
+          <Button onClick={saveSettings} disabled={saving} className="gap-2">
+            {saving ? (
+              <><Loader2 className="w-4 h-4 animate-spin" /> Saving...</>
+            ) : (
+              <><Save className="w-4 h-4" /> Save Settings</>
+            )}
+          </Button>
+        </div>
       </div>
 
       {/* Test Connection */}
@@ -117,6 +190,7 @@ export const BunnyStorageSetup = () => {
           <Button
             onClick={testConnection}
             disabled={testing || !config?.configured}
+            variant="outline"
             className="gap-2"
           >
             {testing ? (
@@ -127,7 +201,6 @@ export const BunnyStorageSetup = () => {
           </Button>
         </div>
 
-        {/* Test Result */}
         {testResult && (
           <div className={`rounded-lg p-4 border ${
             testResult.success
@@ -170,36 +243,11 @@ export const BunnyStorageSetup = () => {
             <li>Go to your <span className="font-medium text-foreground">Bunny.net Dashboard</span></li>
             <li>Navigate to <span className="font-medium text-foreground">Storage → Storage Zones</span></li>
             <li>Copy your <span className="font-medium text-foreground">Password (API Key)</span>, <span className="font-medium text-foreground">Zone Name</span>, and <span className="font-medium text-foreground">Hostname</span></li>
-            <li>Add them to your Laravel <span className="font-medium text-foreground">.env</span> file</li>
-            <li>Come back here and click <span className="font-medium text-foreground">Test Connection</span></li>
+            <li>Fill in the fields above and click <span className="font-medium text-foreground">Save Settings</span></li>
+            <li>Click <span className="font-medium text-foreground">Test Connection</span> to verify</li>
           </ol>
         </div>
       )}
     </div>
   );
 };
-
-// ─── Config Card ─────────────────────────────────────────────────────────────
-const ConfigCard = ({
-  icon: Icon,
-  label,
-  value,
-  configured,
-}: {
-  icon: React.ElementType;
-  label: string;
-  value: string;
-  configured: boolean;
-}) => (
-  <div className="flex items-center gap-3 p-4 rounded-lg border border-border bg-card">
-    <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${
-      configured ? 'bg-green-500/10' : 'bg-muted'
-    }`}>
-      <Icon className={`w-4 h-4 ${configured ? 'text-green-500' : 'text-muted-foreground'}`} />
-    </div>
-    <div className="min-w-0">
-      <p className="text-xs text-muted-foreground">{label}</p>
-      <p className="text-sm font-medium truncate">{value}</p>
-    </div>
-  </div>
-);
