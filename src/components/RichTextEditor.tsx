@@ -1,3 +1,4 @@
+import DOMPurify from 'dompurify';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Underline from '@tiptap/extension-underline';
@@ -188,7 +189,7 @@ export function RichContent({ html, className }: { html: string; className?: str
   return (
     <div
       className={cn('prose prose-sm dark:prose-invert max-w-none', className)}
-      dangerouslySetInnerHTML={{ __html: content }}
+      dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(content) }}
     />
   );
 }
