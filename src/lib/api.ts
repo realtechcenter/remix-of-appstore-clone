@@ -1,5 +1,5 @@
 // API Configuration - Laravel API
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://api.realtechcomputer.com';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://api.macsofy.com';
 
 // Get API key from localStorage (set after login)
 const getApiKey = () => localStorage.getItem('admin_api_key') || '';

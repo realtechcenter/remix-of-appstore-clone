@@ -14,7 +14,7 @@ import { AppearancePanel } from '@/components/settings/AppearancePanel';
 import { PrivacyPanel } from '@/components/settings/PrivacyPanel';
 import { AboutPanel } from '@/components/settings/AboutPanel';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://api.realtechcomputer.com';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://api.macsofy.com';
 
 type SettingsSection = 'profile' | 'password' | 'notifications' | 'appearance' | 'privacy' | 'about';
 
