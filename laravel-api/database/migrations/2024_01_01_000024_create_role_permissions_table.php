@@ -37,6 +37,7 @@ return new class extends Migration
             'user_status.manage',
             'coupons.manage',
             'settings.manage',
+            'storage.manage',
             'receipts.view',
         ];
 
