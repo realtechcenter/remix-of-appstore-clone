@@ -27,8 +27,9 @@ export const CoachMarks = ({ steps, storageKey, onComplete }: CoachMarksProps) =
   const tooltipRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    const globalDismissed = localStorage.getItem("coach-marks-global-shown");
     const dismissed = localStorage.getItem(storageKey);
-    if (!dismissed) {
+    if (!dismissed && !globalDismissed) {
       // Small delay so DOM is ready
       const timer = setTimeout(() => setVisible(true), 600);
       return () => clearTimeout(timer);
@@ -63,6 +64,7 @@ export const CoachMarks = ({ steps, storageKey, onComplete }: CoachMarksProps) =
   const dismiss = useCallback(() => {
     setVisible(false);
     localStorage.setItem(storageKey, "true");
+    localStorage.setItem("coach-marks-global-shown", "true");
     onComplete?.();
   }, [storageKey, onComplete]);
 
