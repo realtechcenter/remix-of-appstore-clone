@@ -1,11 +1,13 @@
-import { useState } from "react";
-import { Shield, Crown, User, Plus, Search, X, Check, Loader2, Settings2, Trash2, ChevronDown, ChevronRight, ShieldAlert } from "lucide-react";
+import { useState, useMemo } from "react";
+import { Shield, Crown, User, Plus, Search, X, Check, Loader2, Settings2, Trash2, ChevronDown, ChevronRight, ShieldAlert, ChevronsUpDown } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandInput, CommandList, CommandEmpty, CommandItem } from "@/components/ui/command";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -67,6 +69,8 @@ const AssignRolesTab = () => {
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [newRoleUserId, setNewRoleUserId] = useState("");
   const [newRole, setNewRole] = useState("moderator");
+  const [userSearchOpen, setUserSearchOpen] = useState(false);
+  const [userSearchQuery, setUserSearchQuery] = useState("");
 
   const { data: rolesData, isLoading } = useQuery({
     queryKey: ["admin-user-roles"],
@@ -86,6 +90,19 @@ const AssignRolesTab = () => {
   const userRoles = rolesData?.users || [];
   const allUsers = usersData?.users || [];
   const availableRoles = permData?.role_names || ["admin", "moderator", "user"];
+
+  const selectedUserLabel = useMemo(() => {
+    const u = allUsers.find((u) => String(u.id) === newRoleUserId);
+    return u ? (u.full_name || u.email) : "Select user...";
+  }, [allUsers, newRoleUserId]);
+
+  const filteredDialogUsers = useMemo(() => {
+    if (!userSearchQuery) return allUsers;
+    const q = userSearchQuery.toLowerCase();
+    return allUsers.filter(
+      (u) => u.full_name?.toLowerCase().includes(q) || u.email?.toLowerCase().includes(q)
+    );
+  }, [allUsers, userSearchQuery]);
 
   const addRole = useMutation({
     mutationFn: ({ userId, role }: { userId: number; role: string }) => rolesApi.add(userId, role),
@@ -173,12 +190,36 @@ const AssignRolesTab = () => {
             <DialogDescription>Select a user and role to assign</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
-            <Select value={newRoleUserId} onValueChange={setNewRoleUserId}>
-              <SelectTrigger><SelectValue placeholder="Select user" /></SelectTrigger>
-              <SelectContent>
-                {allUsers.map((u) => <SelectItem key={u.id} value={String(u.id)}>{u.full_name || u.email}</SelectItem>)}
-              </SelectContent>
-            </Select>
+            <Popover open={userSearchOpen} onOpenChange={setUserSearchOpen}>
+              <PopoverTrigger asChild>
+                <Button variant="outline" role="combobox" className="w-full justify-between font-normal">
+                  {selectedUserLabel}
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-full p-0" align="start">
+                <Command shouldFilter={false}>
+                  <CommandInput placeholder="Search users..." value={userSearchQuery} onValueChange={setUserSearchQuery} />
+                  <CommandList>
+                    <CommandEmpty>No users found.</CommandEmpty>
+                    {filteredDialogUsers.map((u) => (
+                      <CommandItem
+                        key={u.id}
+                        value={String(u.id)}
+                        onSelect={(val) => {
+                          setNewRoleUserId(val);
+                          setUserSearchOpen(false);
+                        }}
+                      >
+                        <Check className={`mr-2 h-4 w-4 ${String(u.id) === newRoleUserId ? "opacity-100" : "opacity-0"}`} />
+                        <span>{u.full_name || u.email}</span>
+                        {u.full_name && <span className="ml-2 text-xs text-muted-foreground">{u.email}</span>}
+                      </CommandItem>
+                    ))}
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
             <Select value={newRole} onValueChange={setNewRole}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
