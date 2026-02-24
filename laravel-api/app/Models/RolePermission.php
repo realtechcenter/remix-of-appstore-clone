@@ -58,6 +58,7 @@ class RolePermission extends Model
             ['key' => 'user_status.manage', 'label' => 'Ban / Suspend Users', 'group' => 'User Status'],
             ['key' => 'coupons.manage', 'label' => 'Manage Coupons', 'group' => 'Coupons'],
             ['key' => 'settings.manage', 'label' => 'Manage Settings', 'group' => 'Settings'],
+            ['key' => 'storage.manage', 'label' => 'File Explorer', 'group' => 'Storage'],
             ['key' => 'receipts.view', 'label' => 'View Receipts', 'group' => 'Receipts'],
         ];
     }
