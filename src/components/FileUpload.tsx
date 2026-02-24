@@ -3,7 +3,7 @@ import { Upload, X, Loader2, Image as ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://api.realtechcomputer.com';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://api.macsofy.com';
 
 interface FileUploadProps {
   type: 'icons' | 'screenshots' | 'versions';

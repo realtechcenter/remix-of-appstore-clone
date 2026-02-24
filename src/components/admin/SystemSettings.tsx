@@ -8,7 +8,7 @@ import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { bunnyApi, type BunnyConfig, type BunnyTestResult } from '@/lib/api';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://api.realtechcomputer.com';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://api.macsofy.com';
 
 interface SystemSettings {
   maintenance_mode: boolean;

@@ -5,7 +5,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const LARAVEL_API_URL = (Deno.env.get("LARAVEL_API_URL") || "https://api.realtechcomputer.com").replace(/\/$/, '');
+const LARAVEL_API_URL = (Deno.env.get("LARAVEL_API_URL") || "https://api.macsofy.com").replace(/\/$/, '');
 
 interface App {
   id: number;

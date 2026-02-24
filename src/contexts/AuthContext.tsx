@@ -26,7 +26,7 @@ interface AuthContextType {
   isAdminOrModerator: boolean;
 }
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://api.realtechcomputer.com';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://api.macsofy.com';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 

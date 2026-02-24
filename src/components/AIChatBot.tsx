@@ -50,7 +50,7 @@ interface ParsedApp {
   description: string;
 }
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://api.realtechcomputer.com';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://api.macsofy.com';
 const CHAT_URL = `${API_BASE_URL}/api/ai/chat/stream`;
 
 // Parse [APP:id:name:icon_url:is_popular:download_count:description] tags from message content
