@@ -83,23 +83,40 @@ export const CoachMarks = ({ steps, storageKey, onComplete }: CoachMarksProps) =
   const isFirst = current === 0;
   const isLast = current === steps.length - 1;
   const pad = 6;
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  const isMobile = vw < 640;
+  const tooltipW = isMobile ? Math.min(vw - 24, 300) : 300;
 
-  // Tooltip position
-  const placement = step.placement || "bottom";
-  let tooltipStyle: React.CSSProperties = { position: "fixed", zIndex: 10001 };
+  // On mobile, force top/bottom placement since left/right won't fit
+  let placement = step.placement || "bottom";
+  if (isMobile && (placement === "left" || placement === "right")) {
+    placement = rect.top > vh / 2 ? "top" : "bottom";
+  }
+
+  let tooltipStyle: React.CSSProperties = {
+    position: "fixed",
+    zIndex: 10001,
+    width: tooltipW,
+    maxWidth: `calc(100vw - 24px)`,
+  };
+
+  const centerX = Math.max(12, Math.min(rect.left + rect.width / 2 - tooltipW / 2, vw - tooltipW - 12));
 
   if (placement === "bottom") {
-    tooltipStyle.top = rect.bottom + pad + 8;
-    tooltipStyle.left = Math.max(12, Math.min(rect.left + rect.width / 2 - 150, window.innerWidth - 312));
+    const top = rect.bottom + pad + 8;
+    tooltipStyle.top = Math.min(top, vh - 180);
+    tooltipStyle.left = centerX;
   } else if (placement === "top") {
-    tooltipStyle.bottom = window.innerHeight - rect.top + pad + 8;
-    tooltipStyle.left = Math.max(12, Math.min(rect.left + rect.width / 2 - 150, window.innerWidth - 312));
+    const bottom = vh - rect.top + pad + 8;
+    tooltipStyle.bottom = Math.min(bottom, vh - 40);
+    tooltipStyle.left = centerX;
   } else if (placement === "right") {
-    tooltipStyle.top = Math.max(12, rect.top + rect.height / 2 - 50);
-    tooltipStyle.left = rect.right + pad + 8;
+    tooltipStyle.top = Math.max(12, Math.min(rect.top + rect.height / 2 - 50, vh - 180));
+    tooltipStyle.left = Math.min(rect.right + pad + 8, vw - tooltipW - 12);
   } else {
-    tooltipStyle.top = Math.max(12, rect.top + rect.height / 2 - 50);
-    tooltipStyle.right = window.innerWidth - rect.left + pad + 8;
+    tooltipStyle.top = Math.max(12, Math.min(rect.top + rect.height / 2 - 50, vh - 180));
+    tooltipStyle.right = Math.max(12, vw - rect.left + pad + 8);
   }
 
   return createPortal(
@@ -143,7 +160,7 @@ export const CoachMarks = ({ steps, storageKey, onComplete }: CoachMarksProps) =
       <div
         ref={tooltipRef}
         style={tooltipStyle}
-        className="w-[300px] bg-card border border-border rounded-lg shadow-lg z-[10001] animate-scale-in"
+        className="bg-card border border-border rounded-lg shadow-lg z-[10001] animate-scale-in"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
