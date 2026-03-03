@@ -37,13 +37,13 @@ async function apiRequest<T>(endpoint: string, options: ApiOptions = {}): Promis
   };
   
   if (requiresAuth) {
-    // Try admin API key first, then fall back to user auth token
-    const adminKey = getApiKey();
+    // Prefer user auth token (JWT), fall back to legacy admin API key
     const userToken = getUserAuthToken();
-    if (adminKey) {
-      headers['Authorization'] = `Bearer ${adminKey}`;
-    } else if (userToken) {
+    const adminKey = getApiKey();
+    if (userToken) {
       headers['Authorization'] = `Bearer ${userToken}`;
+    } else if (adminKey) {
+      headers['Authorization'] = `Bearer ${adminKey}`;
     }
   }
   
