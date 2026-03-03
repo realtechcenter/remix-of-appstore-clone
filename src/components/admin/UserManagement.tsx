@@ -68,8 +68,9 @@ export const UserManagement = () => {
       setUsers(response.users);
       setTotalPages(response.pagination.total_pages);
       setTotalUsers(response.pagination.total);
-    } catch (error) {
-      toast.error("Failed to load users");
+    } catch (error: any) {
+      console.error("Failed to load users:", error?.message || error);
+      toast.error(error?.message || "Failed to load users");
       setUsers([]);
     } finally {
       setLoading(false);
