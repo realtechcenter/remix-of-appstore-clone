@@ -1,4 +1,4 @@
-import { Gamepad2, Puzzle, HardDrive, FileText, ShoppingBag, LayoutGrid, Box, X, ShoppingCart, CreditCard, Settings, LogIn } from "lucide-react";
+import { Gamepad2, Puzzle, HardDrive, FileText, ShoppingBag, LayoutGrid, Box, X, ShoppingCart, CreditCard, Settings, LogIn, ShieldCheck } from "lucide-react";
 import { useLanguage, useTranslations } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { Link, useLocation } from "react-router-dom";
@@ -23,6 +23,7 @@ export const Sidebar = ({ activeCategory, onCategoryChange, isOpen = false, onTo
     { id: "programs", label: t.programs, icon: Box },
     { id: "games", label: t.games, icon: Gamepad2 },
     { id: "extensions", label: t.extensions, icon: Puzzle },
+    { id: "disclaimer", label: language === "km" ? "សេចក្តីបដិសេធ" : "Disclaimer", icon: ShieldCheck, path: "/disclaimer" },
     { id: "os", label: t.os, icon: HardDrive },
     { id: "articles", label: t.articles, icon: FileText },
     { id: "goods", label: t.goods, icon: ShoppingBag },
@@ -73,6 +74,25 @@ export const Sidebar = ({ activeCategory, onCategoryChange, isOpen = false, onTo
           </p>
           {navItems.map((item) => {
             const Icon = item.icon;
+            if (item.path) {
+              const isActive = location.pathname === item.path;
+              return (
+                <Link
+                  key={item.id}
+                  to={item.path}
+                  onClick={() => onToggle?.()}
+                  className={cn(
+                    "w-full flex items-center gap-2.5 px-2.5 py-[7px] rounded-md text-[13px] font-medium transition-all",
+                    isActive
+                      ? "bg-primary text-primary-foreground"
+                      : "text-sidebar-foreground hover:bg-accent/70 hover:text-foreground"
+                  )}
+                >
+                  <Icon className="w-[16px] h-[16px] shrink-0 opacity-80" />
+                  <span className="flex-1 truncate">{item.label}</span>
+                </Link>
+              );
+            }
             const isActive = isOnIndex && activeCategory === item.id;
             return (
               <button

@@ -17,6 +17,7 @@ import PaymentHistory from "./pages/PaymentHistory";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 import Wishlist from "./pages/Wishlist";
+import Disclaimer from "./pages/Disclaimer";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://api.macsofy.com';
 
@@ -60,6 +61,7 @@ function AppRoutes() {
       <Route path="/payment-history" element={<PaymentHistory />} />
       <Route path="/profile" element={<Profile />} />
       <Route path="/wishlist" element={<Wishlist />} />
+      <Route path="/disclaimer" element={<Disclaimer />} />
       <Route path="/:id" element={<AppDetail />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
