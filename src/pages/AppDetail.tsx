@@ -969,7 +969,7 @@ const AppDetail = () => {
                               onClick={() => setShowPaymentDialog(true)}
                             >
                               <ShoppingCart className="w-5 h-5" />
-                              {language === 'km' ? 'ទិញ' : 'Buy Now'} - {selectedCoupon ? (
+                              {language === 'km' ? 'ទិញ' : 'Get Yours'} - {selectedCoupon ? (
                                 <span className="flex items-center gap-2">
                                   <span className="line-through opacity-60">{priceDisplay}</span>
                                   <span>{finalPriceDisplay}</span>
