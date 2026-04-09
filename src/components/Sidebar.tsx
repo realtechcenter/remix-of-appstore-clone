@@ -1,4 +1,4 @@
-import { Gamepad2, Puzzle, HardDrive, FileText, ShoppingBag, LayoutGrid, Box, X, ShoppingCart, CreditCard, Settings, LogIn } from "lucide-react";
+import { Gamepad2, Puzzle, HardDrive, FileText, ShoppingBag, LayoutGrid, Box, X, ShoppingCart, CreditCard, Settings, LogIn, ShieldCheck } from "lucide-react";
 import { useLanguage, useTranslations } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { Link, useLocation } from "react-router-dom";

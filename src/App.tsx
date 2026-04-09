@@ -17,6 +17,7 @@ import PaymentHistory from "./pages/PaymentHistory";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 import Wishlist from "./pages/Wishlist";
+import Disclaimer from "./pages/Disclaimer";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://api.macsofy.com';
 
