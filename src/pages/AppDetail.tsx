@@ -949,7 +949,7 @@ const AppDetail = () => {
                               className="w-full h-14 text-base font-semibold gap-2 bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg"
                             >
                               <Lock className="w-5 h-5" />
-                              {language === 'km' ? 'ចូលគណនីជាមុនសិន' : 'Sign In First'}
+                              {language === 'km' ? 'ចូលគណនីដើម្បីបន្ត' : 'Sign In to Continue'}
                             </Button>
                           </Link>
                         );
