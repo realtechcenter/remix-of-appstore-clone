@@ -74,6 +74,25 @@ export const Sidebar = ({ activeCategory, onCategoryChange, isOpen = false, onTo
           </p>
           {navItems.map((item) => {
             const Icon = item.icon;
+            if (item.path) {
+              const isActive = location.pathname === item.path;
+              return (
+                <Link
+                  key={item.id}
+                  to={item.path}
+                  onClick={() => onToggle?.()}
+                  className={cn(
+                    "w-full flex items-center gap-2.5 px-2.5 py-[7px] rounded-md text-[13px] font-medium transition-all",
+                    isActive
+                      ? "bg-primary text-primary-foreground"
+                      : "text-sidebar-foreground hover:bg-accent/70 hover:text-foreground"
+                  )}
+                >
+                  <Icon className="w-[16px] h-[16px] shrink-0 opacity-80" />
+                  <span className="flex-1 truncate">{item.label}</span>
+                </Link>
+              );
+            }
             const isActive = isOnIndex && activeCategory === item.id;
             return (
               <button
