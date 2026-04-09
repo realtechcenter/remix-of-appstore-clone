@@ -976,6 +976,9 @@ const AppDetail = () => {
                                 </span>
                               ) : priceDisplay}
                             </Button>
+                            <Link to="/disclaimer" className="text-xs text-muted-foreground hover:text-primary text-center block mt-1 underline underline-offset-2">
+                              {language === 'km' ? 'សូមអានមុនពេលទិញ' : 'Read before you buy'}
+                            </Link>
                             
                             <CouponSuggestion
                               price={priceNum}
