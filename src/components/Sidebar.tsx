@@ -23,6 +23,7 @@ export const Sidebar = ({ activeCategory, onCategoryChange, isOpen = false, onTo
     { id: "programs", label: t.programs, icon: Box },
     { id: "games", label: t.games, icon: Gamepad2 },
     { id: "extensions", label: t.extensions, icon: Puzzle },
+    { id: "disclaimer", label: language === "km" ? "សេចក្តីបដិសេធ" : "Disclaimer", icon: ShieldCheck, path: "/disclaimer" },
     { id: "os", label: t.os, icon: HardDrive },
     { id: "articles", label: t.articles, icon: FileText },
     { id: "goods", label: t.goods, icon: ShoppingBag },
