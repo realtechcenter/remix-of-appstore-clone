@@ -70,15 +70,18 @@ class AppController extends Controller
 
         // Compute real download counts from paid orders
         $appIds = $apps->pluck('id')->all();
-        $orderCounts = Order::whereIn('app_id', $appIds)
-            ->whereIn('status', ['paid', 'approved'])
+        $orderCounts = \DB::table('orders')
+            ->whereIn('app_id', $appIds)
+            ->where('status', 'paid')
             ->selectRaw('app_id, COUNT(*) as cnt')
             ->groupBy('app_id')
             ->pluck('cnt', 'app_id');
 
         // For app list, always hide download URLs (security)
         $apps = $apps->map(function ($app) use ($orderCounts) {
-            $app->download_count = (int) ($orderCounts[$app->id] ?? 0);
+            $count = (int) ($orderCounts[$app->id] ?? 0);
+            $app->setAttribute('download_count', $count);
+            $app->download_count = $count;
             if ($app->versions) {
                 $app->versions = $app->versions->map(function ($version) {
                     $version->download_url = null;
