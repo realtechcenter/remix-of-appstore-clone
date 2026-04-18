@@ -160,6 +160,11 @@ class AppController extends Controller
             $app->setRelation('videos', collect([]));
         }
 
+        // Compute real download count from paid orders
+        $app->download_count = (int) Order::where('app_id', $app->id)
+            ->whereIn('status', ['paid', 'approved'])
+            ->count();
+
         return response()->json(['app' => $app]);
     }
 
