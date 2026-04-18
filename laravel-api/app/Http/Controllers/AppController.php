@@ -68,18 +68,18 @@ class AppController extends Controller
         $total = $query->count();
         $apps = $query->skip($offset)->take($limit)->get();
 
-        // Compute real download counts from paid orders
-        $appIds = $apps->pluck('id')->all();
+        // Compute real download counts from paid orders using app_name
+        $appNames = $apps->pluck('name')->filter()->unique()->values()->all();
         $orderCounts = \DB::table('orders')
-            ->whereIn('app_id', $appIds)
+            ->whereIn('app_name', $appNames)
             ->where('status', 'paid')
-            ->selectRaw('app_id, COUNT(*) as cnt')
-            ->groupBy('app_id')
-            ->pluck('cnt', 'app_id');
+            ->selectRaw('app_name, COUNT(*) as cnt')
+            ->groupBy('app_name')
+            ->pluck('cnt', 'app_name');
 
         // For app list, always hide download URLs (security)
         $apps = $apps->map(function ($app) use ($orderCounts) {
-            $count = (int) ($orderCounts[$app->id] ?? 0);
+            $count = (int) ($orderCounts[$app->name] ?? 0);
             $app->setAttribute('download_count', $count);
             $app->download_count = $count;
             if ($app->versions) {
@@ -164,9 +164,9 @@ class AppController extends Controller
         }
 
         // Compute real download count from paid orders
-        // Compute real download count from paid orders
+        // Compute real download count from paid orders using app_name
         $realCount = (int) \DB::table('orders')
-            ->where('app_id', $app->id)
+            ->where('app_name', $app->name)
             ->where('status', 'paid')
             ->count();
         $app->setAttribute('download_count', $realCount);
