@@ -163,10 +163,9 @@ class AppController extends Controller
             $app->setRelation('videos', collect([]));
         }
 
-        // Compute real download count from paid orders
-        // Compute real download count from paid orders using app_name
+        // Compute real download count from paid orders using app_id
         $realCount = (int) \DB::table('orders')
-            ->where('app_name', $app->name)
+            ->where('app_id', $app->id)
             ->where('status', 'paid')
             ->count();
         $app->setAttribute('download_count', $realCount);
