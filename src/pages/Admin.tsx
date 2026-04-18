@@ -685,7 +685,7 @@ const AppsTab = () => {
                                 {version.is_visible === false && <Badge variant="secondary" className="text-xs bg-muted text-muted-foreground">Hidden</Badge>}
                               </div>
                               <p className="text-xs text-muted-foreground mt-0.5">
-                                {version.release_date}{version.file_size ? ` • ${version.file_size}` : ""}
+                                {version.release_date ? new Date(version.release_date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : ''}{version.file_size ? ` • ${version.file_size}` : ""}
                               </p>
                             </div>
                             <div className="flex gap-1">
