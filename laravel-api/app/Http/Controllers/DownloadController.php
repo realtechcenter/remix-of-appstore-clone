@@ -91,6 +91,11 @@ class DownloadController extends Controller
             return response()->json(['error' => 'No download URL available'], 404);
         }
 
+        // Increment download counter (skip for admins to avoid inflating stats during testing)
+        if (!$isAdmin) {
+            $app->increment('download_count');
+        }
+
         // Check if Token Authentication is enabled
         $tokenAuthKey = SystemSetting::getValue('bunny_token_auth_key');
         $tokenExpiry = (int) SystemSetting::getValue('bunny_token_expiry', '3600'); // default 1 hour
