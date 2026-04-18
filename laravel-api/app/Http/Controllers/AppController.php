@@ -164,9 +164,13 @@ class AppController extends Controller
         }
 
         // Compute real download count from paid orders
-        $app->download_count = (int) Order::where('app_id', $app->id)
-            ->whereIn('status', ['paid', 'approved'])
+        // Compute real download count from paid orders
+        $realCount = (int) \DB::table('orders')
+            ->where('app_id', $app->id)
+            ->where('status', 'paid')
             ->count();
+        $app->setAttribute('download_count', $realCount);
+        $app->download_count = $realCount;
 
         return response()->json(['app' => $app]);
     }
